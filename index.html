@@ -888,7 +888,8 @@ footer#footer{
 <nav class="navlinks" id="navlinks">
 <a data-manus_click_id="2" data-manus_clickable="true" href="https://skrewu.com" rel="noopener" target="_blank">Shop</a>
 <a data-manus_click_id="3" data-manus_clickable="true" href="#shop">Customs</a>
-<a data-manus_click_id="4" data-manus_clickable="true" href="#weeklygram">Weeklygram</a>
+<a data-manus_click_id="4" data-manus_clickable="true" href="#vault">Vault</a>
+<a data-manus_click_id="5" data-manus_clickable="true" href="#weeklygram">Weeklygram</a>
 <a data-manus_click_id="5" data-manus_clickable="true" href="#live">Live</a>
 <a class="nav-cta" data-manus_click_id="6" data-manus_clickable="true" href="#join">Get In</a>
 </nav>
@@ -1021,6 +1022,78 @@ footer#footer{
 </div>
 </div>
 <button aria-label="Cart" class="cart-fab" data-count="0" id="cartFab">0</button>
+<!-- ============ THE VAULT (MCG logo/design archive) ============ -->
+<style>
+#vault{position:relative;padding:96px 0;background:
+  radial-gradient(1200px 400px at 50% -10%, rgba(163,42,31,0.10), transparent 60%),
+  var(--void);border-top:1px solid var(--iron);overflow:hidden;}
+#vault .vault-scanlines{position:absolute;inset:0;pointer-events:none;opacity:0.05;
+  background:repeating-linear-gradient(0deg, var(--bone) 0 1px, transparent 1px 3px);}
+#vault .wrap{position:relative;z-index:1;}
+.vault-lockbar{display:flex;align-items:center;gap:8px;font-family:var(--body);
+  font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--bone-dim);margin-bottom:14px;}
+.vault-lockbar b{color:var(--acid);}
+.vault-toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:26px 0 10px;}
+.vault-search{flex:1;min-width:220px;display:flex;align-items:center;gap:8px;
+  background:var(--void-2);border:1px solid var(--iron);padding:11px 14px;}
+.vault-search input{flex:1;background:none;border:none;color:var(--bone);font-family:var(--body);
+  font-size:13px;outline:none;letter-spacing:0.03em;}
+.vault-search input::placeholder{color:var(--bone-dim);}
+.vault-count{font-family:var(--body);font-size:11px;color:var(--bone-dim);letter-spacing:0.06em;white-space:nowrap;}
+.vault-brands{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 28px;}
+.vault-brand-chip{background:none;border:1px solid var(--iron-light);color:var(--bone-dim);
+  padding:7px 13px;font-family:var(--display);font-size:12px;letter-spacing:0.05em;text-transform:uppercase;
+  cursor:pointer;transition:all 0.15s;}
+.vault-brand-chip:hover{border-color:var(--bone);color:var(--bone);}
+.vault-brand-chip.on{background:var(--rust);border-color:var(--rust-bright);color:var(--bone);}
+.vault-brand-chip .n{opacity:0.6;font-size:10px;margin-left:5px;}
+.vault-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.vault-tile{position:relative;aspect-ratio:1;background:var(--void-2);border:1px solid var(--iron);
+  overflow:hidden;cursor:pointer;transition:border-color 0.15s, transform 0.15s;}
+.vault-tile:hover{border-color:var(--acid);transform:translateY(-2px);}
+.vault-tile img{width:100%;height:100%;object-fit:contain;background:
+  repeating-conic-gradient(#141210 0% 25%, #0e0d0b 0% 50%) 50%/16px 16px;}
+.vault-tile .vt-meta{position:absolute;left:0;right:0;bottom:0;padding:8px 9px;
+  background:linear-gradient(transparent, rgba(10,9,8,0.92));opacity:0;transition:opacity 0.15s;}
+.vault-tile:hover .vt-meta{opacity:1;}
+.vault-tile .vt-name{font-family:var(--body);font-size:10px;color:var(--bone);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vault-tile .vt-brand{font-family:var(--display);font-size:9px;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--acid);}
+.vault-empty{grid-column:1/-1;border:1px dashed var(--iron);padding:56px 20px;text-align:center;color:var(--bone-dim);}
+.vault-empty h3{font-family:var(--display);color:var(--bone);font-size:20px;margin-bottom:8px;letter-spacing:0.04em;}
+.vault-empty code{color:var(--acid);font-size:12px;}
+.vault-more{display:block;margin:28px auto 0;background:none;border:1px solid var(--iron-light);
+  color:var(--bone);font-family:var(--display);font-size:13px;letter-spacing:0.06em;text-transform:uppercase;
+  padding:12px 30px;cursor:pointer;transition:all 0.15s;}
+.vault-more:hover{border-color:var(--acid);color:var(--acid);}
+.vault-more[disabled]{opacity:0.4;cursor:default;}
+</style>
+<section id="vault">
+<div class="vault-scanlines"></div>
+<div class="wrap">
+<div class="sec-head reveal">
+<div>
+<span class="sec-eyebrow">The Vault</span>
+<h2>Every crest.<br/>Every drop. One archive.</h2>
+<p>The full MCG logo &amp; design library — Death Corps, Skrew U, Black Metal, Death Squad and the rest. Search it, filter by brand, pull what you need.</p>
+</div>
+</div>
+<div class="vault-lockbar">&#128274; Members-only archive · <b id="vaultTotal">syncing…</b></div>
+<div class="vault-toolbar">
+<div class="vault-search">
+<span aria-hidden="true">&#128269;</span>
+<input id="vaultSearch" type="text" placeholder="Search logos, tags, brands…" maxlength="60" autocomplete="off"/>
+</div>
+<span class="vault-count" id="vaultCount"></span>
+</div>
+<div class="vault-brands" id="vaultBrands"></div>
+<div class="vault-grid" id="vaultGrid">
+<div class="vault-empty"><h3>Vault is warming up.</h3><p>No assets ingested yet. Run the importer to fill it:<br/><code>node scripts/bulk-import.mjs --dir /path/to/archive --public</code></p></div>
+</div>
+<button class="vault-more" id="vaultMore" style="display:none;">Load more</button>
+</div>
+</section>
 <section id="weeklygram">
 <div class="collage-backdrop"></div>
 <div class="wrap">
@@ -1452,8 +1525,9 @@ footer#footer{
 <div class="footer-brand">Skrew U</div>
 <nav class="footer-links">
 <a data-manus_click_id="64" data-manus_clickable="true" href="https://skrewu.com" rel="noopener" target="_blank">Shop</a>
-<a data-manus_click_id="65" data-manus_clickable="true" href="#weeklygram">Weeklygram</a>
-<a data-manus_click_id="66" data-manus_clickable="true" href="#zine">The Zine</a>
+<a data-manus_click_id="65" data-manus_clickable="true" href="#vault">Vault</a>
+<a data-manus_click_id="66" data-manus_clickable="true" href="#weeklygram">Weeklygram</a>
+<a data-manus_click_id="67" data-manus_clickable="true" href="#zine">The Zine</a>
 <a data-manus_click_id="67" data-manus_clickable="true" href="#frequency">Frequency</a>
 <a data-manus_click_id="68" data-manus_clickable="true" href="#live">Live</a>
 <a data-manus_click_id="69" data-manus_clickable="true" href="#join">Join</a>
