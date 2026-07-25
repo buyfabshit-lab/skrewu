@@ -194,7 +194,13 @@ img,svg{display:block;max-width:100%;}
 .canvas img.art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:8%;z-index:1;}
 /* after-reveal clip driven by --split */
 .canvas .after-wrap{position:absolute;inset:0;z-index:2;clip-path:inset(0 0 0 var(--split,50%));}
-.canvas .after-wrap img{filter:saturate(1.25) contrast(1.08);}
+/* processing overlay + spinner */
+.canvas .proc{position:absolute;inset:0;z-index:7;display:none;place-items:center;background:rgba(10,9,8,.62);backdrop-filter:blur(2px);}
+.canvas.is-processing .proc{display:grid;}
+.canvas.is-processing .split-handle{display:none;}
+.proc .spin{width:38px;height:38px;border-radius:50%;border:3px solid var(--iron);border-top-color:var(--volt-bright);animation:spin .7s linear infinite;}
+.proc .proc-t{margin-top:12px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--bone-dim);}
+@keyframes spin{to{transform:rotate(360deg)}}
 .canvas .split-line{
   position:absolute;top:0;bottom:0;left:var(--split,50%);width:2px;
   background:var(--volt-bright);z-index:5;transform:translateX(-1px);box-shadow:0 0 12px var(--volt-glow);
@@ -514,7 +520,9 @@ function toast(msg){
    bodies with real handlers as each feature is built.
    ============================================================ */
 function handleAction(group,id,label){
-  // TODO: dispatch to real feature handlers as they're built.
+  // ---- real handlers (fill these in as features land) ----
+  if(id==='remove-bg' || id==='ai-remover'){ runRemoveBG(); return; }
+  // ---- everything else: placeholder feedback for now ----
   toast(`<b>${label}</b> — wire this up next`);
 }
 
@@ -537,10 +545,7 @@ document.addEventListener('click',e=>{
 /* ---- header buttons ---- */
 $('#btn-menu').addEventListener('click',()=>toast('<b>Menu</b> — wire this up next'));
 $('#btn-pro').addEventListener('click',()=>toast('<b>Go Pro</b> — wire this up next'));
-$('#btn-export').addEventListener('click',()=>{
-  if(!state.hasImage) return toast('Upload a logo first');
-  toast('<b>Export</b> — wire this up next');
-});
+$('#btn-export').addEventListener('click',doExport);
 
 /* ---- edit action bar ---- */
 $('#editbar').addEventListener('click',e=>{
@@ -549,6 +554,7 @@ $('#editbar').addEventListener('click',e=>{
   const act=btn.dataset.act;
   if(act==='compare'){ toggleCompare(); return; }
   if(act==='reset'){ resetCanvas(); return; }
+  if(act==='undo'){ doUndo(); return; }
   handleAction('edit',act,btn.querySelector('.eb-name').textContent);
 });
 
@@ -567,27 +573,142 @@ $('#tabbar').addEventListener('click',e=>{
    CANVAS · upload + before/after compare slider
    (This part is wired for real so there's something to play with.)
    ============================================================ */
-const state={hasImage:false,compare:false,src:null};
+const state={hasImage:false,compare:false,processing:false,original:null,result:null};
 const canvas=$('#canvas');
 
 function loadImage(src){
-  state.src=src; state.hasImage=true; state.compare=true;
+  state.original=src; state.result=null; state.hasImage=true; state.compare=true;
   canvas.classList.remove('no-compare');
   canvas.style.setProperty('--split','50%');
   canvas.innerHTML=`
     <span class="badge badge-before">Before</span>
     <span class="badge badge-after">After</span>
     <img class="art" src="${src}" alt="logo before">
-    <div class="after-wrap"><img class="art" src="${src}" alt="logo after"></div>
+    <div class="after-wrap"><img class="art" id="after-art" src="${src}" alt="logo after"></div>
     <div class="split-line"></div>
     <div class="split-handle" id="split-handle">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 3 12 9 18"/><polyline points="15 6 21 12 15 18"/></svg>
-    </div>`;
-  $('[data-act="undo"]').disabled=false;
+    </div>
+    <div class="proc"><div><div class="spin"></div><div class="proc-t">Working…</div></div></div>`;
+  $('[data-act="undo"]').disabled=true;   // nothing to undo until a tool runs
   wireSlider();
 }
+
+/* ============================================================
+   REMOVE BACKGROUND — 100% client-side (no API key / no backend)
+   Flood-fills the connected background inward from every border,
+   keying on the border colour with a tolerance, then feathers the
+   1px edge so it doesn't look cut out. Great for logos on solid /
+   simple backgrounds; struggles on busy photos (that'd want an AI
+   service — easy to swap in later at the marked spot).
+   ============================================================ */
+const RBG_TOLERANCE=32;      // colour match radius (0-255-ish)
+const RBG_MAXDIM=1600;       // cap working resolution for responsiveness
+
+function removeBackground(src){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        let {width:w,height:h}=img;
+        const scale=Math.min(1,RBG_MAXDIM/Math.max(w,h));
+        w=Math.round(w*scale); h=Math.round(h*scale);
+        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        const ctx=cv.getContext('2d',{willReadFrequently:true});
+        ctx.drawImage(img,0,0,w,h);
+        const id=ctx.getImageData(0,0,w,h), d=id.data, N=w*h;
+
+        // reference bg colour = average of the four corners
+        const corners=[0,(w-1),(h-1)*w,(h*w-1)];
+        let rr=0,gg=0,bb=0;
+        corners.forEach(p=>{const i=p*4;rr+=d[i];gg+=d[i+1];bb+=d[i+2];});
+        rr/=4; gg/=4; bb/=4;
+        const tol2=RBG_TOLERANCE*RBG_TOLERANCE*3;
+        const near=i=>{const dr=d[i]-rr,dg=d[i+1]-gg,db=d[i+2]-bb;return dr*dr+dg*dg+db*db<=tol2;};
+
+        // flood fill from all border pixels (iterative stack)
+        const visited=new Uint8Array(N), stack=[];
+        for(let x=0;x<w;x++){stack.push(x);stack.push(x+(h-1)*w);}
+        for(let y=0;y<h;y++){stack.push(y*w);stack.push(w-1+y*w);}
+        while(stack.length){
+          const p=stack.pop();
+          if(visited[p]) continue;
+          visited[p]=1;
+          if(!near(p*4)) continue;
+          d[p*4+3]=0;                       // clear alpha = transparent bg
+          const x=p%w, y=(p/w)|0;
+          if(x>0)   stack.push(p-1);
+          if(x<w-1) stack.push(p+1);
+          if(y>0)   stack.push(p-w);
+          if(y<h-1) stack.push(p+w);
+        }
+
+        // 1px edge feather — soften alpha where opaque meets transparent
+        const out=new Uint8ClampedArray(d);
+        for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+          const p=(y*w+x), a=d[p*4+3];
+          if(a===0) continue;
+          let clear=0,tot=0;
+          for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+            const nx=x+dx,ny=y+dy; if(nx<0||ny<0||nx>=w||ny>=h) continue;
+            tot++; if(d[(ny*w+nx)*4+3]===0) clear++;
+          }
+          if(clear>0) out[p*4+3]=Math.round(a*(1-clear/tot*0.8));
+        }
+        ctx.putImageData(new ImageData(out,w,h),0,0);
+        resolve(cv.toDataURL('image/png'));
+      }catch(err){ reject(err); }
+    };
+    img.onerror=()=>reject(new Error('image load failed'));
+    img.src=src;
+  });
+}
+
+function setProcessing(on){
+  state.processing=on;
+  canvas.classList.toggle('is-processing',on);
+}
+
+async function runRemoveBG(){
+  if(!state.hasImage) return toast('Upload a logo first');
+  if(state.processing) return;
+  if(!state.compare){ state.compare=true; canvas.classList.remove('no-compare'); }
+  canvas.style.setProperty('--split','50%');
+  setProcessing(true);
+  toast('Removing background…');
+  try{
+    const result=await removeBackground(state.original);
+    state.result=result;
+    const after=$('#after-art'); if(after) after.src=result;
+    $('[data-act="undo"]').disabled=false;
+    toast('<b>Background removed</b> — drag the slider to compare');
+  }catch(err){
+    console.error(err);
+    toast('Couldn\'t process that image');
+  }finally{ setProcessing(false); }
+}
+
+function doUndo(){
+  if(!state.result) return;
+  state.result=null;
+  const after=$('#after-art'); if(after) after.src=state.original;
+  $('[data-act="undo"]').disabled=true;
+  toast('Reverted to original');
+}
+
+/* ---- Export: download the current result (transparent PNG if BG removed) ---- */
+function doExport(){
+  if(!state.hasImage) return toast('Upload a logo first');
+  const src=state.result||state.original;
+  const a=document.createElement('a');
+  a.href=src;
+  a.download=state.result?'gang-sheet-logo-transparent.png':'gang-sheet-logo.png';
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('<b>Exported</b> — check your downloads');
+}
 function resetCanvas(){
-  state.hasImage=false; state.compare=false; state.src=null;
+  state.hasImage=false; state.compare=false; state.original=null; state.result=null;
+  setProcessing(false);
   canvas.classList.add('no-compare');
   canvas.innerHTML=`
     <span class="badge badge-before">Before</span>
