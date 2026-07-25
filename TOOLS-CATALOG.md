@@ -8,10 +8,17 @@ API surface live in each tool's README.
 |---|---|---|---|
 | [omniflow-command](tools-library/omniflow-command/) | Every order from every sales channel in one live feed — classify and push to fulfillment from a single screen. | ✅ Ready | Supabase `omniflow_orders` |
 | [wholesale-order-form](tools-library/wholesale-order-form/) | A shop-facing drop-off form — buyers submit multi-item print/merch orders (sizes, artwork, notes) straight into your production queue. | ✅ Ready | Supabase `shop_orders` + `order-artwork` bucket |
+| [logo-vault](tools-library/logo-vault/) | Sell licensed brand art with tiered licensing. | ✅ Ready (placeholder catalog — awaiting MVP zip) | Shopify Storefront + Supabase `print-assets` (private, signed URLs) |
 | gang-sheet-logo-maker | Lay out customer logos into a print-ready gang sheet for DTF/transfer runs. | ⏳ Pending source — not present in this repo | TBD |
 
 ## Notes
 
+- **logo-vault** is fully built and wired (Shopify Storefront checkout, Supabase
+  `print-assets` signed-URL delivery, watermarked previews). Its catalog is
+  **config-driven placeholder data** — the `MidnightFusion_Logo_Vault_MVP.zip`
+  didn't reach the build, so the 9 products + exact tier pricing/terms need to be
+  dropped into `tools-library/logo-vault/config.json` (a config edit, no code
+  changes). See that tool's README.
 - **gang-sheet-logo-maker** is referenced but its code isn't in `skrewu` or
   `machine`. When you point me at the repo it lives in (I can `add_repo` it), it
   drops into `tools-library/gang-sheet-logo-maker/` following the same portability

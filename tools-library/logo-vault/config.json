@@ -1,0 +1,44 @@
+{
+  "_status": "PLACEHOLDER CATALOG. The MidnightFusion_Logo_Vault_MVP.zip did not reach the build environment, so the 9 products and exact tier pricing/terms below are stand-ins. Replace this `tiers` + `catalog` block verbatim with the values from the MVP; the tool renders whatever is here.",
+
+  "branding": {
+    "businessName": "MidnightFusion",
+    "productName": "Logo Vault",
+    "tagline": "Licensed brand art",
+    "eyebrow": "MidnightFusion · Licensed Assets",
+    "logoUrl": null,
+    "colors": { "accent": "#7c6cff", "accent2": "#5b4be0", "gold": "#e6b64c" }
+  },
+
+  "backend": {
+    "supabaseUrl": "https://qmztuagvxopahowexrum.supabase.co",
+    "supabaseAnonKey": "sb_publishable_cbwgMdVv6XDxLp0WOBsM-w_irvs7BAh",
+    "assetBucket": "print-assets",
+    "signerEndpoint": null,
+    "signedUrlTtlSeconds": 300
+  },
+
+  "shopify": {
+    "storefrontDomain": null,
+    "storefrontAccessToken": null,
+    "apiVersion": "2024-10"
+  },
+
+  "tiers": [
+    { "id": "creator",    "name": "Creator",    "price": 29,  "currency": "USD", "blurb": "Personal & small-creator use — one end product, print run up to 500." },
+    { "id": "commercial", "name": "Commercial", "price": 79,  "currency": "USD", "blurb": "Business & merch resale — multiple products, print run up to 5,000." },
+    { "id": "extended",   "name": "Extended",   "price": 249, "currency": "USD", "blurb": "Unlimited use, resale & sublicense — no run cap, transferable." }
+  ],
+
+  "catalog": [
+    { "id": "lv-01", "name": "Placeholder Mark 01", "previewUrl": null, "assetPath": "lv-01/master.zip", "formats": ["SVG", "AI", "PNG", "PDF"], "variants": { "creator": null, "commercial": null, "extended": null } },
+    { "id": "lv-02", "name": "Placeholder Mark 02", "previewUrl": null, "assetPath": "lv-02/master.zip", "formats": ["SVG", "AI", "PNG", "PDF"], "variants": { "creator": null, "commercial": null, "extended": null } },
+    { "id": "lv-03", "name": "Placeholder Mark 03", "previewUrl": null, "assetPath": "lv-03/master.zip", "formats": ["SVG", "AI", "PNG", "PDF"], "variants": { "creator": null, "commercial": null, "extended": null } },
+    { "id": "lv-04", "name": "Placeholder Mark 04", "previewUrl": null, "assetPath": "lv-04/master.zip", "formats": ["SVG", "AI", "PNG", "PDF"], "variants": { "creator": null, "commercial": null, "extended": null } },
+    { "id": "lv-05", "name": "Placeholder Mark 05", "previewUrl": null, "assetPath": "lv-05/master.zip", "formats": ["SVG", "AI", "PNG", "PDF"], "variants": { "creator": null, "commercial": null, "extended": null } },
+    { "id": "lv-06", "name": "Placeholder Mark 06", "previewUrl": null, "assetPath": "lv-06/master.zip", "formats": ["SVG", "AI", "PNG", "PDF"], "variants": { "creator": null, "commercial": null, "extended": null } },
+    { "id": "lv-07", "name": "Placeholder Mark 07", "previewUrl": null, "assetPath": "lv-07/master.zip", "formats": ["SVG", "AI", "PNG", "PDF"], "variants": { "creator": null, "commercial": null, "extended": null } },
+    { "id": "lv-08", "name": "Placeholder Mark 08", "previewUrl": null, "assetPath": "lv-08/master.zip", "formats": ["SVG", "AI", "PNG", "PDF"], "variants": { "creator": null, "commercial": null, "extended": null } },
+    { "id": "lv-09", "name": "Placeholder Mark 09", "previewUrl": null, "assetPath": "lv-09/master.zip", "formats": ["SVG", "AI", "PNG", "PDF"], "variants": { "creator": null, "commercial": null, "extended": null } }
+  ]
+}
