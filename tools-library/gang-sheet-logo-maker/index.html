@@ -79,6 +79,7 @@ img,svg{display:block;max-width:100%;}
 }
 .hdr-burger{display:flex;flex-direction:column;gap:5px;padding:6px 4px;}
 .hdr-burger span{width:22px;height:2px;background:var(--bone);display:block;}
+#brand-logo{height:30px;width:auto;max-width:88px;object-fit:contain;flex-shrink:0;}
 .hdr-title{flex:1;text-align:center;line-height:1;}
 .hdr-title .t1{font-size:20px;letter-spacing:.04em;}
 .hdr-title .t1 em{color:var(--volt-bright);font-style:normal;}
@@ -307,9 +308,10 @@ img,svg{display:block;max-width:100%;}
   <!-- ============ HEADER ============ -->
   <header class="app-header">
     <button class="hdr-burger" id="btn-menu" aria-label="Menu"><span></span><span></span><span></span></button>
+    <img id="brand-logo" alt="" hidden/>
     <div class="hdr-title">
-      <div class="t1">LOGO <em>MAKER</em></div>
-      <div class="t2">Gang Sheet · DTF &amp; Shirt Production</div>
+      <div class="t1" id="tool-title">LOGO <em>MAKER</em></div>
+      <div class="t2" id="tool-tagline">Gang Sheet · DTF &amp; Shirt Production</div>
     </div>
     <button class="hdr-pro" id="btn-pro" aria-label="Go Pro" title="Go Pro">&#128081;</button>
     <button class="hdr-export" id="btn-export">
@@ -436,6 +438,73 @@ const ICON = {
 };
 function svg(paths){
   return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+paths+'</svg>';
+}
+
+/* ============================================================
+   CONFIG  —  per-customer branding, zero code changes needed.
+   Resolution order (first hit wins, deep-merged over defaults):
+     1. window.TOOL_CONFIG   (host page sets it inline before load)
+     2. ?config=<url>        (query param pointing at a config.json)
+     3. ./config.json        (co-located file, the normal deploy case)
+     4. built-in defaults    (below)
+   See README "Config surface" + "API surface" for the full schema.
+   ============================================================ */
+const DEFAULT_CONFIG = {
+  businessName:'SKREW U',
+  toolTitle:'Logo Maker',                 // last word is accent-coloured
+  tagline:'Gang Sheet · DTF & Shirt Production',
+  logoUrl:'',                             // optional header logo (url or data URI)
+  colors:{ accent:'#a32a1f', accentBright:'#c43a2c', accentDim:'#6e1c14', highlight:'#c4f135' },
+  export:{ filePrefix:'gang-sheet-logo' },
+  removeBg:{ tolerance:32, maxDimension:1600 }
+};
+let CONFIG = structuredClone(DEFAULT_CONFIG);
+
+function deepMerge(base,extra){
+  if(!extra||typeof extra!=='object') return base;
+  for(const k of Object.keys(extra)){
+    if(extra[k]&&typeof extra[k]==='object'&&!Array.isArray(extra[k])){
+      base[k]=deepMerge(base[k]?structuredClone(base[k]):{},extra[k]);
+    }else if(extra[k]!==undefined){ base[k]=extra[k]; }
+  }
+  return base;
+}
+
+function applyConfig(cfg){
+  CONFIG = deepMerge(structuredClone(DEFAULT_CONFIG), cfg||{});
+  const c=CONFIG.colors||{}, root=document.documentElement.style;
+  if(c.accent)      root.setProperty('--volt',c.accent);
+  if(c.accentBright)root.setProperty('--volt-bright',c.accentBright);
+  if(c.accentDim)   root.setProperty('--volt-dim',c.accentDim);
+  if(c.highlight)   root.setProperty('--acid',c.highlight);
+  if(c.accentBright){
+    const hex=c.accentBright.replace('#','');
+    if(hex.length===6){const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+      root.setProperty('--volt-glow',`rgba(${r},${g},${b},0.34)`);}
+  }
+  // title: accent the last word to keep the mock's two-tone look
+  const title=(CONFIG.toolTitle||'Logo Maker').trim().split(/\s+/);
+  const last=title.pop();
+  document.getElementById('tool-title').innerHTML=
+    (title.length?title.join(' ')+' ':'')+'<em>'+last+'</em>';
+  document.getElementById('tool-tagline').textContent=CONFIG.tagline||'';
+  document.title=(CONFIG.businessName?CONFIG.businessName+' — ':'')+(CONFIG.toolTitle||'Logo Maker');
+  const logo=document.getElementById('brand-logo');
+  if(CONFIG.logoUrl){ logo.src=CONFIG.logoUrl; logo.alt=(CONFIG.businessName||'')+' logo'; logo.hidden=false; }
+  else { logo.hidden=true; }
+}
+
+async function initConfig(){
+  // 1. inline override
+  if(window.TOOL_CONFIG){ applyConfig(window.TOOL_CONFIG); return; }
+  // 2. ?config=<url>  then  3. ./config.json
+  const params=new URLSearchParams(location.search);
+  const url=params.get('config')||'config.json';
+  try{
+    const res=await fetch(url,{cache:'no-store'});
+    if(res.ok){ applyConfig(await res.json()); return; }
+  }catch(e){/* file:// or missing config — fall through to defaults */}
+  applyConfig(null); // 4. defaults (still normalises the header)
 }
 
 /* ============================================================
@@ -602,14 +671,12 @@ function loadImage(src){
    simple backgrounds; struggles on busy photos (that'd want an AI
    service — easy to swap in later at the marked spot).
    ============================================================ */
-const RBG_TOLERANCE=32;      // colour match radius (0-255-ish)
-const RBG_MAXDIM=1600;       // cap working resolution for responsiveness
-
 function removeBackground(src){
   return new Promise((resolve,reject)=>{
     const img=new Image();
     img.onload=()=>{
       try{
+        const RBG_TOLERANCE=CONFIG.removeBg.tolerance, RBG_MAXDIM=CONFIG.removeBg.maxDimension;
         let {width:w,height:h}=img;
         const scale=Math.min(1,RBG_MAXDIM/Math.max(w,h));
         w=Math.round(w*scale); h=Math.round(h*scale);
@@ -700,9 +767,10 @@ function doUndo(){
 function doExport(){
   if(!state.hasImage) return toast('Upload a logo first');
   const src=state.result||state.original;
+  const prefix=CONFIG.export.filePrefix||'gang-sheet-logo';
   const a=document.createElement('a');
   a.href=src;
-  a.download=state.result?'gang-sheet-logo-transparent.png':'gang-sheet-logo.png';
+  a.download=state.result?prefix+'-transparent.png':prefix+'.png';
   document.body.appendChild(a); a.click(); a.remove();
   toast('<b>Exported</b> — check your downloads');
 }
@@ -771,6 +839,9 @@ canvas.addEventListener('drop',e=>{
   e.preventDefault();
   if(e.dataTransfer.files&&e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
 });
+
+/* ---- apply per-customer branding (see CONFIG block above) ---- */
+initConfig();
 </script>
 </body>
 </html>

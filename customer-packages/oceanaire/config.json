@@ -1,0 +1,19 @@
+{
+  "businessName": "Oceanaire Sportswear",
+  "toolTitle": "Team Logo Prep",
+  "tagline": "Custom Sportswear · DTF & Embroidery",
+  "logoUrl": "",
+  "colors": {
+    "accent": "#0b5c8a",
+    "accentBright": "#1499d6",
+    "accentDim": "#083f5f",
+    "highlight": "#ffd23f"
+  },
+  "export": {
+    "filePrefix": "oceanaire-logo"
+  },
+  "removeBg": {
+    "tolerance": 30,
+    "maxDimension": 2000
+  }
+}
