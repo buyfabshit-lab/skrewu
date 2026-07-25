@@ -315,7 +315,7 @@ img{max-width:100%;display:block;}
 /* ============ SKREWBAY (auction) ============ */
 #shop{padding:100px 0 110px;background:var(--void);}
 .shop-toolbar{
-  display:flex;justify-content:flex-end;margin-bottom:32px;
+  display:flex;justify-content:flex-end;gap:12px;margin-bottom:32px;flex-wrap:wrap;
 }
 .btn-upload{
   background:var(--rust);color:var(--bone);border:1px solid var(--rust-bright);
@@ -323,6 +323,13 @@ img{max-width:100%;display:block;}
   display:inline-flex;align-items:center;gap:8px;transition:background .2s ease, transform .15s ease;
 }
 .btn-upload:hover{background:var(--rust-bright);transform:translateY(-1px);}
+.btn-tool{
+  background:transparent;color:var(--bone);border:1px solid var(--iron-light);
+  padding:13px 22px;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;
+  display:inline-flex;align-items:center;gap:8px;transition:border-color .2s ease, color .2s ease, transform .15s ease;
+}
+.btn-tool:hover{border-color:var(--acid);color:var(--acid);transform:translateY(-1px);}
+.btn-tool svg{width:16px;height:16px;}
 
 .product-grid{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
@@ -888,6 +895,7 @@ footer#footer{
 <nav class="navlinks" id="navlinks">
 <a data-manus_click_id="2" data-manus_clickable="true" href="https://skrewu.com" rel="noopener" target="_blank">Shop</a>
 <a data-manus_click_id="3" data-manus_clickable="true" href="#shop">Customs</a>
+<a href="gang-sheet-maker.html">Logo Maker</a>
 <a data-manus_click_id="4" data-manus_clickable="true" href="#weeklygram">Weeklygram</a>
 <a data-manus_click_id="5" data-manus_clickable="true" href="#live">Live</a>
 <a class="nav-cta" data-manus_click_id="6" data-manus_clickable="true" href="#join">Get In</a>
@@ -951,6 +959,10 @@ footer#footer{
 </div>
 </div>
 <div class="shop-toolbar">
+<a class="btn-tool" href="gang-sheet-maker.html">
+<svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M15 9h0M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5"></path></svg>
+      Logo Maker
+    </a>
 <button class="btn-upload" data-manus_click_id="10" data-manus_clickable="true" id="openUploadBtn">+ List an Item</button>
 </div>
 <div class="product-grid" id="productGrid"><div class="shop-empty-state" id="shopEmptyState"><h3>Nothing on the floor yet.</h3><p>Be the first to put something up. Hit "List an Item" above.</p></div></div>
