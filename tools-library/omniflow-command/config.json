@@ -1,0 +1,20 @@
+{
+  "branding": {
+    "businessName": "OmniFlow",
+    "productName": "OmniFlow Command",
+    "tagline": "Live feed · auto-unified",
+    "logoUrl": null,
+    "colors": {
+      "accent": "#3b82f6",
+      "accent2": "#2563eb",
+      "positive": "#22c55e"
+    }
+  },
+  "backend": {
+    "supabaseUrl": "https://qmztuagvxopahowexrum.supabase.co",
+    "supabaseAnonKey": "sb_publishable_cbwgMdVv6XDxLp0WOBsM-w_irvs7BAh",
+    "table": "omniflow_orders"
+  },
+  "channels": ["shopify", "amazon", "ebay", "direct_api", "manual"],
+  "classifications": ["B2B Wholesale", "DTC Standard", "Expedited", "Requires Review"]
+}

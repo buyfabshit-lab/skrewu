@@ -1,17 +1,33 @@
 /* ============================================================
    OmniFlow Command — unified multi-channel order intake console
-   Reads/updates public.omniflow_orders in Supabase.
+   Portable tool module. Reads/updates a Supabase orders table.
+
+   Configuration is external: config.json (same folder) or a URL passed
+   as ?config=<url>. Anything not supplied there falls back to DEFAULT_CONFIG
+   below, so the tool still runs when opened directly from disk.
+   See README.md for the full config schema and API surface.
    ============================================================ */
 
-/* ── Supabase (same project as the SKREW U site) ── */
-const SUPABASE_URL = 'https://qmztuagvxopahowexrum.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_cbwgMdVv6XDxLp0WOBsM-w_irvs7BAh';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/* ── Default config (overridden by config.json / ?config=) ── */
+const DEFAULT_CONFIG = {
+  branding: {
+    businessName: 'OmniFlow',
+    productName: 'OmniFlow Command',
+    tagline: 'Live feed · auto-unified',
+    logoUrl: null,
+    colors: { accent: '#3b82f6', accent2: '#2563eb', positive: '#22c55e' },
+  },
+  backend: {
+    supabaseUrl: 'https://qmztuagvxopahowexrum.supabase.co',
+    supabaseAnonKey: 'sb_publishable_cbwgMdVv6XDxLp0WOBsM-w_irvs7BAh',
+    table: 'omniflow_orders',
+  },
+  channels: ['shopify', 'amazon', 'ebay', 'direct_api', 'manual'],
+  classifications: ['B2B Wholesale', 'DTC Standard', 'Expedited', 'Requires Review'],
+};
 
-/* ── Reference data ── */
-const CLASSIFICATIONS = ['B2B Wholesale', 'DTC Standard', 'Expedited', 'Requires Review'];
-
-const SOURCES = {
+/* Known channel presentation metadata (config.channels picks which are active). */
+const CHANNEL_META = {
   shopify:    { label: 'Shopify',    color: '#95bf47', bg: '#16250f' },
   amazon:     { label: 'Amazon',     color: '#ff9900', bg: '#2a2008' },
   ebay:       { label: 'eBay',       color: '#e53238', bg: '#2a1113' },
@@ -19,8 +35,55 @@ const SOURCES = {
   manual:     { label: 'Manual',     color: '#94a3b8', bg: '#1a2439' },
 };
 
+/* Runtime, populated by boot() once config resolves. */
+let CONFIG = DEFAULT_CONFIG;
+let sb = null;
+let TABLE = DEFAULT_CONFIG.backend.table;
+let CLASSIFICATIONS = DEFAULT_CONFIG.classifications;
+let CHANNELS = DEFAULT_CONFIG.channels;
+
+async function loadConfig() {
+  const params = new URLSearchParams(location.search);
+  const url = params.get('config') || 'config.json';
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('config ' + res.status);
+    const raw = await res.json();
+    return mergeConfig(DEFAULT_CONFIG, raw);
+  } catch (e) {
+    console.info('[OmniFlow] using built-in default config (' + e.message + ')');
+    return DEFAULT_CONFIG;
+  }
+}
+function mergeConfig(base, over) {
+  return {
+    branding: { ...base.branding, ...(over.branding || {}),
+      colors: { ...base.branding.colors, ...((over.branding || {}).colors || {}) } },
+    backend: { ...base.backend, ...(over.backend || {}) },
+    channels: Array.isArray(over.channels) && over.channels.length ? over.channels : base.channels,
+    classifications: Array.isArray(over.classifications) && over.classifications.length ? over.classifications : base.classifications,
+  };
+}
+function applyBranding(cfg) {
+  const b = cfg.branding;
+  document.title = b.productName + ' — Order Intake';
+  const nameEl = document.getElementById('brandName');
+  if (nameEl) nameEl.textContent = b.productName;
+  const tagEl = document.getElementById('brandTagline');
+  if (tagEl) tagEl.textContent = b.tagline;
+  const logoEl = document.getElementById('brandLogo');
+  if (logoEl && b.logoUrl) {
+    logoEl.innerHTML = `<img src="${b.logoUrl}" alt="${escapeHtml(b.businessName)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+  }
+  const c = b.colors || {};
+  const root = document.documentElement.style;
+  if (c.accent)   { root.setProperty('--blue', c.accent);  root.setProperty('--cyan', c.accent); }
+  if (c.accent2)  { root.setProperty('--blue-2', c.accent2); }
+  if (c.positive) { root.setProperty('--green', c.positive); }
+}
+
 function sourceBadge(src) {
-  const m = SOURCES[src] || SOURCES.manual;
+  const m = CHANNEL_META[src] || CHANNEL_META.manual;
   let glyph;
   switch (src) {
     case 'shopify':    glyph = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.3 4.2c-.1 0-1.6.4-1.6.4s-1-1-1.1-1.1c-.1-.1-.3-.1-.4-.1 0 0-.2 0-.5.1-.4-1.1-1-1.6-1.9-1.6-.7 0-1.3.5-1.7 1.2-.9.3-1.5.5-1.6.5-.5.2-.5.2-.6.6C4.3 5.4 3 15.6 3 15.6l8.4 1.6 4.6-1.1S15.4 4.2 15.3 4.2zM11.6 3.6l-.9.3c0-.5-.1-1.1-.3-1.5.6.1.9.8 1.2 1.2zm-1.5-1c.2.4.3 1 .3 1.5l-1.6.5c.3-1.1.9-1.7 1.3-2z"/></svg>'; break;
@@ -53,7 +116,7 @@ let panelDraft = null; // { tags:[], notes:'', classification:'' } for the open 
 const filters = {
   search: '',
   dateRange: 'today',
-  platforms: new Set(Object.keys(SOURCES)), // all on
+  platforms: new Set(), // populated from config.channels at boot
   status: 'all',
 };
 let sort = { key: 'intake_at', dir: 'desc' };
@@ -78,7 +141,7 @@ const fmtMoney = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFrac
 /* ── Fetch ── */
 async function loadOrders() {
   $('feedSub').textContent = 'Syncing unified intake…';
-  const { data, error } = await sb.from('omniflow_orders').select('*').order('intake_at', { ascending: false });
+  const { data, error } = await sb.from(TABLE).select('*').order('intake_at', { ascending: false });
   if (error) {
     console.error(error);
     $('feedSub').textContent = 'Feed error — check connection.';
@@ -213,7 +276,7 @@ function openPanel(id) {
 }
 
 function renderPanelBody(o) {
-  const src = (SOURCES[o.source] || {}).label || o.source;
+  const src = (CHANNEL_META[o.source] || {}).label || o.source;
   const raw = JSON.stringify(o.raw_platform_data || {}, null, 2);
   return `
     <div class="pintake">Intake Details: <b>${escapeHtml(o.uct)}</b> (Source: ${escapeHtml(src)})</div>
@@ -293,7 +356,7 @@ async function updateOrder(id, patch, okMsg) {
     const o = ORDERS[idx];
     if (o) { panelDraft.classification = o.classification; }
   }
-  const { error } = await sb.from('omniflow_orders').update(patch).eq('id', id);
+  const { error } = await sb.from(TABLE).update(patch).eq('id', id);
   if (error) {
     console.error(error);
     if (prev && idx >= 0) ORDERS[idx] = prev; // rollback
@@ -346,9 +409,9 @@ function buildMenus() {
     buildMenus(); render(); closeMenus();
   }));
 
-  // platforms (multi)
-  $('platformMenu').innerHTML = Object.entries(SOURCES).map(([k, m]) =>
-    `<div class="opt ${filters.platforms.has(k) ? 'on' : ''}" data-v="${k}"><span class="box">${filters.platforms.has(k) ? tick() : ''}</span>${m.label}</div>`).join('');
+  // platforms (multi) — active channels come from config
+  $('platformMenu').innerHTML = CHANNELS.map(k =>
+    `<div class="opt ${filters.platforms.has(k) ? 'on' : ''}" data-v="${k}"><span class="box">${filters.platforms.has(k) ? tick() : ''}</span>${(CHANNEL_META[k] || {}).label || k}</div>`).join('');
   $('platformMenu').querySelectorAll('.opt').forEach(o => o.addEventListener('click', e => {
     e.stopPropagation();
     const k = o.dataset.v;
@@ -368,7 +431,7 @@ function buildMenus() {
   }));
 }
 function updatePlatformLabel() {
-  const n = filters.platforms.size, total = Object.keys(SOURCES).length;
+  const n = filters.platforms.size, total = CHANNELS.length;
   $('platformLabel').textContent = n === total ? 'All Selected' : `${n} of ${total}`;
 }
 const tick = () => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><path d="M5 13l4 4L19 7"/></svg>`;
@@ -423,6 +486,17 @@ document.addEventListener('click', closeMenus);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeMenus(); if (!panel.classList.contains('hidden')) closePanel(); } });
 
 /* ── Boot ── */
-buildMenus();
-updatePlatformLabel();
-loadOrders();
+async function boot() {
+  CONFIG = await loadConfig();
+  applyBranding(CONFIG);
+  TABLE = CONFIG.backend.table;
+  CLASSIFICATIONS = CONFIG.classifications;
+  CHANNELS = CONFIG.channels.filter(c => CHANNEL_META[c]); // keep only channels we can render
+  if (!CHANNELS.length) CHANNELS = Object.keys(CHANNEL_META);
+  filters.platforms = new Set(CHANNELS);
+  sb = supabase.createClient(CONFIG.backend.supabaseUrl, CONFIG.backend.supabaseAnonKey);
+  buildMenus();
+  updatePlatformLabel();
+  loadOrders();
+}
+boot();
