@@ -384,6 +384,13 @@ img{max-width:100%;display:block;}
   padding:9px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin-top:8px;
 }
 .btn-buynow:hover{background:var(--rust-bright);}
+.btn-ticket{
+  width:100%;background:var(--acid);border:1px solid var(--acid);color:var(--void);
+  padding:11px;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;
+  font-family:var(--display);font-weight:700;margin-top:8px;transition:all .2s ease;
+}
+.btn-ticket:hover{background:var(--void);color:var(--acid);}
+.btn-ticket .tk-sub{display:block;font-family:var(--body);font-size:9px;letter-spacing:0.06em;opacity:0.8;margin-top:3px;}
 
 .shop-empty-state{
   grid-column:1/-1;text-align:center;padding:80px 20px;
@@ -1017,6 +1024,7 @@ footer#footer{
 <button id="placeBidBtn">Place Bid</button>
 </div>
 <button class="btn-buynow" id="buyNowDetailBtn" style="display:none;">Buy It Now — <span id="buyNowDetailPrice"></span></button>
+<button class="btn-ticket" id="genTicketBtn" style="display:none;">🖨 Print Ticket + CAD Sheet<span class="tk-sub">NEVER BLANK · shop production packet</span></button>
 <p class="form-note" id="bidDetailNote"></p>
 </div>
 </div>
@@ -1468,5 +1476,6 @@ footer#footer{
 </div>
 </div>
 </footer>
+<script src="ticket.js"></script>
 <script src="app.js"></script>
 </body></html>

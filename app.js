@@ -277,7 +277,7 @@ function renderProducts(){
         </div>
         <div class="bid-count">${item.bids.length} bid${item.bids.length === 1 ? '' : 's'}</div>
         <div class="auction-countdown ${isEnded ? 'ended-label' : (isUrgent ? 'urgent' : '')}" data-countdown="${item.id}">${formatCountdown(remaining)}</div>
-        <button class="btn-bid" data-detail="${item.id}" ${isEnded ? 'disabled' : ''}>${isEnded ? 'Auction Ended' : 'View & Bid'}</button>
+        <button class="btn-bid" data-detail="${item.id}">${isEnded ? (item.currentBidder ? 'Open Print Ticket' : 'View') : 'View & Bid'}</button>
       </div>
     </article>
   `;
@@ -330,6 +330,12 @@ function openBidDetail(id){
     document.getElementById('buyNowDetailPrice').textContent = `$${item.buyNowPrice.toFixed(2)}`;
   } else {
     buyBtn.style.display = 'none';
+  }
+  // NEVER BLANK: once an item is sold (auction won or bought), it becomes a
+  // production job — expose the print ticket + CAD sheet generator.
+  const ticketBtn = document.getElementById('genTicketBtn');
+  if (ticketBtn){
+    ticketBtn.style.display = isSold(item) ? 'block' : 'none';
   }
   document.getElementById('bidDetailNote').textContent = item.ended ? 'This auction has ended.' : 'Bids inside the last 2 minutes extend the clock by 3 minutes.';
   document.getElementById('placeBidBtn').disabled = item.ended;
@@ -397,12 +403,58 @@ document.getElementById('buyNowDetailBtn').addEventListener('click', ()=>{
   const bidderHandle = (document.getElementById('sellerHandle').value.trim() || 'anon').toUpperCase();
   item.currentBid = item.buyNowPrice;
   item.currentBidder = bidderHandle;
+  item.buyer = bidderHandle;
+  item.channel = 'BUY IT NOW';
   item.bids.push({bidder: bidderHandle, amount: item.buyNowPrice});
   item.ended = true;
   item.endsAt = Date.now();
-  bidModal.classList.remove('open');
   renderProducts();
+  // Sold → straight to the shop floor: pop the production packet.
+  generateTicketFor(item);
+  // Refresh the detail view so the ticket button is now available too.
+  openBidDetail(item.id);
 });
+
+/* ============ NEVER BLANK — production packet hook ============ */
+// An item is a production job once the auction has ended with a winner,
+// or it was bought outright.
+function isSold(item){
+  return !!item && item.ended && !!item.currentBidder;
+}
+
+// Map a SKREWBAY listing into the order shape the generator expects.
+function buildOrderFromListing(item){
+  return {
+    id: item.id,
+    title: item.title,
+    artworkUrl: item.photo,          // the uploaded design art
+    designer: item.seller,           // who listed / created the design
+    buyer: item.buyer || item.currentBidder,
+    price: item.currentBid,
+    date: item.endsAt || Date.now(),
+    channel: item.channel || 'SKREWBAY',
+    method: 'Screen Print',
+    location: 'Full Front'
+  };
+}
+
+function generateTicketFor(item){
+  if (!window.NeverBlank){ console.error('NeverBlank generator not loaded'); return; }
+  window.NeverBlank.generatePacket(buildOrderFromListing(item)).then(res => {
+    if (res && res.blocked){
+      alert('Pop-up blocked. Allow pop-ups for this site to open the print ticket + CAD sheet.');
+    }
+  });
+}
+
+const genTicketBtnEl = document.getElementById('genTicketBtn');
+if (genTicketBtnEl){
+  genTicketBtnEl.addEventListener('click', ()=>{
+    const item = listings.find(l => l.id === currentDetailId);
+    if (!item || !isSold(item)) return;
+    generateTicketFor(item);
+  });
+}
 
 renderProducts();
 
