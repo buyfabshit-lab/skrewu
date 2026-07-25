@@ -24,11 +24,11 @@
   --ember:#ff6b35;
   --paper:#ece6d8;
 
-  /* logo-maker accent (violet "premium" family from reference mock) */
-  --volt:#8b5cf6;
-  --volt-bright:#a78bfa;
-  --volt-dim:#6d47c4;
-  --volt-glow:rgba(139,92,246,0.35);
+  /* logo-maker accent — mapped to the SKREW U brand (rust primary) */
+  --volt:#a32a1f;
+  --volt-bright:#c43a2c;
+  --volt-dim:#6e1c14;
+  --volt-glow:rgba(196,58,44,0.34);
 
   --display:'Death Corps Pro','Arial Narrow','Helvetica Neue',sans-serif;
   --body:'Courier New',ui-monospace,'SF Mono',Menlo,monospace;
@@ -58,7 +58,7 @@ h1,h2,h3,h4{
 }
 button{font-family:var(--body);cursor:pointer;color:inherit;background:none;border:none;}
 img,svg{display:block;max-width:100%;}
-:focus-visible{outline:2px solid var(--volt-bright);outline-offset:2px;}
+:focus-visible{outline:2px solid var(--acid);outline-offset:2px;}
 ::-webkit-scrollbar{width:6px;height:6px;}
 ::-webkit-scrollbar-thumb{background:var(--iron);border-radius:3px;}
 
@@ -181,7 +181,7 @@ img,svg{display:block;max-width:100%;}
   padding:5px 12px;border-radius:20px;font-weight:700;z-index:4;pointer-events:none;
 }
 .canvas .badge-before{left:12px;background:rgba(30,27,23,.85);color:var(--bone-dim);border:1px solid var(--iron);}
-.canvas .badge-after{right:12px;background:var(--volt);color:#fff;}
+.canvas .badge-after{right:12px;background:var(--acid);color:var(--void);}
 .canvas-empty{text-align:center;color:var(--bone-dim);padding:20px;z-index:2;}
 .canvas-empty .ce-ico{color:var(--iron-light);margin:0 auto 12px;}
 .canvas-empty .ce-t{font-family:var(--display);text-transform:uppercase;font-size:15px;color:var(--bone);letter-spacing:.04em;}
