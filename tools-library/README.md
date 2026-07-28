@@ -37,6 +37,7 @@ pitch of each. Current modules:
 - **[omniflow-command](omniflow-command/)** — unified multi-channel order-intake console.
 - **[wholesale-order-form](wholesale-order-form/)** — shop-facing multi-item order drop-off form.
 - **[logo-vault](logo-vault/)** — sell licensed brand art with tiered licensing (Shopify checkout + signed-URL delivery).
+- **[blanks-storefront](blanks-storefront/)** — pick a blank, then design it; live S&S Activewear catalog via the bundled `ss-products` function.
 
 ## Configuring a tool for a customer
 
