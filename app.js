@@ -729,3 +729,108 @@ document.getElementById('joinForm').addEventListener('submit', (e)=>{
     alert("Something went wrong sending that — mind trying again in a second?");
   });
 });
+
+/* ============ THE VAULT (MCG logo/design archive) ============ */
+/* Reads the vault_assets table via the vault_search / vault_brands RPCs
+   (anon, RLS read-only). Web-sized derivatives live in the public
+   `vault-public` bucket; originals stay private (pulled via the vault-sign
+   edge function by admin tooling, not the public site). */
+(function(){
+  const grid = document.getElementById('vaultGrid');
+  if (!grid) return;
+  const brandsEl = document.getElementById('vaultBrands');
+  const searchEl = document.getElementById('vaultSearch');
+  const countEl = document.getElementById('vaultCount');
+  const totalEl = document.getElementById('vaultTotal');
+  const moreBtn = document.getElementById('vaultMore');
+  const PAGE = 60;
+
+  let state = { q: '', brand: null, offset: 0, loading: false, done: false, items: [] };
+
+  const PUBLIC_BASE = SUPABASE_URL + '/storage/v1/object/public/vault-public/';
+  const publicUrl = (p) => p ? PUBLIC_BASE + p : null;
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  async function loadBrands(){
+    const { data, error } = await sb.rpc('vault_brands');
+    if (error){ console.error('vault_brands:', error); return; }
+    const total = (data || []).reduce((a, b) => a + Number(b.n), 0);
+    totalEl.textContent = total ? (total.toLocaleString() + ' assets') : 'empty — run the importer';
+    const chips = [`<button class="vault-brand-chip on" data-brand="">All</button>`]
+      .concat((data || []).map(b =>
+        `<button class="vault-brand-chip" data-brand="${esc(b.brand)}">${esc(b.brand)}<span class="n">${b.n}</span></button>`));
+    brandsEl.innerHTML = chips.join('');
+    brandsEl.querySelectorAll('.vault-brand-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        brandsEl.querySelectorAll('.vault-brand-chip').forEach(c => c.classList.remove('on'));
+        chip.classList.add('on');
+        state.brand = chip.dataset.brand || null;
+        resetAndLoad();
+      });
+    });
+  }
+
+  function renderTile(a){
+    const url = publicUrl(a.public_path);
+    const inner = url
+      ? `<img src="${url}" alt="${esc(a.filename)}" loading="lazy">`
+      : `<img alt="${esc(a.filename)}" style="opacity:.25">`;
+    return `<div class="vault-tile" data-url="${url || ''}" title="${esc(a.filename)}">
+      ${inner}
+      <div class="vt-meta">
+        ${a.brand ? `<div class="vt-brand">${esc(a.brand)}</div>` : ''}
+        <div class="vt-name">${esc(a.filename)}</div>
+      </div>
+    </div>`;
+  }
+
+  function paint(){
+    if (!state.items.length){
+      grid.innerHTML = `<div class="vault-empty"><h3>Nothing matches.</h3><p>Try another brand or search term.</p></div>`;
+      countEl.textContent = '';
+      moreBtn.style.display = 'none';
+      return;
+    }
+    grid.innerHTML = state.items.map(renderTile).join('');
+    countEl.textContent = state.items.length + ' shown';
+    grid.querySelectorAll('.vault-tile').forEach(t => {
+      t.addEventListener('click', () => { if (t.dataset.url) window.open(t.dataset.url, '_blank', 'noopener'); });
+    });
+    moreBtn.style.display = state.done ? 'none' : 'block';
+  }
+
+  async function loadPage(){
+    if (state.loading || state.done) return;
+    state.loading = true;
+    moreBtn.disabled = true;
+    const { data, error } = await sb.rpc('vault_search', {
+      p_query: state.q || null, p_brand: state.brand, p_tags: null,
+      p_limit: PAGE, p_offset: state.offset
+    });
+    state.loading = false;
+    moreBtn.disabled = false;
+    if (error){ console.error('vault_search:', error); return; }
+    const rows = data || [];
+    state.items = state.items.concat(rows);
+    state.offset += rows.length;
+    if (rows.length < PAGE) state.done = true;
+    paint();
+  }
+
+  function resetAndLoad(){
+    state.offset = 0; state.done = false; state.items = [];
+    grid.innerHTML = '';
+    loadPage();
+  }
+
+  let searchTimer = null;
+  searchEl.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { state.q = searchEl.value.trim(); resetAndLoad(); }, 250);
+  });
+  moreBtn.addEventListener('click', loadPage);
+
+  loadBrands();
+  loadPage();
+})();
