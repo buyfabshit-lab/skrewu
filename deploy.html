@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SKREWU · Deploy</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#13110f; --bone:#e8e2d4; --bone-dim:#a8a194;
+  --rust:#a32a1f; --rust-bright:#c43a2c; --acid:#c4f135; --iron:#3a3530;
+  --iron-light:#56504a; --ember:#ff6b35;
+  --display:'Arial Narrow','Helvetica Neue',sans-serif;
+  --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--void);color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.6;padding-bottom:120px;}
+h1,h2,h3{font-family:var(--display);text-transform:uppercase;letter-spacing:0.03em;font-weight:700;line-height:1.05;}
+a{color:var(--acid);}
+img{max-width:100%;display:block;}
+:focus-visible{outline:3px solid var(--acid);outline-offset:2px;}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px;}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:10;background:rgba(10,9,8,0.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--iron);}
+.topbar .row{display:flex;align-items:center;justify-content:space-between;height:60px;max-width:760px;margin:0 auto;padding:0 20px;}
+.topbar .back{font-size:12px;text-transform:uppercase;letter-spacing:0.12em;color:var(--bone-dim);}
+.topbar .title{font-family:var(--display);font-size:20px;letter-spacing:0.06em;text-transform:uppercase;}
+.topbar .env{font-size:10px;color:var(--bone-dim);letter-spacing:0.12em;text-transform:uppercase;}
+
+.hd{margin:28px 0 8px;font-size:26px;}
+.sub{color:var(--bone-dim);font-size:13px;margin-bottom:24px;}
+
+.card{background:var(--void-2);border:1px solid var(--iron);padding:20px;margin-bottom:18px;}
+.card h3{font-size:15px;letter-spacing:0.06em;margin-bottom:14px;color:var(--bone);}
+label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--bone-dim);margin:14px 0 6px;}
+label:first-of-type{margin-top:0;}
+.req{color:var(--rust-bright);}
+input[type=text],input[type=number],textarea,select{
+  width:100%;background:var(--void);border:1px solid var(--iron);color:var(--bone);
+  font-family:var(--body);font-size:14px;padding:11px 12px;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--acid);outline:none;}
+textarea{min-height:120px;resize:vertical;}
+.hint{font-size:11px;color:var(--iron-light);margin-top:5px;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:560px){.two{grid-template-columns:1fr;}}
+
+/* dropzone */
+.dz{border:2px dashed var(--iron);background:var(--void);min-height:170px;display:flex;
+  align-items:center;justify-content:center;text-align:center;cursor:pointer;position:relative;overflow:hidden;}
+.dz:hover{border-color:var(--acid);}
+.dz.has-image{border-style:solid;}
+.dz .dz-label{color:var(--bone-dim);font-size:13px;padding:20px;}
+.dz img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;}
+
+/* buttons */
+.btn{border:1px solid var(--iron);background:var(--void);color:var(--bone);
+  padding:10px 16px;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;font-family:var(--body);}
+.btn:hover{border-color:var(--acid);color:var(--acid);}
+.btn-ai{border-color:var(--acid);color:var(--acid);}
+.btn-primary{background:var(--rust);border-color:var(--rust-bright);color:var(--bone);font-size:13px;padding:14px 22px;}
+.btn-primary:hover{background:var(--rust-bright);color:#fff;}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.row-inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+
+/* channel toggles */
+.chan{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--iron);background:var(--void);margin-bottom:10px;}
+.chan .meta{flex:1;}
+.chan .name{font-family:var(--display);text-transform:uppercase;letter-spacing:0.05em;font-size:15px;}
+.chan .desc{font-size:11px;color:var(--bone-dim);}
+.chan .badge{font-size:9px;text-transform:uppercase;letter-spacing:0.1em;padding:3px 8px;border:1px solid var(--iron);color:var(--bone-dim);}
+.chan .badge.live{color:var(--acid);border-color:var(--acid);}
+.chan.disabled{opacity:0.55;}
+.sw{position:relative;width:46px;height:26px;flex-shrink:0;}
+.sw input{opacity:0;width:0;height:0;}
+.sw .track{position:absolute;inset:0;background:var(--iron);transition:.2s;border-radius:0;}
+.sw .track::before{content:'';position:absolute;height:20px;width:20px;left:3px;top:3px;background:var(--bone);transition:.2s;}
+.sw input:checked + .track{background:var(--acid);}
+.sw input:checked + .track::before{transform:translateX(20px);background:var(--void);}
+.sw input:disabled + .track{cursor:not-allowed;}
+
+/* status log */
+.deploybar{position:fixed;bottom:0;left:0;right:0;background:var(--void-2);border-top:1px solid var(--iron);padding:14px 0;z-index:20;}
+.deploybar .row{display:flex;gap:14px;align-items:center;justify-content:flex-end;max-width:760px;margin:0 auto;padding:0 20px;}
+.log{margin-top:8px;}
+.log-item{border:1px solid var(--iron);padding:10px 12px;margin-bottom:8px;font-size:13px;}
+.log-item.ok{border-color:var(--acid);}
+.log-item.err{border-color:var(--rust-bright);}
+.log-item.pending{border-color:var(--ember);}
+.log-item .lbl{text-transform:uppercase;letter-spacing:0.08em;font-size:11px;color:var(--bone-dim);}
+.gate{background:var(--void-2);border:1px solid var(--iron);padding:14px;margin-bottom:18px;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="row">
+    <a class="back" href="/">&larr; Site</a>
+    <span class="title">Deploy</span>
+    <span class="env" id="envTag">Shopify: DEATH CORPS</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1 class="hd">Design once. Deploy everywhere.</h1>
+  <p class="sub">Build the listing here, pick your channels, hit deploy. Shopify is live — eBay and TikTok Shop wire in next.</p>
+
+  <!-- optional deploy-key gate -->
+  <div class="gate" id="gate" style="display:none;">
+    <label for="deployKey">Deploy key <span class="hint">(only if your Netlify site sets DEPLOY_SHARED_KEY)</span></label>
+    <input type="text" id="deployKey" placeholder="paste your deploy key">
+  </div>
+
+  <!-- design -->
+  <section class="card">
+    <h3>Design</h3>
+    <div class="dz" id="dz">
+      <span class="dz-label" id="dzLabel">Drop your product image here, or tap to choose</span>
+      <input type="file" id="dzInput" accept="image/*" style="display:none;">
+    </div>
+    <div class="hint">Uploaded to your Supabase storage, then handed to each channel as a public image URL.</div>
+  </section>
+
+  <!-- details -->
+  <section class="card">
+    <h3>Product details</h3>
+    <label for="title">Product name <span class="req">*</span></label>
+    <input type="text" id="title" maxlength="255" placeholder="e.g. Death Corps Capsule Tee">
+
+    <label for="desc">Description <span class="req">*</span></label>
+    <div class="row-inline" style="margin-bottom:6px;">
+      <button class="btn btn-ai" id="aiBtn" type="button">&#10022; Auto-fill description</button>
+      <input type="text" id="keywords" placeholder="keywords (comma separated) — feeds the AI" style="flex:1;min-width:180px;">
+    </div>
+    <textarea id="desc" placeholder="Write it, or let auto-fill draft it in the SKREW U voice."></textarea>
+
+    <div class="two">
+      <div>
+        <label for="price">Price (USD) <span class="req">*</span></label>
+        <input type="number" id="price" min="0" step="0.01" placeholder="35.00">
+      </div>
+      <div>
+        <label for="compareAt">Compare-at price <span class="hint">(optional)</span></label>
+        <input type="number" id="compareAt" min="0" step="0.01" placeholder="45.00">
+      </div>
+    </div>
+    <div class="two">
+      <div>
+        <label for="sku">SKU <span class="hint">(optional)</span></label>
+        <input type="text" id="sku" placeholder="DC-TEE-001">
+      </div>
+      <div>
+        <label for="productType">Product type <span class="hint">(optional)</span></label>
+        <input type="text" id="productType" placeholder="T-Shirt">
+      </div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;margin-top:16px;">
+      <input type="checkbox" id="publish" style="width:auto;"> Publish live immediately <span class="hint">(off = save as draft — recommended)</span>
+    </label>
+  </section>
+
+  <!-- channels -->
+  <section class="card">
+    <h3>Channels</h3>
+
+    <div class="chan">
+      <label class="sw"><input type="checkbox" id="chShopify" checked><span class="track"></span></label>
+      <div class="meta">
+        <div class="name">Shopify</div>
+        <div class="desc">DEATH CORPS &middot; deathcorps.shop</div>
+      </div>
+      <span class="badge live">Live</span>
+    </div>
+
+    <div class="chan disabled">
+      <label class="sw"><input type="checkbox" id="chEbay" disabled><span class="track"></span></label>
+      <div class="meta">
+        <div class="name">eBay</div>
+        <div class="desc">Needs eBay developer keyset (App/Cert/Dev ID)</div>
+      </div>
+      <span class="badge">Soon</span>
+    </div>
+
+    <div class="chan disabled">
+      <label class="sw"><input type="checkbox" id="chTiktok" disabled><span class="track"></span></label>
+      <div class="meta">
+        <div class="name">TikTok Shop</div>
+        <div class="desc">Needs approved Partner API access + seller auth</div>
+      </div>
+      <span class="badge">Gated</span>
+    </div>
+  </section>
+
+  <div class="log" id="log"></div>
+</main>
+
+<div class="deploybar">
+  <div class="row">
+    <span id="deployStatus" class="hint"></span>
+    <button class="btn btn-primary" id="deployBtn" type="button">Deploy</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="deploy.js"></script>
+</body>
+</html>
