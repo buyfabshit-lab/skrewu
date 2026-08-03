@@ -1,0 +1,14 @@
+{
+  "name": "ss-products",
+  "version": "1.0.0",
+  "description": "S&S Activewear blanks feed for the Blanks Storefront (zero dependencies)",
+  "type": "module",
+  "main": "index.js",
+  "exports": "./index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

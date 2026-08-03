@@ -1,0 +1,19 @@
+{
+  "branding": {
+    "businessName": "SKREW U",
+    "productName": "Shop Order Intake",
+    "tagline": "Send it to the floor",
+    "colors": {
+      "accent": "#a32a1f",
+      "accent2": "#c43a2c",
+      "highlight": "#c4f135"
+    }
+  },
+  "backend": {
+    "supabaseUrl": "https://qmztuagvxopahowexrum.supabase.co",
+    "supabaseAnonKey": "sb_publishable_cbwgMdVv6XDxLp0WOBsM-w_irvs7BAh",
+    "table": "shop_orders",
+    "artworkBucket": "order-artwork"
+  },
+  "orderRefPrefix": "SU"
+}

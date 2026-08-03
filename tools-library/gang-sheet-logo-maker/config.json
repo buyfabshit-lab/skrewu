@@ -1,0 +1,19 @@
+{
+  "businessName": "SKREW U",
+  "toolTitle": "Logo Maker",
+  "tagline": "Gang Sheet · DTF & Shirt Production",
+  "logoUrl": "",
+  "colors": {
+    "accent": "#a32a1f",
+    "accentBright": "#c43a2c",
+    "accentDim": "#6e1c14",
+    "highlight": "#c4f135"
+  },
+  "export": {
+    "filePrefix": "gang-sheet-logo"
+  },
+  "removeBg": {
+    "tolerance": 32,
+    "maxDimension": 1600
+  }
+}

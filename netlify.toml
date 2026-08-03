@@ -1,0 +1,16 @@
+# Netlify config for SKREW U
+# Static site at repo root + serverless functions for multi-channel product deploy.
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  # Node 18+ gives us global fetch, so these functions ship with zero npm deps.
+  node_bundler = "esbuild"
+
+# Friendly path: POST /api/deploy-shopify  ->  the function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

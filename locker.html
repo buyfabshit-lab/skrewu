@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SKREWU · Locker</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#13110f; --bone:#e8e2d4; --bone-dim:#a8a194;
+  --rust:#a32a1f; --rust-bright:#c43a2c; --acid:#c4f135; --iron:#3a3530;
+  --iron-light:#56504a; --ember:#ff6b35;
+  --display:'Arial Narrow','Helvetica Neue',sans-serif;
+  --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--void);color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.65;}
+h1,h2,h3{font-family:var(--display);text-transform:uppercase;letter-spacing:0.04em;font-weight:700;line-height:1.05;}
+img{max-width:100%;display:block;}
+a{color:var(--acid);}
+button{font-family:var(--body);cursor:pointer;}
+:focus-visible{outline:3px solid var(--acid);outline-offset:2px;}
+.wrap{max-width:820px;margin:0 auto;padding:0 24px;}
+
+/* top strip */
+.strip{border-bottom:1px solid var(--iron);background:rgba(10,9,8,.9);backdrop-filter:blur(6px);position:sticky;top:0;z-index:10;}
+.strip .row{display:flex;align-items:center;justify-content:space-between;height:56px;max-width:820px;margin:0 auto;padding:0 24px;}
+.strip .mark{font-family:var(--display);letter-spacing:.14em;font-size:13px;color:var(--bone-dim);text-transform:uppercase;}
+.strip .who{font-size:11px;color:var(--acid);letter-spacing:.1em;text-transform:uppercase;}
+
+/* hero — lots of breathing room */
+.hero{padding:72px 0 40px;}
+.hero .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--rust-bright);margin-bottom:18px;}
+.hero h1{font-size:clamp(38px,8vw,66px);letter-spacing:-.01em;}
+.hero h1 .accent{color:var(--acid);}
+.hero p{color:var(--bone-dim);margin-top:18px;max-width:52ch;font-size:15px;}
+
+/* section */
+section{padding:26px 0;border-top:1px solid var(--iron);}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;gap:16px;}
+.sec-head h2{font-size:20px;}
+.sec-head .count{font-size:12px;color:var(--iron-light);letter-spacing:.08em;text-transform:uppercase;}
+
+/* big inviting dropzone */
+.drop{border:2px dashed var(--iron);border-radius:2px;background:var(--void-2);
+  padding:56px 24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;}
+.drop:hover,.drop.over{border-color:var(--acid);background:#161410;}
+.drop .ic{width:54px;height:54px;margin:0 auto 18px;color:var(--iron-light);}
+.drop .big{font-family:var(--display);text-transform:uppercase;letter-spacing:.05em;font-size:20px;color:var(--bone);}
+.drop .small{color:var(--bone-dim);font-size:13px;margin-top:8px;}
+
+/* vault grid */
+.vault{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;}
+.logo-card{background:var(--void-2);border:1px solid var(--iron);border-radius:2px;overflow:hidden;position:relative;}
+.logo-card .art{aspect-ratio:1/1;background:
+  linear-gradient(45deg,#111 25%,transparent 25%),
+  linear-gradient(-45deg,#111 25%,transparent 25%),
+  linear-gradient(45deg,transparent 75%,#111 75%),
+  linear-gradient(-45deg,transparent 75%,#111 75%);
+  background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0;
+  display:grid;place-items:center;}
+.logo-card .art img{width:100%;height:100%;object-fit:contain;padding:14px;}
+.logo-card .cap{padding:9px 11px;font-size:11px;color:var(--bone-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.logo-card .del{position:absolute;top:7px;right:7px;background:rgba(10,9,8,.8);border:1px solid var(--iron);color:var(--bone-dim);
+  width:26px;height:26px;border-radius:2px;font-size:14px;line-height:1;display:grid;place-items:center;}
+.logo-card .del:hover{border-color:var(--rust-bright);color:var(--rust-bright);}
+.empty{color:var(--iron-light);text-align:center;padding:40px 20px;border:1px dashed var(--iron);border-radius:2px;font-size:13px;}
+
+/* shirts studio */
+.stub{border:1px solid var(--iron);border-radius:2px;padding:28px;background:var(--void-2);color:var(--bone-dim);font-size:14px;}
+.stub b{color:var(--bone);}
+.btn{border:1px solid var(--iron);background:var(--void);color:var(--bone);padding:11px 18px;font-size:11px;
+  text-transform:uppercase;letter-spacing:.12em;border-radius:2px;font-family:var(--body);}
+.btn:hover{border-color:var(--acid);color:var(--acid);}
+.btn.go{background:var(--rust);border-color:var(--rust-bright);color:var(--bone);}
+.btn.go:hover{background:var(--rust-bright);color:#fff;}
+.btn.ghost{background:transparent;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+
+.builder{border:1px solid var(--iron);border-radius:2px;background:var(--void-2);padding:24px;margin-bottom:20px;}
+.b-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+@media(max-width:640px){.b-grid{grid-template-columns:1fr;}}
+.b-controls label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--bone-dim);margin:16px 0 8px;}
+.b-controls label:first-child{margin-top:0;}
+.b-controls input{width:100%;background:var(--void);border:1px solid var(--iron);color:var(--bone);
+  font-family:var(--body);font-size:14px;padding:11px 12px;border-radius:2px;}
+.b-controls input:focus{border-color:var(--acid);outline:none;}
+.b-actions{display:flex;gap:10px;margin-top:22px;}
+.b-actions .btn{flex:1;text-align:center;}
+
+.mock{position:relative;width:100%;max-width:300px;aspect-ratio:1/1;margin:0 auto;
+  background:radial-gradient(circle at 50% 42%,#1c1a16,#0c0b09 70%);border-radius:2px;}
+.mock svg{width:100%;height:100%;display:block;}
+.mock .base-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0c0b09;}
+.mock .mock-logo{position:absolute;transform:translate(-50%,-50%);object-fit:contain;cursor:grab;touch-action:none;user-select:none;-webkit-user-drag:none;}
+.mock .mock-logo.drag{cursor:grabbing;}
+.mock .mock-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--iron-light);font-size:12px;text-align:center;padding:20px;}
+
+.logo-pick{display:flex;gap:9px;flex-wrap:wrap;}
+.logo-pick .lp{width:52px;height:52px;border:1px solid var(--iron);border-radius:2px;overflow:hidden;background:#111;cursor:pointer;padding:0;}
+.logo-pick .lp img{width:100%;height:100%;object-fit:contain;padding:5px;}
+.logo-pick .lp.on{border-color:var(--acid);box-shadow:0 0 0 1px var(--acid);}
+.logo-pick .none{color:var(--iron-light);font-size:12px;}
+
+.swatches{display:flex;gap:9px;flex-wrap:wrap;}
+.swatches .sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--iron);cursor:pointer;padding:0;}
+.swatches .sw.on{border-color:var(--acid);box-shadow:0 0 0 2px var(--void),0 0 0 4px var(--acid);}
+
+.shirts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;}
+.shirt-card{background:var(--void-2);border:1px solid var(--iron);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+.shirt-card .sm{position:relative;aspect-ratio:1/1;background:radial-gradient(circle at 50% 42%,#1c1a16,#0c0b09 70%);}
+.shirt-card .sm svg{width:100%;height:100%;}
+.shirt-card .sm .sl-base{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0c0b09;}
+.shirt-card .sm .sl{position:absolute;transform:translate(-50%,-50%);object-fit:contain;}
+.shirt-card .sbody{padding:12px 13px;display:flex;flex-direction:column;gap:6px;flex:1;}
+.shirt-card .sname{font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;font-size:15px;}
+.shirt-card .sprice{color:var(--acid);font-size:13px;}
+.shirt-card .sstatus{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--bone-dim);}
+.shirt-card .srow{display:flex;gap:7px;margin-top:auto;padding-top:8px;}
+.shirt-card .srow .btn{flex:1;text-align:center;padding:9px 6px;font-size:10px;}
+.shirt-card .del{position:absolute;top:7px;right:7px;background:rgba(10,9,8,.8);border:1px solid var(--iron);color:var(--bone-dim);
+  width:26px;height:26px;border-radius:2px;font-size:14px;line-height:1;display:grid;place-items:center;z-index:2;}
+.shirt-card .del:hover{border-color:var(--rust-bright);color:var(--rust-bright);}
+.add-shirt{border:2px dashed var(--iron);border-radius:2px;background:transparent;color:var(--bone-dim);
+  min-height:120px;display:grid;place-items:center;text-align:center;font-size:13px;cursor:pointer;padding:20px;}
+.add-shirt:hover{border-color:var(--acid);color:var(--acid);}
+
+.b-preview{position:relative;}
+.place-hint{text-align:center;font-size:11px;color:var(--iron-light);margin-top:12px;text-transform:uppercase;letter-spacing:.08em;}
+.mini{font-size:10px;color:var(--iron-light);text-transform:uppercase;letter-spacing:.08em;margin:2px 0 8px;}
+.hintv{color:var(--iron-light);font-size:10px;text-transform:none;letter-spacing:0;}
+.garment-pick{display:flex;gap:9px;flex-wrap:wrap;}
+.garment-pick .gp{width:54px;height:54px;border:1px solid var(--iron);border-radius:2px;overflow:hidden;background:#111;cursor:pointer;padding:0;position:relative;}
+.garment-pick .gp img{width:100%;height:100%;object-fit:cover;}
+.garment-pick .gp.on{border-color:var(--acid);box-shadow:0 0 0 1px var(--acid);}
+.garment-pick .gp .gdel{position:absolute;top:1px;right:1px;background:rgba(0,0,0,.65);color:#fff;width:17px;height:17px;font-size:12px;line-height:1;border:0;display:grid;place-items:center;border-radius:2px;}
+.garment-pick .add-g{width:54px;height:54px;border:1px dashed var(--iron);border-radius:2px;background:transparent;color:var(--bone-dim);font-size:22px;cursor:pointer;display:grid;place-items:center;}
+.garment-pick .add-g:hover{border-color:var(--acid);color:var(--acid);}
+.b-controls input[type=range]{width:100%;accent-color:var(--acid);padding:0;background:none;border:none;}
+
+footer{border-top:1px solid var(--iron);padding:28px 0 60px;color:var(--iron-light);font-size:12px;text-align:center;}
+
+/* gang sheet */
+.gs-sub{color:var(--bone-dim);font-size:13px;margin-bottom:18px;max-width:56ch;}
+.gs-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start;}
+@media(max-width:640px){.gs-grid{grid-template-columns:1fr;}}
+.gs-canvas-wrap{border:1px solid var(--iron);border-radius:2px;padding:10px;overflow:auto;max-height:520px;
+  background-color:#0e0d0b;
+  background-image:linear-gradient(45deg,#1a1a1a 25%,transparent 25%),linear-gradient(-45deg,#1a1a1a 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#1a1a1a 75%),linear-gradient(-45deg,transparent 75%,#1a1a1a 75%);
+  background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;}
+#gsCanvas{width:100%;height:auto;display:block;}
+.gs-stats{margin-top:10px;font-size:12px;color:var(--bone-dim);letter-spacing:.03em;}
+.seg{display:flex;gap:8px;flex-wrap:wrap;}
+.seg .seg-b{border:1px solid var(--iron);background:var(--void);color:var(--bone-dim);padding:8px 14px;border-radius:2px;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;}
+.seg .seg-b.on{border-color:var(--acid);color:var(--acid);}
+.gs-controls label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--bone-dim);margin:16px 0 8px;}
+.gs-controls label:first-child{margin-top:0;}
+.gs-controls input[type=range]{width:100%;accent-color:var(--acid);}
+.gs-items{margin-top:14px;display:flex;flex-direction:column;gap:8px;}
+.gs-item{display:flex;align-items:center;gap:10px;border:1px solid var(--iron);border-radius:2px;padding:7px 9px;font-size:12px;}
+.gs-item img{width:32px;height:32px;object-fit:contain;background:#111;border-radius:2px;}
+.gs-item .gi-meta{flex:1;color:var(--bone-dim);}
+.gs-item .gi-del{background:none;border:1px solid var(--iron);color:var(--bone-dim);width:24px;height:24px;border-radius:2px;cursor:pointer;}
+.gs-item .gi-del:hover{border-color:var(--rust-bright);color:var(--rust-bright);}
+.gs-empty{color:var(--iron-light);font-size:12px;padding:8px 0;}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--acid);color:var(--void);
+  font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:13px;padding:12px 20px;border-radius:2px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:50;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.bad{background:var(--rust-bright);color:var(--bone);}
+</style>
+</head>
+<body>
+
+<div class="strip">
+  <div class="row">
+    <span class="mark">SKREWU</span>
+    <span class="who" id="whoTag">LOCKER</span>
+  </div>
+</div>
+
+<main class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Private Locker</div>
+    <h1 id="heroName">Loading…</h1>
+    <p id="heroSub">Drop your logos in here. They're yours — they stay in your locker and go straight onto your shirts. Nobody else sees them.</p>
+  </header>
+
+  <section>
+    <div class="sec-head"><h2>Drop your logos</h2></div>
+    <div class="drop" id="drop">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div class="big">Drag logos here</div>
+      <div class="small">or tap to choose — PNG, JPG, SVG. Add as many as you want.</div>
+      <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Your logos</h2><span class="count" id="vaultCount"></span></div>
+    <div class="vault" id="vault"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Your shirts</h2><span class="count" id="shirtCount"></span></div>
+
+    <div class="builder" id="builder" hidden>
+      <div class="b-grid">
+        <div class="b-preview">
+          <div class="mock" id="mock"></div>
+          <div class="place-hint" id="placeHint"></div>
+        </div>
+        <div class="b-controls">
+          <label>Shirt base</label>
+          <div class="garment-pick" id="garmentPick"></div>
+          <div class="mini">or a plain color</div>
+          <div class="swatches" id="swatches"></div>
+          <input type="file" id="garmentInput" accept="image/*" style="display:none;">
+
+          <label>Pick a logo</label>
+          <div class="logo-pick" id="logoPick"></div>
+
+          <label>Print size <span class="hintv" id="sizeVal"></span></label>
+          <input type="range" id="sizeRange" min="8" max="48" value="26">
+
+          <label>Name</label>
+          <input type="text" id="shirtName" maxlength="120" placeholder="e.g. Gracie Crest Tee">
+          <label>Price (USD)</label>
+          <input type="number" id="shirtPrice" min="0" step="0.01" placeholder="35.00">
+          <div class="b-actions">
+            <button class="btn ghost" id="cancelShirt" type="button">Cancel</button>
+            <button class="btn go" id="saveShirt" type="button">Save shirt</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="shirts" id="shirts"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Gang sheet</h2><span class="count" id="gsInfo"></span></div>
+    <p class="gs-sub">Pack your logos onto a print-ready DTF sheet — set how many copies and how big, then export the file for your printer. Transparent background, real inches.</p>
+    <div class="gs-grid">
+      <div class="gs-preview">
+        <div class="gs-canvas-wrap"><canvas id="gsCanvas" width="880" height="200"></canvas></div>
+        <div class="gs-stats" id="gsStats"></div>
+      </div>
+      <div class="gs-controls">
+        <label>Sheet width</label>
+        <div class="seg" id="gsWidth"></div>
+
+        <label>Add a logo</label>
+        <div class="logo-pick" id="gsLogoPick"></div>
+
+        <label>Copies <span class="hintv" id="gsQtyVal"></span></label>
+        <input type="range" id="gsQty" min="1" max="24" value="4">
+        <label>Each this wide <span class="hintv" id="gsSizeVal"></span></label>
+        <input type="range" id="gsSize" min="1" max="12" step="0.5" value="3.5">
+        <button class="btn" id="gsAdd" type="button" style="margin-top:14px;">Add to sheet</button>
+
+        <div class="gs-items" id="gsItems"></div>
+
+        <div class="b-actions">
+          <button class="btn ghost" id="gsClear" type="button">Clear</button>
+          <button class="btn go" id="gsExport" type="button">Export PNG</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">SKREW U · your locker, your art, your rules.</footer>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="locker.js"></script>
+<script src="gangsheet.js"></script>
+</body>
+</html>

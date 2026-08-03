@@ -1,0 +1,14 @@
+{
+  "name": "skrewu-vault-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Bulk importer + tooling for the SKREWU / MCG logo & design vault.",
+  "scripts": {
+    "import": "node bulk-import.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "sharp": "^0.33.4"
+  }
+}
