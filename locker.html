@@ -139,6 +139,30 @@ section{padding:26px 0;border-top:1px solid var(--iron);}
 
 footer{border-top:1px solid var(--iron);padding:28px 0 60px;color:var(--iron-light);font-size:12px;text-align:center;}
 
+/* gang sheet */
+.gs-sub{color:var(--bone-dim);font-size:13px;margin-bottom:18px;max-width:56ch;}
+.gs-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start;}
+@media(max-width:640px){.gs-grid{grid-template-columns:1fr;}}
+.gs-canvas-wrap{border:1px solid var(--iron);border-radius:2px;padding:10px;overflow:auto;max-height:520px;
+  background-color:#0e0d0b;
+  background-image:linear-gradient(45deg,#1a1a1a 25%,transparent 25%),linear-gradient(-45deg,#1a1a1a 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#1a1a1a 75%),linear-gradient(-45deg,transparent 75%,#1a1a1a 75%);
+  background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;}
+#gsCanvas{width:100%;height:auto;display:block;}
+.gs-stats{margin-top:10px;font-size:12px;color:var(--bone-dim);letter-spacing:.03em;}
+.seg{display:flex;gap:8px;flex-wrap:wrap;}
+.seg .seg-b{border:1px solid var(--iron);background:var(--void);color:var(--bone-dim);padding:8px 14px;border-radius:2px;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;}
+.seg .seg-b.on{border-color:var(--acid);color:var(--acid);}
+.gs-controls label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--bone-dim);margin:16px 0 8px;}
+.gs-controls label:first-child{margin-top:0;}
+.gs-controls input[type=range]{width:100%;accent-color:var(--acid);}
+.gs-items{margin-top:14px;display:flex;flex-direction:column;gap:8px;}
+.gs-item{display:flex;align-items:center;gap:10px;border:1px solid var(--iron);border-radius:2px;padding:7px 9px;font-size:12px;}
+.gs-item img{width:32px;height:32px;object-fit:contain;background:#111;border-radius:2px;}
+.gs-item .gi-meta{flex:1;color:var(--bone-dim);}
+.gs-item .gi-del{background:none;border:1px solid var(--iron);color:var(--bone-dim);width:24px;height:24px;border-radius:2px;cursor:pointer;}
+.gs-item .gi-del:hover{border-color:var(--rust-bright);color:var(--rust-bright);}
+.gs-empty{color:var(--iron-light);font-size:12px;padding:8px 0;}
+
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--acid);color:var(--void);
   font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:13px;padding:12px 20px;border-radius:2px;
   opacity:0;pointer-events:none;transition:.25s;z-index:50;}
@@ -213,6 +237,37 @@ footer{border-top:1px solid var(--iron);padding:28px 0 60px;color:var(--iron-lig
 
     <div class="shirts" id="shirts"></div>
   </section>
+
+  <section>
+    <div class="sec-head"><h2>Gang sheet</h2><span class="count" id="gsInfo"></span></div>
+    <p class="gs-sub">Pack your logos onto a print-ready DTF sheet — set how many copies and how big, then export the file for your printer. Transparent background, real inches.</p>
+    <div class="gs-grid">
+      <div class="gs-preview">
+        <div class="gs-canvas-wrap"><canvas id="gsCanvas" width="880" height="200"></canvas></div>
+        <div class="gs-stats" id="gsStats"></div>
+      </div>
+      <div class="gs-controls">
+        <label>Sheet width</label>
+        <div class="seg" id="gsWidth"></div>
+
+        <label>Add a logo</label>
+        <div class="logo-pick" id="gsLogoPick"></div>
+
+        <label>Copies <span class="hintv" id="gsQtyVal"></span></label>
+        <input type="range" id="gsQty" min="1" max="24" value="4">
+        <label>Each this wide <span class="hintv" id="gsSizeVal"></span></label>
+        <input type="range" id="gsSize" min="1" max="12" step="0.5" value="3.5">
+        <button class="btn" id="gsAdd" type="button" style="margin-top:14px;">Add to sheet</button>
+
+        <div class="gs-items" id="gsItems"></div>
+
+        <div class="b-actions">
+          <button class="btn ghost" id="gsClear" type="button">Clear</button>
+          <button class="btn go" id="gsExport" type="button">Export PNG</button>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="wrap">SKREW U · your locker, your art, your rules.</footer>
@@ -220,5 +275,6 @@ footer{border-top:1px solid var(--iron);padding:28px 0 60px;color:var(--iron-lig
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="locker.js"></script>
+<script src="gangsheet.js"></script>
 </body>
 </html>
