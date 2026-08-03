@@ -90,8 +90,9 @@ section{padding:26px 0;border-top:1px solid var(--iron);}
 .mock{position:relative;width:100%;max-width:300px;aspect-ratio:1/1;margin:0 auto;
   background:radial-gradient(circle at 50% 42%,#1c1a16,#0c0b09 70%);border-radius:2px;}
 .mock svg{width:100%;height:100%;display:block;}
-.mock .mock-logo{position:absolute;top:41%;left:50%;transform:translate(-50%,-50%);
-  width:24%;max-height:22%;object-fit:contain;pointer-events:none;}
+.mock .base-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0c0b09;}
+.mock .mock-logo{position:absolute;transform:translate(-50%,-50%);object-fit:contain;cursor:grab;touch-action:none;user-select:none;-webkit-user-drag:none;}
+.mock .mock-logo.drag{cursor:grabbing;}
 .mock .mock-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--iron-light);font-size:12px;text-align:center;padding:20px;}
 
 .logo-pick{display:flex;gap:9px;flex-wrap:wrap;}
@@ -108,7 +109,8 @@ section{padding:26px 0;border-top:1px solid var(--iron);}
 .shirt-card{background:var(--void-2);border:1px solid var(--iron);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
 .shirt-card .sm{position:relative;aspect-ratio:1/1;background:radial-gradient(circle at 50% 42%,#1c1a16,#0c0b09 70%);}
 .shirt-card .sm svg{width:100%;height:100%;}
-.shirt-card .sm .sl{position:absolute;top:41%;left:50%;transform:translate(-50%,-50%);width:24%;max-height:22%;object-fit:contain;}
+.shirt-card .sm .sl-base{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0c0b09;}
+.shirt-card .sm .sl{position:absolute;transform:translate(-50%,-50%);object-fit:contain;}
 .shirt-card .sbody{padding:12px 13px;display:flex;flex-direction:column;gap:6px;flex:1;}
 .shirt-card .sname{font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;font-size:15px;}
 .shirt-card .sprice{color:var(--acid);font-size:13px;}
@@ -121,6 +123,19 @@ section{padding:26px 0;border-top:1px solid var(--iron);}
 .add-shirt{border:2px dashed var(--iron);border-radius:2px;background:transparent;color:var(--bone-dim);
   min-height:120px;display:grid;place-items:center;text-align:center;font-size:13px;cursor:pointer;padding:20px;}
 .add-shirt:hover{border-color:var(--acid);color:var(--acid);}
+
+.b-preview{position:relative;}
+.place-hint{text-align:center;font-size:11px;color:var(--iron-light);margin-top:12px;text-transform:uppercase;letter-spacing:.08em;}
+.mini{font-size:10px;color:var(--iron-light);text-transform:uppercase;letter-spacing:.08em;margin:2px 0 8px;}
+.hintv{color:var(--iron-light);font-size:10px;text-transform:none;letter-spacing:0;}
+.garment-pick{display:flex;gap:9px;flex-wrap:wrap;}
+.garment-pick .gp{width:54px;height:54px;border:1px solid var(--iron);border-radius:2px;overflow:hidden;background:#111;cursor:pointer;padding:0;position:relative;}
+.garment-pick .gp img{width:100%;height:100%;object-fit:cover;}
+.garment-pick .gp.on{border-color:var(--acid);box-shadow:0 0 0 1px var(--acid);}
+.garment-pick .gp .gdel{position:absolute;top:1px;right:1px;background:rgba(0,0,0,.65);color:#fff;width:17px;height:17px;font-size:12px;line-height:1;border:0;display:grid;place-items:center;border-radius:2px;}
+.garment-pick .add-g{width:54px;height:54px;border:1px dashed var(--iron);border-radius:2px;background:transparent;color:var(--bone-dim);font-size:22px;cursor:pointer;display:grid;place-items:center;}
+.garment-pick .add-g:hover{border-color:var(--acid);color:var(--acid);}
+.b-controls input[type=range]{width:100%;accent-color:var(--acid);padding:0;background:none;border:none;}
 
 footer{border-top:1px solid var(--iron);padding:28px 0 60px;color:var(--iron-light);font-size:12px;text-align:center;}
 
@@ -169,12 +184,21 @@ footer{border-top:1px solid var(--iron);padding:28px 0 60px;color:var(--iron-lig
       <div class="b-grid">
         <div class="b-preview">
           <div class="mock" id="mock"></div>
+          <div class="place-hint" id="placeHint"></div>
         </div>
         <div class="b-controls">
+          <label>Shirt base</label>
+          <div class="garment-pick" id="garmentPick"></div>
+          <div class="mini">or a plain color</div>
+          <div class="swatches" id="swatches"></div>
+          <input type="file" id="garmentInput" accept="image/*" style="display:none;">
+
           <label>Pick a logo</label>
           <div class="logo-pick" id="logoPick"></div>
-          <label>Shirt color</label>
-          <div class="swatches" id="swatches"></div>
+
+          <label>Print size <span class="hintv" id="sizeVal"></span></label>
+          <input type="range" id="sizeRange" min="8" max="48" value="26">
+
           <label>Name</label>
           <input type="text" id="shirtName" maxlength="120" placeholder="e.g. Gracie Crest Tee">
           <label>Price (USD)</label>
