@@ -1,0 +1,27 @@
+{
+  "_customer": "Oceanaire Sportswear",
+  "_contact": "Jeff",
+  "_tool": "omniflow-command",
+  "_note": "Values marked PLACEHOLDER are examples — confirm with Jeff before go-live.",
+
+  "branding": {
+    "businessName": "Oceanaire Sportswear",
+    "productName": "Oceanaire Order Deck",
+    "tagline": "Every channel · one tide",
+    "logoUrl": null,
+    "colors": {
+      "accent": "#0ea5b7",
+      "accent2": "#0369a1",
+      "positive": "#2dd4bf"
+    }
+  },
+
+  "backend": {
+    "supabaseUrl": "https://REPLACE-WITH-OCEANAIRE-PROJECT.supabase.co",
+    "supabaseAnonKey": "PLACEHOLDER_OCEANAIRE_PUBLISHABLE_KEY",
+    "table": "orders"
+  },
+
+  "channels": ["shopify", "amazon", "manual"],
+  "classifications": ["Team / Bulk", "Retail", "Rush", "Needs Review"]
+}
