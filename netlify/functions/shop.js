@@ -28,7 +28,10 @@ function json(statusCode, body) {
     headers: {
       'Content-Type': 'application/json',
       // Public, non-secret config — let a browser and the CDN hold onto it.
-      'Cache-Control': 'public, max-age=300',
+      // Only ever the good answer. A failure is a moment in time, usually a
+      // missing key or a database that blinked, and caching one means the fix
+      // looks like it didn't work for five minutes after it did.
+      'Cache-Control': statusCode === 200 ? 'public, max-age=300' : 'no-store',
     },
     body: JSON.stringify(body),
   };
