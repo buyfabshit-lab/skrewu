@@ -317,6 +317,23 @@ $('resetBtn').addEventListener('click', () => {
   state = defaultState(); save(); renderAll(); toast('Line reset');
 });
 
+/* ---- board lock: freeze the canvas so only blocks move ---- */
+const LOCK_KEY = 'skrewu_board_locked';
+let locked = false;
+function applyLock(announce) {
+  const btn = $('lockBtn');
+  viewport.classList.toggle('locked', locked);
+  btn.classList.toggle('on', locked);
+  btn.setAttribute('aria-pressed', locked ? 'true' : 'false');
+  btn.querySelector('.ic').textContent = locked ? '🔒' : '🔓';
+  btn.title = locked
+    ? 'Board locked — it won’t slide while you move blocks. Tap to unlock.'
+    : 'Lock the board so it can’t slide while you move blocks';
+  try { localStorage.setItem(LOCK_KEY, locked ? '1' : '0'); } catch {}
+  if (announce) toast(locked ? 'Board locked — move blocks freely' : 'Board unlocked — swipe to pan');
+}
+$('lockBtn').addEventListener('click', () => { locked = !locked; applyLock(true); });
+
 /* ---- zoom buttons ---- */
 $('zoomIn').addEventListener('click', () => setZoom(zoom + 0.15));
 $('zoomOut').addEventListener('click', () => setZoom(zoom - 0.15));
@@ -330,3 +347,6 @@ growToFitAll();
    whole-line overview); desktop opens 1:1. */
 if (window.innerWidth < 760) { setZoom(0.7); viewport.scrollLeft = 0; viewport.scrollTop = 0; }
 else applyZoom();
+
+try { locked = localStorage.getItem(LOCK_KEY) === '1'; } catch {}
+applyLock(false);
