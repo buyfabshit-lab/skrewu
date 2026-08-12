@@ -15,38 +15,10 @@
  * tampered with from the browser.
  */
 
-const fs = require('fs');
-const path = require('path');
+const CATALOG = require('./_catalog');
 
 function json(statusCode, body) {
   return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
-}
-
-function readJson(name) {
-  // These sit at the site root; try the usual spots.
-  const tries = [
-    path.join(__dirname, '../../' + name),
-    path.join(process.cwd(), name),
-  ];
-  for (const p of tries) {
-    try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch {}
-  }
-  return null;
-}
-
-/* Tools (products.json) and art packs (packs.json) sell through the same
-   checkout, and both get their price from the repo — never from the browser. */
-function loadCatalog() {
-  const products = readJson('products.json');
-  const packs = readJson('packs.json');
-  if (!products && !packs) return null;
-  return {
-    currency: (products && products.currency) || (packs && packs.currency) || 'usd',
-    products: [
-      ...((products && products.products) || []),
-      ...(((packs && packs.packs) || []).map(p => ({ ...p, billing: 'one-time' }))),
-    ],
-  };
 }
 
 exports.handler = async (event) => {
@@ -65,10 +37,7 @@ exports.handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { ok: false, error: 'Invalid request' }); }
 
-  const cat = loadCatalog();
-  if (!cat) return json(500, { ok: false, error: 'Could not read the product catalog' });
-
-  const p = (cat.products || []).find(x => x.id === body.id);
+  const p = CATALOG.byId(body.id);
   if (!p) return json(404, { ok: false, error: 'No such product' });
 
   const origin = process.env.SITE_URL
@@ -81,7 +50,7 @@ exports.handler = async (event) => {
   form.set('success_url', `${origin}/store.html?paid=${encodeURIComponent(p.id)}`);
   form.set('cancel_url', `${origin}/store.html`);
   form.set('line_items[0][quantity]', '1');
-  form.set('line_items[0][price_data][currency]', cat.currency || 'usd');
+  form.set('line_items[0][price_data][currency]', CATALOG.CURRENCY);
   form.set('line_items[0][price_data][unit_amount]', String(Math.round(Number(p.price) * 100)));
   form.set('line_items[0][price_data][product_data][name]', p.name);
   if (p.tagline) form.set('line_items[0][price_data][product_data][description]', p.tagline);

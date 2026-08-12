@@ -20,8 +20,7 @@
  */
 
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
+const CATALOG = require('./_catalog');
 const C = require('./_credits');
 
 /* Which tenant owns tool-store sales. The store page is the platform selling
@@ -52,25 +51,9 @@ function signatureOk(raw, header, secret) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-function readJson(name) {
-  const tries = [path.join(__dirname, '../../' + name), path.join(process.cwd(), name)];
-  for (const p of tries) {
-    try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch {}
-  }
-  return null;
-}
-
-/* The same catalog checkout.js sells from, so the order names the product
-   the way the store does. */
-function productById(id) {
-  if (!id) return null;
-  const products = readJson('products.json');
-  const packs = readJson('packs.json');
-  return [
-    ...((products && products.products) || []),
-    ...((packs && packs.packs) || []),
-  ].find((p) => p.id === id) || null;
-}
+/* The same catalog checkout.js sells from, so the order names the product the
+   way the store does. */
+const productById = CATALOG.byId;
 
 async function sb(pathPart, opts = {}) {
   const url = process.env.SUPABASE_URL;
