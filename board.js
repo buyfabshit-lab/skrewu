@@ -407,9 +407,13 @@ $('resetBtn').addEventListener('click', () => {
 const sheet = $('sheet'), stage = $('stage'), spokes = $('spokes');
 let detailNode = null, pickIndex = -1;
 
+/* Plain hex, not CSS variables — var() isn't reliable inside SVG stroke
+   attributes on Safari, which is where these wires actually get looked at. */
+const DIM = '#4b453d';
 function serviceDot(id) {
   const s = SERVICES[id];
-  return s ? ({ live: 'var(--acid)', key: 'var(--ember)', gated: 'var(--rust)', manual: 'var(--steel)' }[s.status] || 'var(--iron-2)') : 'var(--iron-2)';
+  if (!s) return DIM;
+  return { live: '#c4f135', key: '#ff8a3d', gated: '#d8402f', manual: '#7f95b0' }[s.status] || DIM;
 }
 
 function openDetail(n) {
@@ -574,15 +578,21 @@ function drawLive(n, t) {
         s.b.chip.style.left = tx + 'px';
         s.b.chip.style.top = ty + 'px';
 
+        // green only ever means working: unwired stays dim and dashed
         const lk = n.type + '#' + s.b.key;
-        const col = state.links[lk] ? serviceDot(state.links[lk]) : 'rgba(196,241,53,0.5)';
+        const sid = state.links[lk];
+        const svc = SERVICES[sid];
+        const working = svc && svc.status === 'live';
+        const col = sid ? serviceDot(sid) : DIM;
         const mx = (s.x + tx) / 2, my = (s.y + ty) / 2;
-        paths += `<path d="M ${s.x} ${s.y} Q ${mx} ${my}, ${tx} ${ty}"
-                   fill="none" stroke="${col}" stroke-width="1.5" opacity="0.8"></path>`;
+        paths += `<path d="M ${s.x} ${s.y} Q ${mx} ${my}, ${tx} ${ty}" fill="none" stroke="${col}"
+                   stroke-width="${working ? 2.4 : 1.4}" opacity="${working ? 1 : (sid ? 0.85 : 0.5)}"
+                   ${sid ? '' : 'stroke-dasharray="5 5"'}></path>`;
         const dot = document.createElement('span');
         dot.className = 'dotb';
         dot.style.left = s.x + 'px'; dot.style.top = s.y + 'px';
         dot.style.color = col; dot.style.background = col;
+        if (working) { dot.style.width = '12px'; dot.style.height = '12px'; }
         wrap.appendChild(dot);
       });
       ringSvg.innerHTML = paths;
@@ -651,8 +661,11 @@ function drawRadial(n, t) {
     el.addEventListener('click', () => openPicker(i, c[0]));
     stage.appendChild(el);
 
-    paths += `<path d="M ${cx} ${cy} L ${x} ${y}" stroke="${col}" stroke-width="1.6" opacity="0.55" fill="none"></path>`;
-    paths += `<circle cx="${x}" cy="${y}" r="3.5" fill="${col}"></circle>`;
+    const working = svc && svc.status === 'live';
+    paths += `<path d="M ${cx} ${cy} L ${x} ${y}" stroke="${col}" fill="none"
+               stroke-width="${working ? 2.4 : 1.4}" opacity="${working ? 1 : 0.6}"
+               ${sid ? '' : 'stroke-dasharray="5 5"'}></path>`;
+    paths += `<circle cx="${x}" cy="${y}" r="${working ? 5 : 3.5}" fill="${col}"></circle>`;
   });
   spokes.innerHTML = paths;
   $('sheetCount').textContent = `${w.n}/${w.total}`;
