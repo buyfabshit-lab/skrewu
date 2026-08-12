@@ -441,17 +441,26 @@ function drawLive(n, t) {
   stage.appendChild(live); stage.appendChild(chips);
 
   const panelW = live.clientWidth, panelH = live.clientHeight;
-  const FRAME_W = 420;                       // render the tool at phone width
+  // Render at the tool's own layout width so it fills the panel edge to edge
+  // (too wide and the tool centres itself, leaving dead bars down both sides).
+  const FRAME_W = 520;
   const scale = panelW / FRAME_W;
+
+  const inner = document.createElement('div');
+  inner.className = 'inner';
+  live.appendChild(inner);
 
   const frame = document.createElement('iframe');
   frame.setAttribute('scrolling', 'no');
   frame.setAttribute('tabindex', '-1');
+  // Give the tool a tall viewport so a fixed-height app lays out fully instead
+  // of squeezing into a strip; the panel then scrolls through it.
+  const FRAME_H = Math.max(940, Math.round(panelH / scale));
   frame.style.width = FRAME_W + 'px';
-  frame.style.height = Math.round(panelH / scale) + 'px';
+  frame.style.height = FRAME_H + 'px';
   frame.style.transform = `scale(${scale})`;
   frame.src = t.href;
-  live.appendChild(frame);
+  inner.appendChild(frame);
   const cap = document.createElement('div');
   cap.className = 'lbl'; cap.textContent = 'live view · ' + (n.label || t.name);
   live.appendChild(cap);
@@ -461,6 +470,11 @@ function drawLive(n, t) {
     try { doc = frame.contentDocument; } catch { doc = null; }
     if (!doc) { drawRadial(n, t); return; }        // cross-origin — fall back
 
+    // the panel scrolls through the tall render — the wires follow along
+    const full = Math.max(frame.clientHeight, doc.body.scrollHeight || 0);
+    if (full > frame.clientHeight) frame.style.height = full + 'px';
+    inner.style.height = Math.round(full * scale) + 'px';
+
     // every real, pressable thing on the tool
     const els = [...doc.querySelectorAll('[data-group][data-id], button[id], a[data-tab]')];
     const seen = new Set();
@@ -468,15 +482,17 @@ function drawLive(n, t) {
     els.forEach(el => {
       const r = el.getBoundingClientRect();
       if (!r.width || !r.height) return;
-      const x = live.offsetLeft + r.left * scale + (r.width * scale) / 2;
-      const y = live.offsetTop + r.top * scale + (r.height * scale) / 2;
-      if (y < live.offsetTop + 4 || y > live.offsetTop + panelH - 4) return;  // below the fold
       const label = labelOf(el);
       if (!label || (label.match(/[A-Za-z0-9]/g) || []).length < 2) return;  // icon-only, no name
       const key = (el.dataset.id || el.id || label).toLowerCase();
       if (seen.has(key)) return;
       seen.add(key);
-      liveBtns.push({ key, label, x, y });
+      // position inside the scrolling panel (not the stage) so scrolling works
+      liveBtns.push({
+        key, label,
+        px: r.left * scale + (r.width * scale) / 2,
+        py: r.top * scale + (r.height * scale) / 2,
+      });
     });
 
     if (!liveBtns.length) { live.remove(); chips.remove(); drawRadial(n, t); return; }
@@ -500,25 +516,36 @@ function drawLive(n, t) {
       b.chip = c;
     });
 
-    // wires: real button on the tool  →  its chip
-    let paths = '';
-    liveBtns.forEach(b => {
-      const cr = b.chip.getBoundingClientRect(), sr = stage.getBoundingClientRect();
-      const tx = narrow ? cr.left + cr.width / 2 - sr.left : cr.left - sr.left;
-      const ty = narrow ? cr.top - sr.top : cr.top - sr.top + cr.height / 2;
-      const lk = n.type + '#' + b.key;
-      const col = state.links[lk] ? serviceDot(state.links[lk]) : 'rgba(196,241,53,0.45)';
-      const dx = narrow ? 0 : Math.max(30, (tx - b.x) * 0.45);
-      const dy = narrow ? Math.max(24, (ty - b.y) * 0.45) : 0;
-      paths += `<path d="M ${b.x} ${b.y} C ${b.x + dx} ${b.y + dy}, ${tx - dx} ${ty - dy}, ${tx} ${ty}"
-                 fill="none" stroke="${col}" stroke-width="1.5" opacity="0.75"></path>`;
-      const dot = document.createElement('span');
-      dot.className = 'dotb';
-      dot.style.left = b.x + 'px'; dot.style.top = b.y + 'px';
-      dot.style.color = col; dot.style.background = col;
-      stage.appendChild(dot);
-    });
-    spokes.innerHTML = paths;
+    // wires: real button on the tool  →  its chip (redrawn as the panel scrolls)
+    function layoutWires() {
+      stage.querySelectorAll('.dotb').forEach(d => d.remove());
+      const sr = stage.getBoundingClientRect();
+      const top = live.offsetTop, bottom = top + live.clientHeight;
+      let paths = '';
+      liveBtns.forEach(b => {
+        const x = live.offsetLeft + b.px;
+        const y = top + b.py - live.scrollTop;
+        if (y < top + 3 || y > bottom - 3) return;            // scrolled out of sight
+        const cr = b.chip.getBoundingClientRect();
+        const tx = narrow ? cr.left + cr.width / 2 - sr.left : cr.left - sr.left;
+        const ty = narrow ? cr.top - sr.top : cr.top - sr.top + cr.height / 2;
+        const lk = n.type + '#' + b.key;
+        const col = state.links[lk] ? serviceDot(state.links[lk]) : 'rgba(196,241,53,0.45)';
+        const dx = narrow ? 0 : Math.max(30, (tx - x) * 0.45);
+        const dy = narrow ? Math.max(24, (ty - y) * 0.45) : 0;
+        paths += `<path d="M ${x} ${y} C ${x + dx} ${y + dy}, ${tx - dx} ${ty - dy}, ${tx} ${ty}"
+                   fill="none" stroke="${col}" stroke-width="1.5" opacity="0.75"></path>`;
+        const dot = document.createElement('span');
+        dot.className = 'dotb';
+        dot.style.left = x + 'px'; dot.style.top = y + 'px';
+        dot.style.color = col; dot.style.background = col;
+        stage.appendChild(dot);
+      });
+      spokes.innerHTML = paths;
+    }
+    layoutWires();
+    live.addEventListener('scroll', layoutWires, { passive: true });
+    chips.addEventListener('scroll', layoutWires, { passive: true });
 
     const live_n = liveBtns.filter(b => { const s = SERVICES[state.links[n.type + '#' + b.key]]; return s && s.status === 'live'; }).length;
     $('sheetCount').textContent = `${live_n}/${liveBtns.length}`;
