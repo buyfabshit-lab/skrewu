@@ -22,7 +22,11 @@
 const crypto = require('crypto');
 
 function json(statusCode, body) {
-  return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    body: JSON.stringify(body),
+  };
 }
 
 /* The signature is over the exact bytes Shopify sent — decode before hashing. */

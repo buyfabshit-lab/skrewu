@@ -29,7 +29,11 @@ const TABLES = {
 const PROTECTED = ['tenant_slug', 'owner_slug', 'id', 'created_at'];
 
 function json(statusCode, body) {
-  return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    body: JSON.stringify(body),
+  };
 }
 
 function env() {
