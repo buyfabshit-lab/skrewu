@@ -95,7 +95,8 @@ and are reachable at `/api/<name>` (see `netlify.toml`).
 | Tool | Path |
 |---|---|
 | Deploy Panel | `deploy.html` — one button pushes a product to sales channels |
-| Blanks Catalog | `tools-library/blanks-storefront/` — live S&S Activewear feed (needs keys; falls back to a demo list) |
+| Blanks Picker | `blanks.html?who=<slug>&k=<key>` — browse the S&S catalogue by brand and by line, tick the styles this shop actually prints, and they're saved as that shop's own blanks via `/api/locker`. Everything downstream then works from their ten, not the supplier's ten thousand. Needs `SS_ACCOUNT_NUMBER` + `SS_API_KEY`; without them it shows a short stand-in list and says on the page that it isn't the real catalogue. |
+| Blanks Storefront | `tools-library/blanks-storefront/` — the standalone, customer-facing version of the same feed, for its own deployment. **Its `functions/ss-products/index.js` normalises S&S the same way `netlify/functions/blanks.js` does — if S&S renames a field, both need it.** |
 
 ### Orders & fulfilment
 | Tool | Path |

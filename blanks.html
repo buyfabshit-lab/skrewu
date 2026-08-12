@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Blanks</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --iron:#3a3530; --iron-2:#4b453d; --acid:#c4f135; --ember:#ff8a3d; --rust:#a32a1f; --rust-bright:#c43a2c;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:
+    radial-gradient(1000px 460px at 85% -10%, rgba(196,241,53,.06), transparent 60%),
+    var(--void);
+  color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;padding-bottom:110px;}
+h1,h2,h3{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.02em;line-height:1;}
+a{color:inherit;text-decoration:none;}
+button{font-family:var(--body);cursor:pointer;}
+:focus-visible{outline:3px solid var(--acid);outline-offset:2px;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px;}
+
+.top{border-bottom:1px solid var(--iron);background:rgba(10,9,8,.94);backdrop-filter:blur(6px);
+  position:sticky;top:0;z-index:20;}
+.top .row{display:flex;align-items:center;justify-content:space-between;gap:12px;height:56px;
+  max-width:1180px;margin:0 auto;padding:0 18px;}
+.top .mark{font-family:var(--disp);letter-spacing:.15em;font-size:14px;}
+.top .who{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--bone-dim);}
+
+.head{padding:30px 0 16px;}
+.head h1{font-size:clamp(30px,6.5vw,54px);}
+.head h1 .g{color:var(--acid);}
+.head p{color:var(--bone-dim);max-width:62ch;margin-top:11px;font-size:14px;}
+.warn{margin-top:14px;border-left:3px solid var(--ember);background:var(--void-2);padding:11px 14px;
+  font-size:12.5px;color:var(--bone-dim);}
+.warn b{color:var(--ember);}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 8px;}
+.filters input{flex:1;min-width:180px;background:var(--void-2);border:1px solid var(--iron);color:var(--bone);
+  font-family:var(--body);font-size:13px;padding:10px 12px;}
+.filters input:focus{border-color:var(--acid);outline:none;}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.chip{background:var(--void-2);border:1px solid var(--iron);color:var(--bone-dim);font-size:11px;
+  letter-spacing:.09em;text-transform:uppercase;padding:8px 12px;white-space:nowrap;}
+.chip:hover{border-color:var(--iron-2);color:var(--bone);}
+.chip.on{border-color:var(--acid);color:var(--acid);}
+.chip .n{opacity:.55;margin-left:6px;}
+.chips-l{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--iron-2);
+  width:100%;margin-top:6px;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-top:16px;}
+.b{background:linear-gradient(180deg,var(--panel),var(--void-2));border:1px solid var(--iron);
+  padding:0;text-align:left;overflow:hidden;transition:.15s;position:relative;color:inherit;}
+.b:hover{border-color:var(--iron-2);}
+.b.on{border-color:var(--acid);box-shadow:0 0 0 1px var(--acid) inset;}
+.b .pic{aspect-ratio:1;background:#f4f2ec;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.b .pic img{width:100%;height:100%;object-fit:contain;}
+.b .pic .no{color:#a49c8d;font-size:10px;letter-spacing:.14em;text-transform:uppercase;}
+.b .m{padding:11px 12px;}
+.b .br{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--acid);}
+.b .ti{font-size:13px;margin-top:4px;line-height:1.3;}
+.b .st{font-size:11px;color:var(--bone-dim);margin-top:4px;}
+.b .tick{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;
+  background:var(--acid);color:#0a0908;display:none;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;}
+.b.on .tick{display:flex;}
+.none{grid-column:1/-1;color:var(--iron-2);font-size:13px;padding:26px 0;text-align:center;}
+
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(10,9,8,.96);backdrop-filter:blur(8px);
+  border-top:1px solid var(--iron);padding:13px 18px;z-index:30;}
+.bar .in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.bar .cnt{flex:1;font-size:12.5px;color:var(--bone-dim);min-width:150px;}
+.bar .cnt b{color:var(--acid);font-family:var(--disp);font-size:19px;}
+.bar button{background:var(--acid);border:0;color:#0a0908;font-family:var(--disp);text-transform:uppercase;
+  letter-spacing:.06em;font-weight:700;font-size:14px;padding:12px 20px;}
+.bar button:disabled{opacity:.4;cursor:not-allowed;}
+.bar .ghost{background:transparent;border:1px solid var(--iron);color:var(--bone-dim);font-weight:400;}
+
+.toast{position:fixed;left:50%;bottom:86px;transform:translate(-50%,140%);background:var(--acid);
+  color:#0a0908;font-size:13px;padding:11px 18px;z-index:60;transition:transform .25s;max-width:92vw;}
+.toast.show{transform:translate(-50%,0);}
+.toast.bad{background:var(--rust-bright);color:var(--bone);}
+</style>
+</head>
+<body data-page="Blanks">
+
+<div class="top"><div class="row">
+  <span class="mark" data-brand="Blanks">Blanks</span>
+  <span><a class="who" href="hub.html">The Machine</a></span>
+</div></div>
+
+<main class="wrap">
+  <section class="head">
+    <h1>Pick the blanks <span class="g">you actually sell</span>.</h1>
+    <p>Browse the catalogue by brand and by line, tick the ones you want, and they
+       become your shop's blanks — the only ones you'll see when you build a mockup.
+       Nobody has to scroll past ten thousand styles they'd never print.</p>
+    <div class="warn" id="warn" style="display:none;"></div>
+  </section>
+
+  <div class="filters">
+    <input type="search" id="q" placeholder="Search a style number or name…" autocomplete="off">
+  </div>
+  <div class="chips" id="brands"><span class="chips-l">Brand</span></div>
+  <div class="chips" id="cats"><span class="chips-l">Line</span></div>
+
+  <div class="grid" id="grid"></div>
+</main>
+
+<div class="bar">
+  <div class="in">
+    <span class="cnt" id="cnt">Nothing picked yet.</span>
+    <button class="ghost" id="mine" type="button">What's in my shop</button>
+    <button id="add" type="button" disabled>Add to my shop</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="theme.js"></script>
+<script src="blanks.js"></script>
+</body>
+</html>
