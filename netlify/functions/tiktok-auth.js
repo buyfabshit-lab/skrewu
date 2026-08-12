@@ -14,6 +14,15 @@
  * registered, refuse anything that isn't a genuine callback, and never write a
  * half-authorised shop into the database.
  *
+ * Where the token will land, when there is one: `tenant_integrations`, one row
+ * per shop per provider. That table has row-level security on and no policies,
+ * so the publishable key sees nothing in it and only the service role can read
+ * it — the same arrangement the locker tables use.
+ *
+ * It must NOT land in `tenants.shop`, which is the obvious-looking spot and is
+ * a trap: /api/shop serves that record to anyone who asks, with no key at all,
+ * so a token stored there would be published on the open web.
+ *
  * Netlify environment variables (none of these live in the repo):
  *   TIKTOK_APP_KEY, TIKTOK_APP_SECRET   from Partner Center → your app
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY

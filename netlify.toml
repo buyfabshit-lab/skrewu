@@ -9,6 +9,12 @@
   # Node 18+ gives us global fetch, so these functions ship with zero npm deps.
   node_bundler = "esbuild"
 
+  # The price list. esbuild ships only the JavaScript a function reaches, so
+  # these are `require`d in _catalog.js and land inside the bundle. Listing them
+  # here as well costs nothing and makes the dependency obvious from the config
+  # — checkout reads its prices from these two files and dies without them.
+  included_files = ["products.json", "packs.json"]
+
 # Friendly path: POST /api/deploy-shopify  ->  the function
 [[redirects]]
   from = "/api/*"

@@ -294,6 +294,17 @@ signup. See section 5b.
 
 **File storage** — buckets for artwork, mockups, sheets and finished print files.
 
+**`tenant_integrations`** — where a shop's authorisation to another platform
+lives: one row per shop per provider, holding the tokens, the provider's own ID
+for that shop, and when the grant expires. **It refuses the public key
+outright**, like the locker tables, and nothing serves it through a door.
+
+There was an obvious-looking place to put these instead — the shop record
+below — and it is a trap. `/api/shop` hands that record to anybody who asks,
+with **no key at all**, because a storefront has to read its own theme and
+prices before it knows who the visitor is. A token parked there would have been
+published. The rule is short: **a credential never goes in `tenants.shop`.**
+
 ### The shop record
 
 ```jsonc
@@ -399,10 +410,17 @@ credits into your system.
 **Not an environment value:** cloud artwork backup is a credential inside the
 automation runner, on the upload step of the sync workflow.
 
-**Blocked on someone else:** the short-video shop platform needs partner
-approval before keys exist. Its token exchange uses one specific non-obvious
-grant type, its token goes in a custom header, and every call is signed — noted
-so nobody rediscovers it painfully.
+**Blocked on someone else:** the short-video shop platform. Partner approval
+came through, so the two settings it needs — `TIKTOK_APP_KEY` and
+`TIKTOK_APP_SECRET`, both from the partner console's app page — can be filled in
+now. What still can't be finished blind is the token exchange: it uses one
+specific non-obvious grant type, the token then travels in a custom header, and
+every call afterwards is signed. That has to be proved against a sandbox shop
+before a real seller touches it, so `/api/tiktok-auth` stands at its address,
+refuses anything that isn't a genuine callback, and says plainly that it isn't
+finished rather than writing a half-authorised shop into the database. When it
+is finished, what it writes goes in `tenant_integrations` — never the shop
+record.
 
 ---
 
