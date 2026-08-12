@@ -77,6 +77,7 @@ input[type=range]{width:100%;accent-color:var(--acid);}
   text-transform:uppercase;letter-spacing:.06em;font-weight:700;font-size:14px;padding:12px;
   cursor:pointer;margin-top:12px;}
 .btn:disabled{opacity:.45;cursor:not-allowed;}
+.ordernote{font-size:10px;letter-spacing:.06em;color:var(--bone-dim);text-align:center;margin-top:7px;}
 .btn.ghost{background:transparent;border:1px solid var(--iron);color:var(--bone-dim);}
 .btn.ghost:hover{border-color:var(--bone-dim);color:var(--bone);}
 
@@ -186,7 +187,9 @@ footer{margin-top:40px;border-top:1px solid var(--iron);padding-top:16px;color:v
           <span class="n" id="priceVal">$0</span>
         </div>
 
-        <button class="btn" id="export" type="button">Export 300 DPI print file</button>
+        <button class="btn" id="order" type="button">Order this sheet</button>
+        <div class="ordernote">We print it and ship it — your design goes with the order.</div>
+        <button class="btn ghost" id="export" type="button">Or export the 300 DPI print file</button>
         <button class="btn ghost" id="save" type="button">Save it to my locker</button>
       </div>
     </div>

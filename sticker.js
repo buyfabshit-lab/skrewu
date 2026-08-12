@@ -7,14 +7,23 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-  /* ---- the sheets we print. Edit the prices; the sizes are real UV DTF. ---- */
+  /* ---- the sheets we print. Edit the prices; the sizes are real UV DTF. ----
+     `variant` is the Shopify variant this size adds to the cart — from the
+     "Custom UV Sticker Sheet" product on DEATH CORPS. Keep the price here in
+     step with the price on that variant, or the cart will disagree with the
+     screen. Set variant to null and this size just can't be ordered online. */
+  const SHOP_DOMAIN = 'deathcorps.shop';
   const SHEETS = [
-    { id: '4x4',   label: '4 × 4"',    wIn: 4,   hIn: 4,  price: 6  },
-    { id: '6x6',   label: '6 × 6"',    wIn: 6,   hIn: 6,  price: 11 },
-    { id: 'ltr',   label: '8.5 × 11"', wIn: 8.5, hIn: 11, price: 18 },
-    { id: '12x12', label: '12 × 12"',  wIn: 12,  hIn: 12, price: 26 },
-    { id: '12x24', label: '12 × 24"',  wIn: 12,  hIn: 24, price: 45 },
+    { id: '4x4',   label: '4 × 4"',    wIn: 4,   hIn: 4,  price: 6,  variant: '45551940632662' },
+    { id: '6x6',   label: '6 × 6"',    wIn: 6,   hIn: 6,  price: 11, variant: '45551940665430' },
+    { id: 'ltr',   label: '8.5 × 11"', wIn: 8.5, hIn: 11, price: 18, variant: '45551940698198' },
+    { id: '12x12', label: '12 × 12"',  wIn: 12,  hIn: 12, price: 26, variant: '45551940730966' },
+    { id: '12x24', label: '12 × 24"',  wIn: 12,  hIn: 24, price: 45, variant: '45551940763734' },
   ];
+
+  /* Where a finished print file goes so the shop order can point at it. */
+  const SUPABASE_URL = 'https://qmztuagvxopahowexrum.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_cbwgMdVv6XDxLp0WOBsM-w_irvs7BAh';
 
   const DPI = 300;          // export resolution
   const PREVIEW_PPI = 60;   // on-screen pixels per inch before CSS scales it
@@ -182,6 +191,7 @@
       : '';
     $('priceSize').textContent = sheet.label;
     $('priceVal').textContent = n ? '$' + sheet.price : '$0';
+    $('order').textContent = n ? `Order this sheet — $${sheet.price}` : 'Order this sheet';
   }
 
   /* Twenty of the same sticker is one line that says twenty — not twenty lines. */
@@ -277,19 +287,26 @@
   c.addEventListener('pointerup', endDrag);
   c.addEventListener('pointercancel', endDrag);
 
-  /* ---------------- export ---------------- */
+  /* ---------------- the finished print file ---------------- */
+  /* One place that turns the sheet into a 300 DPI PNG — the download button and
+     the shop order both want the same file. */
+  async function composite() {
+    const keep = pieces.filter(fits);
+    if (!keep.length) return null;
+    const full = document.createElement('canvas');
+    full.width = Math.round(sheet.wIn * DPI);
+    full.height = Math.round(sheet.hIn * DPI);
+    const ctx = full.getContext('2d');
+    keep.forEach(p => ctx.drawImage(p.img, p.x * DPI, p.y * DPI, p.wIn * DPI, p.hIn * DPI));
+    return await new Promise(res => { try { full.toBlob(b => res(b), 'image/png'); } catch { res(null); } });
+  }
+
   async function exportPNG() {
     const keep = pieces.filter(fits);
     if (!keep.length) { toast('Put something on the sheet first', true); return; }
     const btn = $('export'); btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Rendering…';
     try {
-      const full = document.createElement('canvas');
-      full.width = Math.round(sheet.wIn * DPI);
-      full.height = Math.round(sheet.hIn * DPI);
-      const ctx = full.getContext('2d');
-      keep.forEach(p => ctx.drawImage(p.img, p.x * DPI, p.y * DPI, p.wIn * DPI, p.hIn * DPI));
-
-      const blob = await new Promise(res => { try { full.toBlob(b => res(b), 'image/png'); } catch { res(null); } });
+      const blob = await composite();
       if (!blob) { toast("Couldn't export — that art is blocked cross-origin", true); return; }
 
       const fname = `${slug || 'uv'}-sticker-sheet-${sheet.id}.png`;
@@ -300,6 +317,56 @@
       toast('Print file exported ✓');
     } catch (e) {
       toast('Export failed: ' + (e.message || e), true);
+    } finally { btn.disabled = false; btn.textContent = orig; }
+  }
+
+  /* ---------------- order it from the shop ----------------
+     The sheet they just built becomes a real print file, that file goes up so
+     the order can point at it, and Shopify takes the money. The design travels
+     with the line item, so the order that lands in OmniFlow already has the
+     file attached — nobody has to email artwork back and forth. */
+  async function orderIt() {
+    if (!sheet.variant) { toast(`${sheet.label} isn’t set up in the shop yet`, true); return; }
+    const keep = pieces.filter(fits);
+    if (!keep.length) { toast('Put something on the sheet first', true); return; }
+
+    const btn = $('order'); btn.disabled = true; const orig = btn.textContent;
+    btn.textContent = 'Sending the file…';
+    try {
+      const blob = await composite();
+      if (!blob) { toast("Couldn't build the print file — that art is blocked cross-origin", true); return; }
+
+      const stamp = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      const path = `sticker-orders/${stamp}.png`;
+      const up = await fetch(`${SUPABASE_URL}/storage/v1/object/listing-photos/${path}`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: 'Bearer ' + SUPABASE_ANON_KEY,
+          'Content-Type': 'image/png',
+        },
+        body: blob,
+      });
+      if (!up.ok) {
+        toast("Couldn't send your design up — export it and we'll take it by email", true);
+        return;
+      }
+      const fileUrl = `${SUPABASE_URL}/storage/v1/object/public/listing-photos/${path}`;
+
+      // Shopify wants the brackets on line-item properties left alone, so build
+      // the query by hand rather than letting URLSearchParams escape them.
+      const prop = (k, v) => `properties[${encodeURIComponent(k)}]=${encodeURIComponent(v)}`;
+      const q = [
+        `id=${encodeURIComponent(sheet.variant)}`,
+        'quantity=1',
+        prop('Sheet size', sheet.label),
+        prop('Stickers on the sheet', String(keep.length)),
+        prop('Print file', fileUrl),
+      ].join('&');
+
+      location.href = `https://${SHOP_DOMAIN}/cart/add?${q}`;
+    } catch (e) {
+      toast('Could not reach the shop: ' + (e.message || e), true);
     } finally { btn.disabled = false; btn.textContent = orig; }
   }
 
@@ -352,6 +419,7 @@
   $('add').addEventListener('click', addPieces);
   $('repack').addEventListener('click', repack);
   $('clear').addEventListener('click', () => { pieces = []; selected = null; draw(); });
+  $('order').addEventListener('click', orderIt);
   $('export').addEventListener('click', exportPNG);
   $('save').addEventListener('click', saveToLocker);
 

@@ -82,7 +82,7 @@ and are reachable at `/api/<name>` (see `netlify.toml`).
 | Client Locker | `locker.html?who=<slug>&k=<access key>` |
 | Shirts Studio | inside `locker.html` — logo on a real blank photo, drag/size the print |
 | Gang Sheet Builder | inside `locker.html` — pack a 22"/24" sheet, export 300 DPI PNG |
-| UV Sticker Sheets | `sticker.html` — the customer lays out their own sheet, drags each sticker where they want it, exports 300 DPI. Works with no account; a locker link (`?who=&k=`) adds their saved logos to the tray. Sheet sizes and prices are the `SHEETS` list at the top of `sticker.js`. |
+| UV Sticker Sheets | `sticker.html` — the customer lays out their own sheet, drags each sticker where they want it, exports 300 DPI. Works with no account; a locker link (`?who=&k=`) adds their saved logos to the tray. Sheet sizes, prices and Shopify variant IDs are the `SHEETS` list at the top of `sticker.js`. **Order this sheet** renders the print file, puts it in the `listing-photos` bucket, and hands off to `deathcorps.shop/cart/add` with the file attached as a line-item property — so Shopify takes the money and the order arrives with the artwork already on it. Needs the *Custom UV Sticker Sheet* product set to Active; while it's a draft the cart link 404s. Keep the prices here in step with the variant prices. |
 | Logo Maker | `tools-library/gang-sheet-logo-maker/` — background cut, enhance, vectorize |
 | Logo Vault | `tools-library/logo-vault/` — licensed art catalogue |
 
