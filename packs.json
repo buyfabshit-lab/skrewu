@@ -1,0 +1,17 @@
+{
+  "_readme": "Art packs — the artwork you sell, as opposed to the tools you sell (those live in products.json). Drop a pack into the `packs` array below and it shows up in the store AND in the sticker sheet builder's art tray, so a customer can buy a pack and immediately build a sheet with it. `art` is a list of image URLs (Supabase storage, your CDN, anywhere public). `price` is in whole dollars. Either paste a Stripe Payment Link into `paymentLink`, or leave it null and set STRIPE_SECRET_KEY in Netlify.",
+  "_shape": {
+    "id": "flash-vol-1",
+    "name": "Flash Sheet Vol. 1",
+    "tagline": "40 pieces, ready to print",
+    "blurb": "Old-school flash, cleaned up and cut out. Transparent PNGs at 300 DPI, sized for stickers or transfers.",
+    "count": 40,
+    "license": "Print and sell — no reselling the files themselves",
+    "price": 29,
+    "cover": "https://…/covers/flash-vol-1.png",
+    "art": ["https://…/flash-1/01.png", "https://…/flash-1/02.png"],
+    "paymentLink": null
+  },
+  "currency": "usd",
+  "packs": []
+}

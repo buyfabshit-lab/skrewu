@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Backdrop</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --iron:#3a3530; --iron-2:#4b453d; --acid:#c4f135; --ember:#ff8a3d; --rust:#a32a1f; --rust-bright:#c43a2c;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--void);}
+body{color:var(--bone);font-family:var(--body);-webkit-font-smoothing:antialiased;}
+
+/* This runs while a machine is also encoding video, so everything that moves
+   moves with transform and opacity only — the compositor handles it and the
+   CPU stays free for the stream. No JavaScript animation loop, on purpose. */
+.scene{position:fixed;inset:0;overflow:hidden;}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;will-change:transform;}
+.b1{width:60vw;height:60vw;left:-12vw;top:-18vw;background:var(--acid);animation:drift1 44s ease-in-out infinite alternate;}
+.b2{width:52vw;height:52vw;right:-14vw;bottom:-16vw;background:var(--rust-bright);animation:drift2 57s ease-in-out infinite alternate;}
+.b3{width:38vw;height:38vw;left:38%;top:44%;background:var(--ember);opacity:.34;animation:drift3 68s ease-in-out infinite alternate;}
+@keyframes drift1{to{transform:translate3d(9vw,7vh,0) scale(1.16);}}
+@keyframes drift2{to{transform:translate3d(-11vw,-6vh,0) scale(1.1);}}
+@keyframes drift3{to{transform:translate3d(-8vw,9vh,0) scale(.86);}}
+
+/* a soft vignette so a person keyed over the top still reads */
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,
+  transparent 34%, rgba(0,0,0,.34) 78%, rgba(0,0,0,.62) 100%);}
+
+/* stripes — for the team face */
+body[data-style=stripes] .stripes{position:absolute;inset:-30%;opacity:.14;
+  background:repeating-linear-gradient(115deg, var(--acid) 0 46px, transparent 46px 128px);
+  animation:slide 32s linear infinite;will-change:transform;}
+@keyframes slide{to{transform:translate3d(128px,0,0);}}
+
+/* grid — for the studio face */
+body[data-style=grid] .grid{position:absolute;inset:0;opacity:.5;
+  background-image:linear-gradient(var(--iron) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--iron) 1px,transparent 1px);
+  background-size:64px 64px;}
+
+/* grain — takes the flat digital look off it */
+.grain{position:absolute;inset:0;opacity:.05;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.6'/></svg>");}
+
+.stripes,.grid{display:none;}
+body[data-style=stripes] .stripes,body[data-style=grid] .grid{display:block;}
+body[data-style=plain] .blob{display:none;}
+
+/* the name, if you want it on there */
+.words{position:absolute;left:0;right:0;bottom:7vh;text-align:center;padding:0 6vw;}
+.words .n{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.04em;
+  font-size:clamp(38px,8.5vw,120px);line-height:.94;text-shadow:0 6px 34px rgba(0,0,0,.6);}
+.words .s{font-size:clamp(12px,1.7vw,20px);letter-spacing:.28em;text-transform:uppercase;
+  color:var(--bone-dim);margin-top:16px;text-shadow:0 2px 12px rgba(0,0,0,.7);}
+.words.off{display:none;}
+
+/* corner-safe: keep the middle clear when somebody's standing in it */
+body[data-words=corner] .words{bottom:auto;top:6vh;left:6vw;right:auto;text-align:left;padding:0;}
+body[data-words=corner] .words .n{font-size:clamp(26px,3.6vw,54px);}
+body[data-words=corner] .words .s{font-size:11px;margin-top:9px;}
+
+@media(prefers-reduced-motion:reduce){
+  .blob,.stripes{animation:none !important;}
+}
+body.still .blob,body.still .stripes{animation:none !important;}
+</style>
+</head>
+<body data-page="Backdrop" data-style="blobs" data-words="center">
+  <div class="scene">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="stripes"></div>
+    <div class="grid"></div>
+    <div class="vig"></div>
+    <div class="grain"></div>
+  </div>
+  <div class="words off" id="words">
+    <div class="n" id="wName"></div>
+    <div class="s" id="wSub"></div>
+  </div>
+
+<script src="theme.js"></script>
+<script src="backdrop.js"></script>
+</body>
+</html>

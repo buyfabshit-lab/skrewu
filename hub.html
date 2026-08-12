@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SKREWU · The Machine</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --rust:#a32a1f; --rust-bright:#c43a2c; --acid:#c4f135; --ember:#ff8a3d; --steel:#7f95b0; --iron:#3a3530; --iron-2:#4b453d;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:
+    radial-gradient(1100px 480px at 82% -8%, rgba(196,241,53,.06), transparent 60%),
+    radial-gradient(800px 460px at -5% 8%, rgba(196,42,31,.08), transparent 55%),
+    var(--void);
+  color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;padding-bottom:80px;}
+h1,h2,h3{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.02em;line-height:1;}
+a{color:inherit;text-decoration:none;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px;}
+
+.top{border-bottom:1px solid var(--iron);background:rgba(10,9,8,.9);backdrop-filter:blur(6px);position:sticky;top:0;z-index:10;}
+.top .row{display:flex;align-items:center;justify-content:space-between;height:58px;max-width:1080px;margin:0 auto;padding:0 22px;}
+.top .mark{font-family:var(--disp);letter-spacing:.16em;font-size:15px;}
+.top .mark b{color:var(--acid);}
+.top .who{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);}
+
+.hero{padding:64px 0 30px;}
+.hero .eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--rust-bright);}
+.hero h1{font-size:clamp(40px,9vw,88px);letter-spacing:-.01em;margin-top:14px;}
+.hero h1 .g{color:var(--acid);}
+.hero p{color:var(--bone-dim);max-width:56ch;margin-top:16px;}
+
+.stage{border-top:1px solid var(--iron);padding:30px 0 6px;}
+.stage-head{display:flex;align-items:baseline;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+.stage-num{font-family:var(--disp);font-size:clamp(26px,5vw,42px);color:var(--iron-2);line-height:.8;}
+.stage-name{font-family:var(--disp);font-size:clamp(19px,3.4vw,27px);}
+.stage-role{color:var(--bone-dim);font-size:12px;flex:1;min-width:160px;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:13px;}
+.tile{display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg,var(--panel),var(--void-2));
+  border:1px solid var(--iron);padding:16px;position:relative;overflow:hidden;transition:border-color .18s,transform .12s;}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--iron-2);transition:background .18s;}
+.tile:hover{border-color:var(--acid);transform:translateY(-2px);}
+.tile:hover::before{background:var(--acid);}
+.tile.soon{opacity:.6;} .tile.soon:hover{border-color:var(--iron);transform:none;} .tile.soon:hover::before{background:var(--iron-2);}
+.tile h3{font-size:17px;padding-left:6px;}
+.tile p{font-size:12px;color:var(--bone-dim);line-height:1.45;padding-left:6px;flex:1;}
+.tile .foot{display:flex;align-items:center;justify-content:space-between;padding-left:6px;margin-top:2px;}
+.chip{font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:3px 7px;border:1px solid currentColor;}
+.chip.live{color:var(--acid);} .chip.built{color:var(--ember);} .chip.soon{color:var(--rust-bright);} .chip.ext{color:var(--steel);}
+.go{font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:13px;color:var(--bone-dim);}
+.tile:hover .go{color:var(--acid);}
+
+footer{margin-top:48px;border-top:1px solid var(--iron);padding-top:18px;color:var(--iron-2);font-size:11px;letter-spacing:.1em;text-transform:uppercase;}
+</style>
+</head>
+<body data-page="The Machine">
+
+<div class="top"><div class="row">
+  <span class="mark" data-brand="The Machine">SKREWU · The Machine</span>
+  <span><a class="who" href="setup.html" style="color:var(--bone-dim);margin-right:14px;">Set someone up</a><a class="who" href="intro.html" style="color:var(--bone-dim);margin-right:14px;">Intro</a><a class="who" href="store.html" style="color:var(--bone-dim);margin-right:14px;">Shop tools</a><a class="who" href="board.html" style="color:var(--acid);">Board view →</a></span>
+</div></div>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">One place · the whole operation</div>
+    <h1>Run the <span class="g">machine</span>.</h1>
+    <p>Every tool, in the order the work happens — design in, boxed order out. Tap any tile to jump straight into it.</p>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head"><span class="stage-num">01</span><span class="stage-name">Design &amp; Prep</span><span class="stage-role">Art in, cleaned up, turned into a print file.</span></div>
+    <div class="grid">
+      <a class="tile" href="locker.html?who=rorion">
+        <h3>Personal Locker</h3><p>Per-person space. Logos stay theirs, build shirt mockups, pack a gang sheet.</p>
+        <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="tools-library/gang-sheet-logo-maker/index.html">
+        <h3>Logo Maker</h3><p>Drop a logo, strip the background, export a clean transparent print PNG.</p>
+        <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="tools-library/logo-vault/index.html">
+        <h3>Logo Vault</h3><p>The brand-art archive — licensed art, tagged and searchable.</p>
+        <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="sticker.html?shop=deathcorps">
+        <h3>UV Sticker Sheets</h3><p>Customer lays out their own sheet — drag it, size it, export 300 DPI.</p>
+        <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head"><span class="stage-num">02</span><span class="stage-name">Build &amp; Deploy</span><span class="stage-role">Design becomes a product, pushed to the stores.</span></div>
+    <div class="grid">
+      <a class="tile" href="locker.html?who=rorion">
+        <h3>Shirts Studio</h3><p>Logo on a real blank photo, drag + size the print, save the listing image.</p>
+        <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="deploy.html">
+        <h3>Deploy Panel</h3><p>One button → push a product to Shopify (TikTok + eBay next).</p>
+        <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="normalize.html">
+        <h3>Blank Normalizer</h3><p>Cut-outs onto one canvas at true scale, with a real border. No sleeve clipped.</p>
+        <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="blanks.html?who=deathcorps">
+        <h3>Blanks Picker</h3><p>Browse by brand and line, tick the ones you'd actually print. They become your shop's blanks.</p>
+        <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="tools-library/blanks-storefront/index.html">
+        <h3>Blanks Storefront</h3><p>The standalone version — a customer-facing catalog page for its own deployment.</p>
+        <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head"><span class="stage-num">03</span><span class="stage-name">Sell</span><span class="stage-role">Where customers actually buy.</span></div>
+    <div class="grid">
+      <a class="tile" href="https://deathcorps.shop" target="_blank" rel="noopener">
+        <h3>DEATH CORPS Shop</h3><p>Your live Shopify store. The deploy panel already talks to it.</p>
+        <div class="foot"><span class="chip ext">Live</span><span class="go">Visit →</span></div>
+      </a>
+      <a class="tile" href="index.html">
+        <h3>SKREW U Site</h3><p>The community front — shop floor, Weeklygram, the Zine, Live.</p>
+        <div class="foot"><span class="chip ext">Live</span><span class="go">Open →</span></div>
+      </a>
+      <div class="tile soon">
+        <h3>TikTok Shop</h3><p>Same one-button target — waiting on Partner API access + seller auth.</p>
+        <div class="foot"><span class="chip soon">In progress</span><span class="go">Soon</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head"><span class="stage-num">04</span><span class="stage-name">Orders &amp; Fulfillment</span><span class="stage-role">Order lands → track → pull → print → ship.</span></div>
+    <div class="grid">
+      <a class="tile" href="tools-library/omniflow-command/index.html">
+        <h3>OmniFlow Command</h3><p>Every channel's orders in one console — triage, classify, status. 24 already in it.</p>
+        <div class="foot"><span class="chip built">In use</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="order-manifest.html">
+        <h3>Ship Manifest</h3><p>The pull-and-pack sheet for getting orders out the door.</p>
+        <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="order-confirmation.html">
+        <h3>Customer Tracking</h3><p>The post-order page a customer sees to follow their order.</p>
+        <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="live.html?bg=1">
+        <h3>Live Overlay</h3><p>Streaming? Orders land on screen as they're paid. Browser source for OBS or TikTok LIVE Studio.</p>
+        <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="stage.html">
+        <h3>Stage Control</h3><p>Swap the logo, headline, picture or clip mid-stream from your phone. The overlay picks it up.</p>
+        <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" href="tools-library/wholesale-order-form/index.html">
+        <h3>Wholesale Form</h3><p>Shop-to-shop multi-item order drop-off for B2B accounts.</p>
+        <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
+      </a>
+    </div>
+  </section>
+
+  <footer><span data-brand></span> — one machine, assembled.</footer>
+</main>
+<script src="theme.js"></script>
+</body>
+</html>

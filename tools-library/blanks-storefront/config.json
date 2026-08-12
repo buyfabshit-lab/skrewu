@@ -1,0 +1,15 @@
+{
+  "branding": {
+    "businessName": "MidnightFusion",
+    "productName": "Blanks",
+    "tagline": "Pick a blank · design it",
+    "heroTitle": "Choose your blank",
+    "heroSub": "Every blank below is live from the S&S Activewear catalog. Pick one and jump straight into the designer.",
+    "logoUrl": null,
+    "colors": { "accent": "#6d5bef", "accent2": "#5a49dd" }
+  },
+  "functionUrl": "http://localhost:8787/ss-products",
+  "designerBaseUrl": "https://REPLACE-with-your-designer-url/design",
+  "defaultLimit": 60,
+  "demoFallback": true
+}

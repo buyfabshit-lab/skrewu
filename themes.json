@@ -1,0 +1,168 @@
+{
+  "_readme": "One engine, many faces. Same tools, same wiring — only the palette, the type and the words change. Pick one with ?theme=<id>, or set shop.theme on a tenant so their people always land in the right skin. Add another by adding a block here; no code change.",
+  "_video": "Any face can have a real presenter instead of the drawn one. Add \"video\": \"https://…/her.mp4\" and the intro plays that in place of the face — filmed, or generated with Hedra or the like. Add \"poster\" for the still it shows before it plays. She still types the same lines underneath, so the page works with the sound off and reads the same if the video never loads.",
+  "default": "skrewu",
+  "themes": {
+    "skrewu": {
+      "name": "SKREW U",
+      "for": "Our own people. Underground, print shop floor, no polish.",
+      "vars": {
+        "--void": "#0a0908",
+        "--void-2": "#12100d",
+        "--panel": "#17130e",
+        "--bone": "#e8e2d4",
+        "--bone-dim": "#a49c8d",
+        "--iron": "#3a3530",
+        "--iron-2": "#4b453d",
+        "--acid": "#c4f135",
+        "--ember": "#ff8a3d",
+        "--rust": "#a32a1f",
+        "--rust-bright": "#c43a2c",
+        "--disp": "'Arial Narrow','Helvetica Neue',sans-serif",
+        "--body": "'Courier New',ui-monospace,Menlo,monospace"
+      },
+      "bodyBg": "radial-gradient(900px 520px at 50% -12%, rgba(196,241,53,.09), transparent 62%), radial-gradient(700px 420px at 12% 108%, rgba(196,42,31,.10), transparent 58%), #0a0908",
+      "guide": "Your guide",
+      "intro": [
+        "Alright — this'll take twenty seconds.",
+        "Everything you make runs down one line. Art in one end, a boxed order out the other.",
+        "It's all open. Every tool, right now. Nothing locked, nothing to unlock.",
+        "You choose the way through — gang sheets, shirts, stickers, or just the orders.",
+        "Any of them. They all come out the same end.",
+        "And it's never stuck. Add a part, move one, throw one out. The line is yours."
+      ],
+      "ask": "So — which one sounds like you?",
+      "backdrop": "blobs",
+      "backdropSub": "Print shop · no gatekeepers"
+    },
+    "pro": {
+      "name": "Studio",
+      "for": "Corporate and professional accounts. Calm, clean, nothing shouting.",
+      "vars": {
+        "--void": "#f7f8fa",
+        "--void-2": "#ffffff",
+        "--panel": "#ffffff",
+        "--bone": "#16202c",
+        "--bone-dim": "#5b6875",
+        "--iron": "#dde3ea",
+        "--iron-2": "#b9c3ce",
+        "--acid": "#1d6fe0",
+        "--ember": "#b7791f",
+        "--rust": "#1d4ed8",
+        "--rust-bright": "#2563eb",
+        "--disp": "'Helvetica Neue',Helvetica,Arial,sans-serif",
+        "--body": "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+      },
+      "bodyBg": "linear-gradient(180deg,#ffffff,#f7f8fa 40%)",
+      "guide": "Your guide",
+      "intro": [
+        "This takes about twenty seconds.",
+        "Your work moves along a single line — artwork in at one end, a finished order out at the other.",
+        "Every tool is available from the start. Nothing is held back behind a tier.",
+        "You choose the route: print files, branded apparel, custom stickers, or order management on its own.",
+        "Each route ends in the same place — a completed, trackable order.",
+        "And nothing is fixed. Add a step, reorder it, remove it. The process is yours to shape."
+      ],
+      "ask": "Which of these describes your work?",
+      "backdrop": "grid",
+      "backdropSub": "Design · print · deliver"
+    },
+    "sport": {
+      "name": "Team",
+      "for": "Schools, clubs and teams. Loud, fast, roster-and-season shaped.",
+      "vars": {
+        "--void": "#0b1220",
+        "--void-2": "#111c31",
+        "--panel": "#16233c",
+        "--bone": "#eef4ff",
+        "--bone-dim": "#93a6c4",
+        "--iron": "#26364f",
+        "--iron-2": "#3a4d6b",
+        "--acid": "#ffd400",
+        "--ember": "#ff6b2c",
+        "--rust": "#c8102e",
+        "--rust-bright": "#e01b3c",
+        "--disp": "'Arial Black','Arial Narrow',Helvetica,sans-serif",
+        "--body": "'Helvetica Neue',Helvetica,Arial,sans-serif"
+      },
+      "bodyBg": "radial-gradient(900px 520px at 50% -12%, rgba(255,212,0,.10), transparent 62%), radial-gradient(700px 420px at 12% 108%, rgba(200,16,46,.14), transparent 58%), #0b1220",
+      "guide": "Your guide",
+      "intro": [
+        "Twenty seconds and you're running.",
+        "Everything moves down one line — art in one end, the team's order out the other.",
+        "Every tool's open right now. Nothing locked, nothing to earn.",
+        "Pick your play: print sheets, team apparel, stickers and decals, or just running the orders.",
+        "Any of them. They all finish the same way.",
+        "And you can change it any time. Add a step, move one, drop one. It's your line."
+      ],
+      "ask": "Which one's you?",
+      "backdrop": "stripes",
+      "backdropSub": "Team gear, done right"
+    },
+    "tropical": {
+      "name": "Island",
+      "for": "Hawaiian and island shops — surf, sun, resort wear.",
+      "vars": {
+        "--void": "#04262b",
+        "--void-2": "#0a3740",
+        "--panel": "#0d4450",
+        "--bone": "#f2fbf7",
+        "--bone-dim": "#93bfba",
+        "--iron": "#175a63",
+        "--iron-2": "#2c7d84",
+        "--acid": "#ffc247",
+        "--ember": "#ff7a59",
+        "--rust": "#e5544b",
+        "--rust-bright": "#ff6a5c",
+        "--disp": "'Trebuchet MS','Gill Sans','Segoe UI',sans-serif",
+        "--body": "'Segoe UI',-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif"
+      },
+      "bodyBg": "radial-gradient(900px 520px at 50% -12%, rgba(255,194,71,.16), transparent 62%), radial-gradient(760px 460px at 8% 108%, rgba(255,122,89,.16), transparent 58%), #04262b",
+      "guide": "Your guide",
+      "intro": [
+        "Hey — twenty seconds and you're set.",
+        "Everything you make runs down one line. Art in one end, a packed order out the other.",
+        "It's all open from the start. Nothing locked, nothing to unlock.",
+        "You pick the way through — print sheets, shirts and resort wear, stickers and decals, or just the orders.",
+        "Any of them. They all come out the same end.",
+        "And nothing's set in stone. Add a step, move one, drop one. The line's yours."
+      ],
+      "ask": "Which one sounds like you?",
+      "backdrop": "blobs",
+      "backdropSub": "Island made"
+    },
+    "critters": {
+      "name": "Critters",
+      "for": "Pet and people shops. Warm, friendly, nothing technical-sounding.",
+      "vars": {
+        "--void": "#fbf6ef",
+        "--void-2": "#ffffff",
+        "--panel": "#fffdfa",
+        "--bone": "#2f2318",
+        "--bone-dim": "#7a6857",
+        "--iron": "#e8ddcd",
+        "--iron-2": "#c9b79f",
+        "--acid": "#2e9e6b",
+        "--ember": "#e08c2f",
+        "--rust": "#c2553d",
+        "--rust-bright": "#d9674c",
+        "--disp": "'Trebuchet MS','Segoe UI',Helvetica,sans-serif",
+        "--body": "'Segoe UI',-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif"
+      },
+      "bodyBg": "radial-gradient(800px 480px at 50% -10%, rgba(46,158,107,.10), transparent 60%), #fbf6ef",
+      "guide": "Your guide",
+      "intro": [
+        "Hi — this only takes twenty seconds.",
+        "Everything you make follows one path. Your picture goes in one end, a finished order comes out the other.",
+        "Everything's open already. Nothing's locked away.",
+        "You pick how you'd like to work — print sheets, shirts, stickers, or just keeping track of orders.",
+        "Whichever you pick, they all end up in the same happy place.",
+        "And you can change your mind whenever. Add a step, move one, take one away. It's yours."
+      ],
+      "ask": "Which one sounds like you?",
+      "backdrop": "blobs",
+      "backdropSub": "For the ones with fur"
+    }
+  },
+  "_backdrop": "Each face also brings a backdrop — the layer that goes behind you on a stream. \"backdrop\" is one of blobs|stripes|grid|plain and \"backdropSub\" is the line under the name."
+}

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SKREWU · The Board</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --iron:#3a3530; --iron-2:#4b453d; --acid:#c4f135; --ember:#ff8a3d; --rust:#d8402f; --steel:#7f95b0;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overscroll-behavior:none;}
+body{background:var(--void);color:var(--bone);font-family:var(--body);font-size:14px;overflow:hidden;display:flex;flex-direction:column;
+  height:100dvh;}
+h1,h3{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.03em;line-height:1;}
+button{font-family:var(--body);cursor:pointer;}
+a{color:inherit;text-decoration:none;}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:14px;height:54px;padding:0 16px;border-bottom:1px solid var(--iron);
+  background:rgba(10,9,8,.95);z-index:30;flex-shrink:0;}
+.top .mark{font-family:var(--disp);letter-spacing:.14em;font-size:14px;text-transform:uppercase;white-space:nowrap;}
+.top .mark b{color:var(--acid);}
+.top .hint{color:var(--iron-2);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;flex:1;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tbtn{background:var(--void-2);border:1px solid var(--iron);color:var(--bone-dim);padding:7px 12px;
+  font-size:10px;text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;}
+.tbtn:hover{border-color:var(--acid);color:var(--acid);}
+/* lock: freezes the board so only the blocks move */
+.lockbtn{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;}
+.lockbtn .ic{font-size:13px;line-height:1;}
+.lockbtn.on{border-color:var(--acid);color:var(--acid);background:rgba(196,241,53,.12);}
+.viewport.locked{overflow:hidden;touch-action:none;overscroll-behavior:none;}
+.canvas{cursor:grab;}
+.canvas.panning{cursor:grabbing;}
+/* locked also pins the whole page so the phone can't scroll or bounce */
+html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;
+  overflow:hidden;overscroll-behavior:none;}
+
+@media(max-width:760px){
+  .top{gap:7px;padding:0 10px;}
+  .top .hint{display:none;}
+  .top .mark{font-size:12px;}
+  .tbtn{padding:7px 9px;font-size:9.5px;}
+  .lockbtn .lbl{display:none;}
+  .lockbtn{padding:7px 10px;}
+  .lockbtn .ic{font-size:15px;}
+}
+
+/* tray */
+.tray{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--iron);
+  overflow-x:auto;background:var(--void-2);flex-shrink:0;-webkit-overflow-scrolling:touch;}
+.tray .tl{font-size:9.5px;color:var(--iron-2);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;margin-right:4px;}
+.tray button{background:var(--void);border:1px dashed var(--iron);color:var(--bone-dim);padding:7px 11px;
+  font-size:11px;white-space:nowrap;}
+.tray button:hover{border-color:var(--acid);color:var(--acid);}
+
+/* board */
+.viewport{flex:1;overflow:auto;position:relative;-webkit-overflow-scrolling:touch;}
+.canvas{position:relative;width:2300px;height:1500px;
+  background-image:radial-gradient(circle, #1d1a15 1.1px, transparent 1.1px);
+  background-size:26px 26px;}
+#wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+#wires path{pointer-events:stroke;cursor:pointer;}
+
+/* nodes */
+.node{position:absolute;width:196px;background:linear-gradient(180deg,var(--panel),var(--void-2));
+  border:1px solid var(--iron);user-select:none;touch-action:none;z-index:5;cursor:grab;}
+.node.dragging{z-index:20;border-color:var(--acid);cursor:grabbing;box-shadow:0 8px 26px rgba(0,0,0,.55);}
+.node .head{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--iron);}
+.node .dotst{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
+.node[data-status=live] .dotst{color:var(--acid);background:var(--acid);}
+.node[data-status=key] .dotst{color:var(--ember);background:var(--ember);}
+.node[data-status=gated] .dotst{color:var(--rust);background:var(--rust);}
+.node[data-status=manual] .dotst{color:var(--steel);background:var(--steel);}
+.node .head h3{font-size:13.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.node .rm{background:none;border:none;color:var(--iron-2);font-size:14px;line-height:1;padding:2px 4px;}
+.node .rm:hover{color:var(--rust);}
+.node .exp{background:none;border:none;color:var(--iron-2);font-size:12px;line-height:1;padding:2px 4px;}
+.node .exp:hover{color:var(--acid);}
+.node .wired-n{font-size:8.5px;letter-spacing:.1em;color:var(--iron-2);text-transform:uppercase;}
+.node .wired-n b{color:var(--acid);}
+
+/* ===== node detail: the tool's buttons fanned out as sub-nodes ===== */
+.sheet{position:fixed;inset:0;z-index:80;background:rgba(6,5,4,.93);backdrop-filter:blur(4px);display:none;flex-direction:column;}
+.sheet.open{display:flex;}
+.sheet .sbar{display:flex;align-items:center;gap:12px;height:54px;padding:0 14px;border-bottom:1px solid var(--iron);flex-shrink:0;}
+.sheet .sbar h2{font-family:var(--disp);text-transform:uppercase;font-size:16px;letter-spacing:.05em;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sheet .sbar h2 b{color:var(--acid);}
+/* touch-action none, or the browser takes the drag and you can't move the map */
+.stage{flex:1;position:relative;overflow:hidden;overscroll-behavior:none;}
+.live{touch-action:pan-x pan-y;}    /* the tool panel scrolls itself */
+.costs .cl{touch-action:pan-y;}
+.pick .list{touch-action:pan-y;}
+.pick .info{touch-action:auto;}
+#spokes{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;}
+.hubn{position:absolute;transform:translate(-50%,-50%);background:linear-gradient(180deg,#1c1811,var(--void-2));
+  border:2px solid var(--acid);padding:14px 18px;text-align:center;max-width:190px;z-index:3;}
+.hubn .t{font-family:var(--disp);text-transform:uppercase;font-size:16px;letter-spacing:.04em;}
+.hubn .s{font-size:9.5px;color:var(--bone-dim);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
+.cap{position:absolute;transform:translate(-50%,-50%);width:132px;background:linear-gradient(180deg,var(--panel),var(--void-2));
+  border:1px solid var(--iron);padding:8px 9px;cursor:pointer;z-index:3;text-align:center;}
+.cap:hover,.cap:focus-visible{border-color:var(--acid);}
+.cap.on{border-color:var(--acid);}
+.cap .cn{font-size:11.5px;color:var(--bone);line-height:1.25;}
+.cap .cs{font-size:9px;letter-spacing:.06em;text-transform:uppercase;margin-top:5px;color:var(--iron-2);}
+.cap.on .cs{color:var(--acid);}
+.sheet .foot{flex-shrink:0;border-top:1px solid var(--iron);padding:10px 14px;color:var(--iron-2);
+  font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+/* live view: the real tool on screen, wires off its actual buttons */
+.live{position:absolute;left:14px;top:14px;bottom:14px;width:46%;border:1px solid var(--iron);
+  overflow-x:hidden;overflow-y:auto;background:#000;z-index:1;-webkit-overflow-scrolling:touch;}
+.live .inner{position:relative;}
+.live iframe{position:absolute;top:0;left:0;border:0;transform-origin:0 0;pointer-events:none;background:#000;}
+.live .lbl{position:absolute;left:0;top:0;background:rgba(10,9,8,.8);color:var(--bone-dim);
+  font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;padding:4px 8px;z-index:3;
+  border-right:1px solid var(--iron);border-bottom:1px solid var(--iron);}
+.dotb{position:absolute;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);z-index:4;
+  box-shadow:0 0 8px currentColor;pointer-events:none;}
+/* the tool fills the screen; each of its buttons wears a glowing marker */
+.live.full{left:12px;right:12px;top:12px;bottom:12px;width:auto;height:auto;transform:none;
+  overflow:auto;}
+.mk{position:absolute;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;
+  border:2px solid #ff8a3d;background:rgba(255,138,61,.28);box-shadow:0 0 10px 3px rgba(255,138,61,.6);
+  cursor:pointer;z-index:5;padding:0;animation:mkpulse 2.2s ease-in-out infinite;}
+.mk:hover{transform:translate(-50%,-50%) scale(1.15);}
+.mk.ok{border-color:#c4f135;background:rgba(196,241,53,.3);
+  box-shadow:0 0 14px 4px rgba(196,241,53,.75);animation:none;}
+@keyframes mkpulse{0%,100%{box-shadow:0 0 8px 2px rgba(255,138,61,.45);}50%{box-shadow:0 0 16px 5px rgba(255,138,61,.85);}}
+@media (prefers-reduced-motion: reduce){ .mk{animation:none;} }
+
+/* connectors ringed around the tool — built full size, then scaled to fit */
+.ringwrap{position:absolute;left:50%;top:50%;transform-origin:50% 50%;}
+.ringwrap svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;}
+.live.center{left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);}
+.chipr{position:absolute;transform:translate(-50%,-50%);z-index:3;width:124px;
+  background:linear-gradient(180deg,var(--panel),var(--void-2));border:1px solid var(--iron);
+  padding:6px 8px;cursor:pointer;text-align:left;}
+.chipr:hover{border-color:var(--acid);}
+.chipr b{display:block;font-weight:400;font-size:11px;color:var(--bone);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chipr i{display:block;font-style:normal;font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chipr u{display:block;text-decoration:none;font-size:8.5px;color:var(--bone-dim);margin-top:3px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+@media(max-width:640px){ .chipr{width:104px;padding:5px 7px;} .chipr b{font-size:10px;} .chipr i{font-size:7.5px;} }
+
+.chips{position:absolute;right:14px;top:14px;bottom:14px;width:44%;overflow-y:auto;z-index:3;
+  display:flex;flex-direction:column;gap:7px;padding-right:2px;}
+.chipw{display:flex;align-items:center;gap:9px;background:linear-gradient(180deg,var(--panel),var(--void-2));
+  border:1px solid var(--iron);padding:8px 10px;cursor:pointer;text-align:left;flex-shrink:0;}
+.chipw:hover{border-color:var(--acid);}
+.chipw .cd{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
+.chipw .cw{flex:1;min-width:0;}
+.chipw .cw b{display:block;font-size:12px;color:var(--bone);font-weight:400;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chipw .cw i{display:block;font-style:normal;font-size:9px;letter-spacing:.07em;text-transform:uppercase;margin-top:2px;}
+.chipw .cw em{display:block;font-style:normal;font-size:8.5px;color:var(--iron-2);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:640px){
+  .sheet .sbar{gap:7px;padding:0 10px;}
+  .sheet .sbar h2{font-size:12px;letter-spacing:.03em;}
+  .live{left:10px;right:10px;width:auto;top:10px;height:54%;bottom:auto;}
+  .chips{left:10px;right:10px;width:auto;top:auto;bottom:10px;height:42%;}
+  .chipw{padding:7px 9px;}
+  .chipw .cw b{font-size:11.5px;}
+}
+
+@media(max-width:620px){
+  .hubn{max-width:126px;padding:11px 12px;}
+  .hubn .t{font-size:13.5px;}
+  .cap{width:112px;padding:7px;}
+  .cap .cn{font-size:10.5px;}
+  .cap .cs{font-size:8px;}
+}
+
+/* what each button costs */
+.costs{position:absolute;right:0;top:0;bottom:0;width:232px;background:rgba(10,9,8,.96);
+  border-left:1px solid var(--iron);z-index:20;display:none;flex-direction:column;}
+.costs.open{display:flex;}
+.costs .ch{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:12px 14px;
+  border-bottom:1px solid var(--iron);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--bone-dim);}
+.costs .ch span{font-family:var(--disp);font-size:19px;color:var(--acid);letter-spacing:.02em;}
+.costs .cl{flex:1;overflow-y:auto;padding:8px;}
+.costs .ci{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:7px 8px;
+  border-bottom:1px solid #221f1a;font-size:11.5px;}
+.costs .ci:last-child{border-bottom:none;}
+.costs .ci .nm{flex:1;min-width:0;}
+.costs .ci .nm b{display:block;font-weight:400;color:var(--bone);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.costs .ci .nm i{display:block;font-style:normal;font-size:8.5px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--iron-2);margin-top:2px;}
+.costs .ci .amt{font-variant-numeric:tabular-nums;color:var(--acid);white-space:nowrap;}
+.costs .ci .amt.zero{color:var(--iron-2);}
+.costs .cf{padding:10px 14px;border-top:1px solid var(--iron);color:var(--iron-2);
+  font-size:9px;letter-spacing:.08em;text-transform:uppercase;text-align:center;}
+@media(max-width:640px){ .costs{width:min(232px,72vw);} }
+
+/* service picker */
+.pick{position:fixed;inset:0;z-index:90;background:rgba(6,5,4,.9);display:none;align-items:flex-end;justify-content:center;}
+.pick.open{display:flex;}
+.pick .card{background:var(--void-2);border:1px solid var(--iron);width:100%;max-width:460px;max-height:76vh;
+  display:flex;flex-direction:column;}
+.pick .ph{padding:14px 16px;border-bottom:1px solid var(--iron);}
+.pick .ph .k{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--bone-dim);}
+.pick .ph .n{font-family:var(--disp);text-transform:uppercase;font-size:17px;margin-top:5px;}
+.pick .list{overflow-y:auto;padding:8px;}
+.pick .opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--void);
+  border:1px solid var(--iron);color:var(--bone);padding:11px 12px;margin-bottom:7px;font-size:13px;}
+.pick .opt:hover{border-color:var(--acid);color:var(--acid);}
+.pick .opt .d{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
+.pick .opt small{display:block;color:var(--iron-2);font-size:10px;letter-spacing:.05em;text-transform:uppercase;margin-top:2px;}
+.pick .opt.clear{color:var(--rust);border-color:var(--iron);}
+.pick .opt.sel{border-color:var(--acid);background:rgba(196,241,53,.08);}
+.pick .info{padding:12px 16px;border-top:1px solid var(--iron);}
+.pick .info label{display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);margin-bottom:7px;}
+.pick .info textarea{width:100%;min-height:64px;background:var(--void);border:1px solid var(--iron);color:var(--bone);
+  font-family:var(--body);font-size:13px;padding:10px;resize:vertical;}
+.pick .info textarea:focus{border-color:var(--acid);outline:none;}
+.pick .pf{display:flex;gap:8px;padding:0 16px 14px;}
+.pick .pf .tbtn{flex:1;text-align:center;padding:11px;}
+.pick .pf .go{background:var(--rust);border-color:var(--rust-bright);color:var(--bone);}
+.cap .ci{font-size:8.5px;color:var(--bone-dim);margin-top:4px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.node.allgreen{border-color:var(--acid);}
+.node.allgreen .wired-n{color:var(--acid);}
+.node .body{padding:8px 10px 10px;}
+.node .desc{font-size:10.5px;color:var(--bone-dim);line-height:1.4;min-height:29px;}
+.node .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:6px;}
+.node .st{font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;border:1px solid currentColor;padding:2px 6px;white-space:nowrap;}
+.node[data-status=live] .st{color:var(--acid);}
+.node[data-status=key] .st{color:var(--ember);}
+.node[data-status=gated] .st{color:var(--rust);}
+.node[data-status=manual] .st{color:var(--steel);}
+.node .open{background:var(--void);border:1px solid var(--iron);color:var(--bone-dim);padding:5px 10px;
+  font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;}
+.node .open:hover{border-color:var(--acid);color:var(--acid);}
+
+/* ports */
+.port{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:var(--void);
+  border:2px solid var(--iron-2);transform:translateY(-50%);cursor:crosshair;z-index:6;}
+.port::after{content:"";position:absolute;inset:-8px;}  /* fat touch target */
+.port.in{left:-9px;} .port.out{right:-9px;}
+.port:hover{border-color:var(--acid);}
+.port.armed{border-color:var(--acid);background:var(--acid);box-shadow:0 0 12px var(--acid);}
+
+/* folder endpoint blocks */
+.node.folder{width:172px;border-color:var(--iron-2);background:linear-gradient(180deg,#1a160f,var(--void-2));}
+.node.folder::before{content:"";position:absolute;top:-9px;left:10px;width:52px;height:9px;
+  background:#1a160f;border:1px solid var(--iron-2);border-bottom:none;}
+.node.folder .head{cursor:grab;border-bottom:1px solid var(--iron);}
+.node.folder .head h3{font-size:12.5px;color:var(--bone-dim);}
+.node.folder .loc{padding:9px 10px 4px;font-size:12px;color:var(--acid);word-break:break-all;line-height:1.35;}
+.node.folder .loc.unset{color:var(--iron-2);}
+.node.folder .sub{padding:0 10px;font-size:9px;color:var(--iron-2);letter-spacing:.06em;text-transform:uppercase;}
+.node.folder .row{padding:8px 10px 10px;display:flex;gap:6px;}
+.node.folder .open{flex:1;text-align:center;}
+.node.folder .port.out{display:none;}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(16px);background:var(--acid);color:var(--void);
+  font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:12.5px;padding:10px 18px;
+  opacity:0;pointer-events:none;transition:.22s;z-index:60;max-width:92vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body data-page="The Board">
+
+<div class="top">
+  <button class="tbtn lockbtn" id="lockBtn" type="button" aria-pressed="false" title="Lock the board so it can't slide while you move blocks">
+    <span class="ic">🔓</span><span class="lbl">Board</span>
+  </button>
+  <a class="mark" href="hub.html" data-brand="Board">SKREWU · Board</a>
+  <span class="hint" id="hint">Drag blocks · drag empty space to slide the board · tap a right port then a left port to wire · tap a wire to cut</span>
+  <button class="tbtn" id="zoomOut" type="button" title="Zoom out">−</button>
+  <button class="tbtn" id="zoomFit" type="button" title="Fit the line on screen">Fit</button>
+  <button class="tbtn" id="zoomIn" type="button" title="Zoom in">+</button>
+  <button class="tbtn" id="setupsBtn" type="button" title="Save this setup, or load one you saved">Setups</button>
+  <button class="tbtn" id="resetBtn" type="button">Reset line</button>
+</div>
+
+<!-- saved setups: keep the arrangement you like and come back to it -->
+<div class="pick" id="setups">
+  <div class="card">
+    <div class="ph"><div class="k">Your setups</div><div class="n">Save this one, or load one back</div></div>
+    <div class="list" id="setupList"></div>
+    <div class="info">
+      <label for="setupName">Save what's on the board now as…</label>
+      <input type="text" id="setupName" placeholder="e.g. Tuesday gang sheets" maxlength="60"
+             style="width:100%;background:var(--void);border:1px solid var(--iron);color:var(--bone);
+                    font-family:var(--body);font-size:13px;padding:10px;">
+    </div>
+    <div class="pf">
+      <button class="tbtn" id="setupSave" type="button">Save it</button>
+      <button class="tbtn" id="setupClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="tray" id="tray"><span class="tl">Add a step:</span></div>
+
+<div class="viewport" id="viewport">
+  <div id="zoomOuter">
+    <div class="canvas" id="canvas">
+      <svg id="wires"></svg>
+    </div>
+  </div>
+</div>
+
+<!-- node detail: the tool in the middle, its buttons fanned out around it -->
+<div class="sheet" id="sheet">
+  <div class="sbar">
+    <button class="tbtn" id="sheetBack" type="button">← Board</button>
+    <h2 id="sheetTitle">Tool</h2>
+    <button class="tbtn" id="viewBtn" type="button" title="Switch between the real tool and the wiring map">Map</button>
+    <button class="tbtn" id="costBtn" type="button" title="What each button costs">$</button>
+    <button class="tbtn" id="rzOut" type="button" title="Zoom out">−</button>
+    <button class="tbtn" id="rzFit" type="button" title="Fit it all on screen">Fit</button>
+    <button class="tbtn" id="rzIn" type="button" title="Zoom in">+</button>
+    <span class="tbtn" id="sheetCount" style="pointer-events:none;">0/0</span>
+  </div>
+  <div class="stage" id="stage"><svg id="spokes"></svg>
+    <aside class="costs" id="costs">
+      <div class="ch">What it costs <span id="costTotal">$0.00</span></div>
+      <div class="cl" id="costList"></div>
+      <div class="cf">per full run · tap a button to set its rate</div>
+    </aside>
+  </div>
+  <div class="foot" id="sheetFoot">Tap a button to wire it to the service that runs it</div>
+</div>
+
+<!-- service picker -->
+<div class="pick" id="pick">
+  <div class="card">
+    <div class="ph"><div class="k">Wire this to</div><div class="n" id="pickName">—</div></div>
+    <div class="list" id="pickList"></div>
+    <div class="info">
+      <label for="pickCost">Cost per run — your rate, in dollars</label>
+      <input type="number" id="pickCost" min="0" step="0.001" placeholder="0.00"
+             style="width:100%;background:var(--void);border:1px solid var(--iron);color:var(--bone);
+                    font-family:var(--body);font-size:13px;padding:10px;">
+      <label for="pickPrompt" style="margin-top:12px;">Prompt — what you tell it to do</label>
+      <textarea id="pickPrompt" placeholder="e.g. Cut the background out cleanly, keep the edges sharp, return a transparent PNG."></textarea>
+      <label for="pickNote" style="margin-top:12px;">Setup — key name, endpoint, account, notes</label>
+      <textarea id="pickNote" placeholder="e.g. uses HEDRA_API_KEY · model character-3"></textarea>
+    </div>
+    <div class="pf">
+      <button class="tbtn" id="pickCancel" type="button">Cancel</button>
+      <button class="tbtn go" id="pickSave" type="button">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="theme.js"></script>
+<script src="board.js"></script>
+</body>
+</html>

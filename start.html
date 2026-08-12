@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SKREWU · Start</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --iron:#3a3530; --iron-2:#4b453d; --acid:#c4f135; --ember:#ff8a3d; --rust:#a32a1f; --rust-bright:#c43a2c;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:
+    radial-gradient(1100px 500px at 80% -10%, rgba(196,241,53,.07), transparent 60%),
+    radial-gradient(900px 460px at -5% 5%, rgba(196,42,31,.09), transparent 55%),
+    var(--void);
+  color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;min-height:100vh;}
+h1,h2,h3{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.02em;line-height:1.02;}
+a{color:inherit;text-decoration:none;}
+button{font-family:var(--body);cursor:pointer;}
+:focus-visible{outline:3px solid var(--acid);outline-offset:2px;}
+.wrap{max-width:940px;margin:0 auto;padding:0 20px 70px;}
+
+.hero{padding:clamp(48px,9vw,86px) 0 26px;text-align:center;}
+.hero .eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--rust-bright);}
+.hero h1{font-size:clamp(34px,8vw,64px);margin-top:14px;}
+.hero h1 .g{color:var(--acid);}
+.hero p{color:var(--bone-dim);max-width:46ch;margin:14px auto 0;font-size:15px;}
+
+.picks{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:34px;}
+@media(max-width:700px){.picks{grid-template-columns:1fr;}}
+
+.pick{background:linear-gradient(180deg,var(--panel),var(--void-2));border:1px solid var(--iron);
+  padding:22px 20px;text-align:left;position:relative;overflow:hidden;transition:.16s;
+  display:flex;flex-direction:column;gap:11px;width:100%;color:inherit;}
+.pick::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--iron-2);transition:.16s;}
+.pick:hover{border-color:var(--acid);transform:translateY(-2px);}
+.pick:hover::before{background:var(--acid);}
+.pick h3{font-size:21px;}
+.pick .say{font-size:13px;color:var(--bone-dim);}
+.pick .line{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:2px;}
+.pick .st{font-size:10px;letter-spacing:.07em;text-transform:uppercase;border:1px solid var(--iron);
+  padding:4px 7px;color:var(--bone-dim);white-space:nowrap;}
+/* arrow and the step it points at wrap together, so no line ends on an arrow */
+.pick .stp{display:inline-flex;align-items:center;gap:5px;}
+.pick .ar{color:var(--iron-2);font-size:11px;}
+.pick .go{font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:13px;
+  color:var(--bone-dim);margin-top:4px;}
+.pick:hover .go{color:var(--acid);}
+
+.after{margin-top:30px;text-align:center;color:var(--iron-2);font-size:11.5px;letter-spacing:.05em;}
+.after a{color:var(--bone-dim);border-bottom:1px solid var(--iron);}
+.after a:hover{color:var(--acid);border-color:var(--acid);}
+
+</style>
+</head>
+<body data-page="Start">
+
+<main class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Takes one tap</div>
+    <h1>What do <span class="g">you</span> do?</h1>
+    <p>Pick the one that sounds like you. We'll build your line for you — you can
+       add to it, move it around or throw parts out later.</p>
+  </header>
+
+  <div class="picks" id="picks"></div>
+
+  <p class="after">
+    Not sure? <a href="#" id="all">Give me everything</a> — or
+    <a href="hub.html">just look around first</a>.
+  </p>
+</main>
+
+<script src="theme.js"></script>
+<script src="starters.js"></script>
+<script src="start.js"></script>
+</body>
+</html>
