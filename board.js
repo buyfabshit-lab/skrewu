@@ -98,8 +98,8 @@ const CAPS = {
   manifest:  [['Build the pull sheet','supabase'], ['Mark shipped','supabase'], ['Tracking number','hands']],
   tracking:  [['Look up an order','supabase'], ['Show status','browser']],
   folder:    [['Set the folder','folder'], ['Files land here','folder']],
-  aiimage:   [['Write the prompt','browser'], ['Make the image','anthropic'], ['Clean it up','bgremove'], ['Keep it','supabase']],
-  aivideo:   [['Pick the design','supabase'], ['Make the clip','hedra'], ['Save it','supabase']],
+  aiimage:   [['Write the prompt','browser'], ['Make the image','mine'], ['Pay for the run','supabase'], ['Keep it','supabase']],
+  aivideo:   [['Write the prompt','browser'], ['Make the clip','mine'], ['Pay for the run','supabase'], ['Save it','supabase']],
   fusion:    [['Send it over','mine'], ['Get the answer back','mine'], ['Keep it','supabase']],
   custom:    [['Step one','hands']],
 };

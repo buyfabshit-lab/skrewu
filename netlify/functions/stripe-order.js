@@ -22,6 +22,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const C = require('./_credits');
 
 /* Which tenant owns tool-store sales. The store page is the platform selling
    its own tools, so its orders belong to the owner — not to any client shop. */
@@ -118,7 +119,29 @@ exports.handler = async (event) => {
     return json(200, { ok: true, ignored: 'not paid yet' });
   }
 
-  const p = productById(s.metadata && s.metadata.product_id);
+  /* A credit top-up isn't an order to pull and ship — it's money becoming
+     credits. Add them and stop; the ledger is the record, not the console.
+     The pack's size is read from the database, never from the session, so a
+     tampered checkout can't mint credits. */
+  const meta = s.metadata || {};
+  if (meta.credit_pack && meta.tenant_slug) {
+    try {
+      const pack = await C.packById(meta.credit_pack);
+      if (!pack) return json(400, { ok: false, error: 'Unknown credit pack ' + meta.credit_pack });
+      const wallet = await C.walletFor(String(meta.tenant_slug));
+      const balance = await C.grant(
+        wallet.id, pack.credits, 'purchase',
+        `${Number(pack.credits).toLocaleString('en-US')} credits`, s.id,
+      );
+      return json(200, { ok: true, credited: pack.credits, balance });
+    } catch (e) {
+      // Report the failure so Stripe retries — money taken and no credits
+      // given is the one outcome that must never be allowed to stand.
+      return json(502, { ok: false, error: String(e.message || e) });
+    }
+  }
+
+  const p = productById(meta.product_id);
   const name = (p && p.name) || 'Tool store purchase';
   const who = s.customer_details || {};
   const monthly = s.mode === 'subscription';

@@ -18,7 +18,12 @@ a{color:inherit;text-decoration:none;}
   background:rgba(10,9,8,.95);flex-shrink:0;}
 .top .mark{font-family:var(--disp);letter-spacing:.14em;font-size:14px;text-transform:uppercase;white-space:nowrap;}
 .top .mark b{color:var(--acid);}
-.top .lk{margin-left:auto;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-dim);}
+.top .bal{margin-left:auto;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--bone-dim);}
+.top .bal b{color:var(--acid);font-family:var(--disp);font-size:14px;letter-spacing:.04em;}
+.top .bal.low b{color:var(--ember);}
+.top .bal a{border-bottom:1px solid transparent;}
+.top .bal a:hover{border-bottom-color:currentColor;}
+.top .lk{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-dim);}
 .top .lk:hover{color:var(--acid);}
 
 .wrap{width:100%;max-width:860px;margin:0 auto;padding:22px 16px 120px;flex:1;}
