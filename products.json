@@ -7,70 +7,100 @@
       "name": "Logo Maker",
       "tagline": "Print-ready art in one drop",
       "blurb": "Drop a logo, strip the background, clean the edges, export a transparent PNG that's actually ready for DTF. No Photoshop, no subscription, no learning curve.",
-      "bullets": ["Background removal", "Enhance + HD upscale", "Vectorize", "Export print-ready PNG"],
+      "bullets": [
+        "Background removal",
+        "Enhance + HD upscale",
+        "Vectorize",
+        "Export print-ready PNG"
+      ],
       "price": 149,
       "billing": "one-time",
       "badge": "Most popular",
       "demo": "tools-library/gang-sheet-logo-maker/index.html",
-      "paymentLink": null
+      "paymentLink": "https://buy.stripe.com/5kQdR8eTn1uF0JY8HUbZe01"
     },
     {
       "id": "gang-sheet",
       "name": "Gang Sheet Builder",
       "tagline": "Pack the sheet, hit print",
       "blurb": "Lay your art out on a 22\" or 24\" sheet, set how many and how big, and export a 300 DPI transparent file straight to your printer. Stop paying someone to gang your sheets.",
-      "bullets": ["22\" and 24\" rolls", "Auto-packing layout", "Real inches, real DPI", "One-tap export"],
+      "bullets": [
+        "22\" and 24\" rolls",
+        "Auto-packing layout",
+        "Real inches, real DPI",
+        "One-tap export"
+      ],
       "price": 99,
       "billing": "one-time",
       "demo": "locker.html?who=demo",
-      "paymentLink": null
+      "paymentLink": "https://buy.stripe.com/fZueVc4eJ4GR8cqf6ibZe02"
     },
     {
       "id": "locker",
       "name": "Client Lockers",
       "tagline": "Every customer, their own room",
       "blurb": "Give each client a private link. They upload their own logos, build their own shirts, and never see anybody else's work. You see all of it from one place.",
-      "bullets": ["A private link per client", "Their logos stay theirs", "Shirt mockups on real blanks", "You see everything"],
+      "bullets": [
+        "A private link per client",
+        "Their logos stay theirs",
+        "Shirt mockups on real blanks",
+        "You see everything"
+      ],
       "price": 39,
       "billing": "per month",
       "badge": "Recurring",
       "demo": "locker.html?who=demo",
-      "paymentLink": null
+      "paymentLink": "https://buy.stripe.com/7sYdR85iN6OZgIWbU6bZe04"
     },
     {
       "id": "omniflow",
       "name": "OmniFlow Orders",
       "tagline": "Every channel, one screen",
       "blurb": "Orders from Shopify, TikTok, eBay and your own forms land in one console — sorted, classified, and ready to pull. No more five tabs and a notebook.",
-      "bullets": ["All channels in one list", "Auto-classify B2B vs DTC", "Status tracking", "Ship manifest built in"],
+      "bullets": [
+        "All channels in one list",
+        "Auto-classify B2B vs DTC",
+        "Status tracking",
+        "Ship manifest built in"
+      ],
       "price": 79,
       "billing": "per month",
       "demo": "tools-library/omniflow-command/index.html",
-      "paymentLink": null
+      "paymentLink": "https://buy.stripe.com/aFabJ0aD70qBboC0bobZe05"
     },
     {
       "id": "all-access",
       "name": "All Access",
       "tagline": "Every tool, one subscription",
       "blurb": "The whole line — every tool we have now and every tool we add, branded to your shop. Nothing to pick, nothing locked. Stop whenever you want and you've lost nothing.",
-      "bullets": ["Every tool, current and future", "Your name and colors on all of it", "Client lockers + order console included", "Cancel any time"],
+      "bullets": [
+        "Every tool, current and future",
+        "Your name and colors on all of it",
+        "Client lockers + order console included",
+        "Cancel any time"
+      ],
       "price": 200,
       "billing": "per month",
       "badge": "Everything",
       "demo": "hub.html",
-      "paymentLink": null
+      "paymentLink": "https://buy.stripe.com/5kQ7sKbHb2yJ9gu3nAbZe06"
     },
     {
       "id": "shop-kit",
       "name": "The Whole Shop Kit",
       "tagline": "All of it, yours for good",
       "blurb": "Same everything as All Access, paid once. Four and a half months of the subscription and it's bought — this is the setup we run, handed to you.",
-      "bullets": ["Every tool, your branding", "Client lockers included", "Order console + manifest", "Setup help to get running"],
+      "bullets": [
+        "Every tool, your branding",
+        "Client lockers included",
+        "Order console + manifest",
+        "Setup help to get running"
+      ],
       "price": 899,
       "billing": "one-time",
       "badge": "Best value",
       "demo": "hub.html",
-      "paymentLink": null
+      "paymentLink": "https://buy.stripe.com/cNicN4eTnddn0JY2jwbZe03"
     }
   ]
 }
