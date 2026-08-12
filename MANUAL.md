@@ -87,7 +87,7 @@ and are reachable at `/api/<name>` (see `netlify.toml`).
 | Client Locker | `locker.html?who=<slug>&k=<access key>` |
 | Shirts Studio | inside `locker.html` — logo on a real blank photo, drag/size the print |
 | Gang Sheet Builder | inside `locker.html` — pack a 22"/24" sheet, export 300 DPI PNG |
-| UV Sticker Sheets | `sticker.html` — the customer lays out their own sheet, drags each sticker where they want it, exports 300 DPI. Works with no account; a locker link (`?who=&k=`) adds their saved logos to the tray. Sheet sizes, prices and Shopify variant IDs are the `SHEETS` list at the top of `sticker.js`. **Order this sheet** renders the print file, puts it in the `listing-photos` bucket, and hands off to `deathcorps.shop/cart/add` with the file attached as a line-item property — so Shopify takes the money and the order arrives with the artwork already on it. Needs the *Custom UV Sticker Sheet* product set to Active; while it's a draft the cart link 404s. Keep the prices here in step with the variant prices. |
+| UV Sticker Sheets | `sticker.html?shop=<slug>` — the customer lays out their own sheet, drags each sticker where they want it, exports 300 DPI. Works with no account; a locker link (`?who=&k=`) adds their saved logos to the tray. **Which shop it sells for comes from `?shop=`**, never from the code — sizes come from `SHEETS` in `sticker.js`, prices and Shopify variant IDs from that tenant's `shop.sheets`. **Order this sheet** renders the print file, puts it in the `listing-photos` bucket, and hands off to that shop's `/cart/add` with the file attached as a line-item property, so Shopify takes the money and the order arrives with the artwork on it. With no shop, or a size the shop hasn't listed, the order button is hidden and export still works. Keep each variant's price on Shopify in step with `shop.sheets`. For DEATH CORPS the *Custom UV Sticker Sheet* product must be set Active — while it's a draft the cart link 404s. |
 | Logo Maker | `tools-library/gang-sheet-logo-maker/` — background cut, enhance, vectorize |
 | Logo Vault | `tools-library/logo-vault/` — licensed art catalogue |
 
@@ -118,24 +118,25 @@ and are reachable at `/api/<name>` (see `netlify.toml`).
 | Table | Holds |
 |---|---|
 | `tenants` | slug, name, `parent_slug`, `kind` (owner/partner/client), `access_key`, branding, tools, `shop`, active |
+| `locker_logos` | a tenant's logos (`tenant_slug`, name, url, storage_path, drive_file_id) |
+| `locker_shirts` | saved shirts (logo, base photo, print position, price, status) |
+| `locker_garments` | uploaded blank photos used as mockup bases |
+| `locker_gang_sheets` | saved gang sheet layouts |
+
+The four `locker_*` tables **deny the public key** (403). Reachable only through
+the locker function using the service role key.
 
 `tenants.shop` is that tenant's storefront — public, non-secret config:
 
 ```jsonc
 { "domain": "deathcorps.shop",
+  "theme": "skrewu",
   "sheets": { "ltr": { "variant": "45551940698198", "price": 18 } } }
 ```
 
 Today: `skrewu` is the owner (the platform), `deathcorps` and `rorion` are
 clients, `oceanaire` is a partner. DEATH CORPS is a customer of this system,
 not the system.
-| `locker_logos` | a tenant's logos (`tenant_slug`, name, url, storage_path, drive_file_id) |
-| `locker_shirts` | saved shirts (logo, base photo, print position, price, status) |
-| `locker_garments` | uploaded blank photos used as mockup bases |
-| `locker_gang_sheets` | saved gang sheet layouts |
-
-All five **deny the public key** (403). Reachable only through the locker
-function using the service role key.
 
 ### Everything else (used by the live site, unchanged)
 `listings`, `bids`, `pins`, `pin_replies`, `join_requests`, `designs`,
