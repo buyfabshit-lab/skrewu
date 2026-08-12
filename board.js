@@ -61,6 +61,8 @@ const SERVICES = {
   upscale:   { name: 'AI upscaler',       note: 'HD / enhance',                 status: 'key'  },
   vector:    { name: 'Vectorizer',        note: 'raster → SVG',                 status: 'key'  },
   n8n:       { name: 'n8n workflow',      note: 'your automation runner',       status: 'key'  },
+  mine:      { name: 'My own API',        note: 'MidnightFusion backend',       status: 'key'  },
+  hedra:     { name: 'Hedra',             note: 'AI video + avatars',           status: 'key'  },
   browser:   { name: 'Runs in the app',   note: 'no service needed',            status: 'live' },
   folder:    { name: 'Local folder',      note: 'saves to your computer',       status: 'live' },
   hands:     { name: 'Hands-on',          note: 'you do this one',              status: 'manual'},
@@ -129,7 +131,8 @@ try {
 } catch { state = defaultState(); }
 
 if (!state.links) state.links = {};   // "<type>:<capIndex>" -> serviceId
-if (!state.notes) state.notes = {};   // "<type>:<capIndex>" -> what you typed in
+if (!state.notes) state.notes = {};     // "<type>:<capIndex>" -> setup details
+if (!state.prompts) state.prompts = {}; // "<type>:<capIndex>" -> what you tell the AI
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} }
 function capsOf(type) { return CAPS[type] || CAPS.custom; }
 function linkOf(type, i) {
@@ -554,10 +557,12 @@ function drawLive(n, t) {
       const sid = state.links[lk] || null;
       const svc = SERVICES[sid];
       const col = sid ? serviceDot(sid) : 'var(--iron-2)';
+      const pr = state.prompts[lk];
       const c = document.createElement('button');
       c.type = 'button'; c.className = 'chipr';
       c.style.borderColor = sid ? col : '';
-      c.innerHTML = `<b>${esc(b.label)}</b><i style="color:${col}">${esc(svc ? svc.name : 'not wired')}</i>`;
+      c.innerHTML = `<b>${esc(b.label)}</b><i style="color:${col}">${esc(svc ? svc.name : 'not wired')}</i>` +
+        (pr ? `<u>“${esc(pr)}”</u>` : '');
       c.addEventListener('click', () => openPicker(b.key, b.label, true));
       wrap.appendChild(c);
       b.chip = c;
@@ -687,8 +692,10 @@ function drawRadial(n, t) {
     el.style.left = x + 'px'; el.style.top = y + 'px';
     el.style.borderColor = col;
     const note = state.notes[n.type + ':' + i];
+    const pr = state.prompts[n.type + ':' + i];
     el.innerHTML = `<div class="cn">${esc(c[0])}</div>` +
       `<div class="cs" style="color:${col}">${esc(svc ? svc.name : 'not wired')}</div>` +
+      (pr ? `<div class="ci">“${esc(pr)}”</div>` : '') +
       (note ? `<div class="ci">${esc(note)}</div>` : '');
     el.addEventListener('click', () => openPicker(i, c[0]));
     stage.appendChild(el);
@@ -711,6 +718,7 @@ function openPicker(i, capName, isLive) {
   pickChoice = isLive ? (state.links[key] || null) : linkOf(detailNode.type, i);
   $('pickName').textContent = capName;
   $('pickNote').value = state.notes[key] || '';
+  $('pickPrompt').value = state.prompts[key] || '';
   renderPickList();
   $('pick').classList.add('open');
 }
@@ -732,6 +740,8 @@ function savePick() {
   state.links[key] = pickChoice;
   const note = $('pickNote').value.trim();
   if (note) state.notes[key] = note; else delete state.notes[key];
+  const prompt = $('pickPrompt').value.trim();
+  if (prompt) state.prompts[key] = prompt; else delete state.prompts[key];
   save(); $('pick').classList.remove('open'); drawDetail();
   toast(pickChoice ? `Wired to ${SERVICES[pickChoice].name}` : 'Connection cleared');
 }

@@ -127,6 +127,8 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .chipr i{display:block;font-style:normal;font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;margin-top:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chipr u{display:block;text-decoration:none;font-size:8.5px;color:var(--bone-dim);margin-top:3px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 @media(max-width:640px){ .chipr{width:104px;padding:5px 7px;} .chipr b{font-size:10px;} .chipr i{font-size:7.5px;} }
 
 .chips{position:absolute;right:14px;top:14px;bottom:14px;width:44%;overflow-y:auto;z-index:3;
@@ -270,8 +272,10 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
     <div class="ph"><div class="k">Wire this to</div><div class="n" id="pickName">—</div></div>
     <div class="list" id="pickList"></div>
     <div class="info">
-      <label for="pickNote">What goes in here — key name, endpoint, account, notes</label>
-      <textarea id="pickNote" placeholder="e.g. uses SHOPIFY_ADMIN_TOKEN on Netlify · store cae949-fc"></textarea>
+      <label for="pickPrompt">Prompt — what you tell it to do</label>
+      <textarea id="pickPrompt" placeholder="e.g. Cut the background out cleanly, keep the edges sharp, return a transparent PNG."></textarea>
+      <label for="pickNote" style="margin-top:12px;">Setup — key name, endpoint, account, notes</label>
+      <textarea id="pickNote" placeholder="e.g. uses HEDRA_API_KEY · model character-3"></textarea>
     </div>
     <div class="pf">
       <button class="tbtn" id="pickCancel" type="button">Cancel</button>
