@@ -330,12 +330,33 @@ function applyLock(announce) {
   btn.setAttribute('aria-pressed', locked ? 'true' : 'false');
   btn.querySelector('.ic').textContent = locked ? '🔒' : '🔓';
   btn.title = locked
-    ? 'Board locked — it won’t slide while you move blocks. Tap to unlock.'
-    : 'Lock the board so it can’t slide while you move blocks';
+    ? 'Screen locked — drag empty space to slide the board. Tap to unlock.'
+    : 'Lock the screen so the phone can’t scroll while you work';
   try { localStorage.setItem(LOCK_KEY, locked ? '1' : '0'); } catch {}
-  if (announce) toast(locked ? 'Board locked — move blocks freely' : 'Board unlocked — swipe to pan');
+  if (announce) toast(locked ? 'Screen locked — drag empty space to slide the board' : 'Unlocked — normal scrolling');
 }
 $('lockBtn').addEventListener('click', () => { locked = !locked; applyLock(true); });
+
+/* Drag empty space to slide the board around. While locked this is how you
+   move across the line — the phone itself never scrolls. Unlocked on a phone,
+   normal swipe-scrolling handles it, so we stay out of the way. */
+let panPid = null, panSX = 0, panSY = 0, panSL = 0, panST = 0;
+canvas.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.node')) return;              // blocks handle themselves
+  if (!locked && e.pointerType !== 'mouse') return;   // let touch scroll natively when unlocked
+  panPid = e.pointerId; canvas.setPointerCapture(panPid);
+  panSX = e.clientX; panSY = e.clientY;
+  panSL = viewport.scrollLeft; panST = viewport.scrollTop;
+  canvas.classList.add('panning');
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (panPid === null || e.pointerId !== panPid) return;
+  viewport.scrollLeft = panSL - (e.clientX - panSX);
+  viewport.scrollTop  = panST - (e.clientY - panSY);
+});
+const endPan = () => { if (panPid === null) return; panPid = null; canvas.classList.remove('panning'); };
+canvas.addEventListener('pointerup', endPan);
+canvas.addEventListener('pointercancel', endPan);
 
 /* While locked, swallow page-level touch scrolling (Safari still bounces the
    window otherwise). The tool tray stays swipeable so you can still add steps. */

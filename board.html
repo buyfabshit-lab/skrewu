@@ -33,7 +33,8 @@ a{color:inherit;text-decoration:none;}
 .lockbtn .ic{font-size:13px;line-height:1;}
 .lockbtn.on{border-color:var(--acid);color:var(--acid);background:rgba(196,241,53,.12);}
 .viewport.locked{overflow:hidden;touch-action:none;overscroll-behavior:none;}
-.viewport.locked .canvas{cursor:default;}
+.canvas{cursor:grab;}
+.canvas.panning{cursor:grabbing;}
 /* locked also pins the whole page so the phone can't scroll or bounce */
 html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;
   overflow:hidden;overscroll-behavior:none;}
@@ -124,7 +125,7 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
     <span class="ic">🔓</span><span class="lbl">Board</span>
   </button>
   <a class="mark" href="hub.html">SKREW<b>U</b> · Board</a>
-  <span class="hint" id="hint">Drag blocks · tap a right port, then a left port to wire · tap a wire to cut it</span>
+  <span class="hint" id="hint">Drag blocks · drag empty space to slide the board · tap a right port then a left port to wire · tap a wire to cut</span>
   <button class="tbtn" id="zoomOut" type="button" title="Zoom out">−</button>
   <button class="tbtn" id="zoomFit" type="button" title="Fit the line on screen">Fit</button>
   <button class="tbtn" id="zoomIn" type="button" title="Zoom in">+</button>
