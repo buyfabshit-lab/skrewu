@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Live Overlay</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --iron:#3a3530; --iron-2:#4b453d; --acid:#c4f135; --ember:#ff8a3d; --rust:#a32a1f; --rust-bright:#c43a2c;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+/* Transparent on purpose — this sits over the stream, not behind it.
+   ?bg=1 paints it solid for setting up and for testing. */
+html,body{height:100%;background:transparent;}
+body.solid{background:var(--void);}
+body{color:var(--bone);font-family:var(--body);overflow:hidden;
+  -webkit-font-smoothing:antialiased;text-shadow:0 2px 10px rgba(0,0,0,.85);}
+.stage{position:relative;width:100vw;height:100vh;}
+
+/* the running total, top left */
+.tally{position:absolute;left:26px;top:26px;display:flex;align-items:stretch;gap:0;
+  border:2px solid var(--acid);background:rgba(10,9,8,.72);backdrop-filter:blur(5px);}
+.tally .cell{padding:11px 17px;}
+.tally .cell + .cell{border-left:1px solid rgba(196,241,53,.35);}
+.tally .n{font-family:var(--disp);font-size:34px;line-height:.95;color:var(--acid);}
+.tally .l{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--bone-dim);margin-top:4px;}
+.tally .shop{display:flex;align-items:center;padding:11px 17px;background:var(--acid);color:#0a0908;
+  font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:17px;text-shadow:none;}
+
+/* orders sliding in, bottom left */
+.feed{position:absolute;left:26px;bottom:26px;width:min(430px,42vw);display:flex;
+  flex-direction:column-reverse;gap:9px;}
+.ord{border-left:4px solid var(--acid);background:rgba(10,9,8,.78);backdrop-filter:blur(5px);
+  padding:11px 15px;animation:slide .45s cubic-bezier(.2,.9,.25,1);}
+@keyframes slide{from{opacity:0;transform:translateX(-32px);}to{opacity:1;transform:none;}}
+.ord .top{font-family:var(--disp);text-transform:uppercase;font-size:19px;letter-spacing:.03em;line-height:1.1;}
+.ord .top b{color:var(--acid);}
+.ord .what{font-size:12.5px;color:var(--bone-dim);margin-top:4px;line-height:1.35;}
+
+/* what's on offer, bottom right */
+.drop{position:absolute;right:26px;bottom:26px;max-width:min(400px,40vw);
+  border:2px solid var(--acid);background:rgba(10,9,8,.78);backdrop-filter:blur(5px);padding:15px 18px;}
+.drop .k{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--acid);}
+.drop .t{font-family:var(--disp);text-transform:uppercase;font-size:26px;line-height:1.05;margin-top:6px;}
+.drop .u{font-size:14px;color:var(--bone-dim);margin-top:8px;word-break:break-all;}
+.drop .u b{color:var(--bone);}
+
+.off{display:none !important;}
+/* Setting it up: only shown with ?bg=1, never over a live stream. */
+.help{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;
+  border:1px dashed var(--iron-2);padding:22px 26px;max-width:560px;font-size:13px;color:var(--bone-dim);
+  line-height:1.6;}
+.help b{color:var(--acid);font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;
+  display:block;font-size:18px;margin-bottom:8px;}
+.help code{color:var(--bone);font-size:12px;word-break:break-all;}
+</style>
+</head>
+<body data-page="Live Overlay">
+<div class="stage">
+  <div class="tally off" id="tally">
+    <span class="shop" id="shopName">Shop</span>
+    <span class="cell"><span class="n" id="nOrders">0</span><span class="l">orders today</span></span>
+    <span class="cell"><span class="n" id="nUnits">0</span><span class="l">pieces</span></span>
+  </div>
+
+  <div class="feed" id="feed"></div>
+
+  <div class="drop off" id="drop">
+    <div class="k">Get yours</div>
+    <div class="t" id="dropTitle">Build your own</div>
+    <div class="u" id="dropUrl"></div>
+  </div>
+
+  <div class="help off" id="help"></div>
+</div>
+
+<script src="theme.js"></script>
+<script src="live.js"></script>
+</body>
+</html>

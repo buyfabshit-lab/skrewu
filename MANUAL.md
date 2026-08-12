@@ -344,3 +344,33 @@ thrown back into ours by clicking through.
 
 **Adding a fifth is a block in `themes.json` — no code.** Adding a *tool*
 still needs `board.js`. Keep it that way: skins are content, tools are code.
+
+---
+
+## 11. Streaming — the live overlay
+
+`live.html?shop=<slug>&k=<access key>` — add as a **browser source** in OBS or
+TikTok LIVE Studio. Transparent background; only the panels show. Orders appear
+on screen as they're paid, because the Shopify webhook has already filed them
+by then.
+
+`&bg=1` paints a solid background for setting it up · `&show=tally,feed,drop`
+picks the panels · `&every=<seconds>` sets how often it checks (10 by default,
+5 at the fastest).
+
+Fed by `/api/live`, which is guarded on two points that must not be relaxed:
+
+- **It needs the shop's access key.** An overlay URL lives in streaming
+  software, but URLs leak — pasted into a chat, caught in a screen recording.
+- **It returns a first name and a city. Nothing else.** No surname, email,
+  street or phone. This data is going on a public livestream and the buyer
+  never agreed to that. If a field isn't on that list, it doesn't leave the
+  database.
+
+The overlay also stays silent when something's wrong — a bad key or a dropped
+connection shows nothing over a live stream, and explains itself only under
+`&bg=1`. An error message in front of an audience is worse than a blank corner.
+
+**Not yet:** a QR code on the drop panel. Worth doing — a QR converts a viewer
+faster than a typed URL — but it needs a real encoder written in, and a wrong
+one is worse than none.
