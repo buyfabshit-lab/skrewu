@@ -54,10 +54,6 @@ button{font-family:var(--body);cursor:pointer;}
 .after a{color:var(--bone-dim);border-bottom:1px solid var(--iron);}
 .after a:hover{color:var(--acid);border-color:var(--acid);}
 
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--acid);
-  color:var(--void);font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:13px;
-  padding:12px 20px;opacity:0;pointer-events:none;transition:.22s;z-index:60;max-width:92vw;text-align:center;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
@@ -78,7 +74,7 @@ button{font-family:var(--body);cursor:pointer;}
   </p>
 </main>
 
-<div class="toast" id="toast"></div>
+<script src="starters.js"></script>
 <script src="start.js"></script>
 </body>
 </html>
