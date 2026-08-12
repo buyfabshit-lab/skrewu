@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Video · The Machine</title>
+<meta name="description" content="Turn a prompt into a clip for the feed — portrait for TikTok, wide for everywhere else."/>
+<link rel="stylesheet" href="gen.css"/>
+</head>
+<body data-kind="video" data-page="AI Video">
+
+<div class="top">
+  <span class="mark" data-brand="AI Video">AI <b>Video</b></span>
+  <a class="lk" href="hub.html">The machine →</a>
+</div>
+
+<main class="wrap">
+  <div class="ask">
+    <textarea id="prompt" placeholder="Say what to make — “slow smoke rolling over a skull logo, embers rising, black background”…"></textarea>
+    <div class="askrow">
+      <button type="button" class="settingsBtn" id="settingsBtn">
+        <span class="gear">⚙</span><span id="summary"></span>
+      </button>
+      <button type="button" class="go" id="go">Make it</button>
+    </div>
+    <div class="note" id="note"></div>
+  </div>
+
+  <div class="wall" id="wall"></div>
+  <p class="empty">Clips land here — video takes minutes, the card will say so.</p>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" role="dialog" aria-label="Video settings">
+  <div class="grab"></div>
+  <div class="head"><h2>Video settings</h2><button type="button" id="closeSheet" aria-label="Close">×</button></div>
+  <div class="sec"><span>▭</span><span>Aspect ratio</span></div>
+  <div class="opts" id="aspects"></div>
+  <div id="extras"></div>
+  <button type="button" class="done" id="doneSheet">Done</button>
+</div>
+
+<script src="gen.js"></script>
+<script src="theme.js"></script>
+</body>
+</html>

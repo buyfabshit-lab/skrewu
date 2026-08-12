@@ -48,8 +48,8 @@ const TOOLS = {
   tracking:  { name: 'Cust. Tracking',  desc: 'What the buyer sees after ordering.',       href: 'order-confirmation.html', status: 'live' },
   // The AI pieces are parts on the line like everything else — not their own
   // rooms. Give each one its page or endpoint in `href` when it's ready.
-  aiimage:   { name: 'AI Image',        desc: 'Make art from a prompt.',                   href: null, status: 'key' },
-  aivideo:   { name: 'AI Video',        desc: 'Turn a design into a clip for the feed.',    href: null, status: 'key' },
+  aiimage:   { name: 'AI Image',        desc: 'Make art from a prompt.',                   href: 'aiimage.html', status: 'key' },
+  aivideo:   { name: 'AI Video',        desc: 'Turn a design into a clip for the feed.',    href: 'aivideo.html', status: 'key' },
   fusion:    { name: 'Fusion Command',  desc: 'Your own AI — point it at your endpoint.',   href: null, status: 'key' },
   custom:    { name: 'Custom Step',     desc: 'Your own step in the line.',                href: null, status: 'manual' },
   folder:    { name: '📁 Folder',       desc: 'Where the files land.',                     href: null, status: 'manual' },

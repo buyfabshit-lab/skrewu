@@ -1,0 +1,92 @@
+/* ============ AI IMAGE / AI VIDEO · shared face ============ */
+/* One stylesheet for both studios — the same settings sheet, the same     */
+/* results wall. What differs between them lives in gen.js, not here.      */
+
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --acid:#c4f135; --ember:#ff8a3d; --rust:#d8402f; --iron:#3a3530; --iron-2:#4b453d;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--void);color:var(--bone);font-family:var(--body);font-size:14px;
+  min-height:100dvh;display:flex;flex-direction:column;}
+h1,h2,h3{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.03em;line-height:1;}
+button{font-family:var(--body);cursor:pointer;}
+a{color:inherit;text-decoration:none;}
+
+.top{display:flex;align-items:center;gap:12px;height:54px;padding:0 16px;border-bottom:1px solid var(--iron);
+  background:rgba(10,9,8,.95);flex-shrink:0;}
+.top .mark{font-family:var(--disp);letter-spacing:.14em;font-size:14px;text-transform:uppercase;white-space:nowrap;}
+.top .mark b{color:var(--acid);}
+.top .lk{margin-left:auto;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-dim);}
+.top .lk:hover{color:var(--acid);}
+
+.wrap{width:100%;max-width:860px;margin:0 auto;padding:22px 16px 120px;flex:1;}
+
+/* the ask */
+.ask{display:flex;flex-direction:column;gap:10px;}
+.ask textarea{width:100%;min-height:88px;resize:vertical;background:var(--void-2);border:1px solid var(--iron);
+  color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.5;padding:13px 14px;}
+.ask textarea:focus{outline:none;border-color:var(--acid);}
+.askrow{display:flex;gap:10px;align-items:stretch;}
+.settingsBtn{flex:1;display:flex;align-items:center;gap:8px;background:var(--void-2);border:1px solid var(--iron);
+  color:var(--bone-dim);padding:12px 14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.settingsBtn:hover{border-color:var(--acid);color:var(--bone);}
+.settingsBtn .gear{font-size:14px;line-height:1;}
+.go{background:var(--acid);border:1px solid var(--acid);color:var(--void);font-family:var(--disp);
+  text-transform:uppercase;letter-spacing:.08em;font-size:14px;padding:12px 26px;}
+.go:disabled{opacity:.5;cursor:default;}
+.note{color:var(--bone-dim);font-size:11.5px;letter-spacing:.04em;min-height:18px;}
+.note.bad{color:var(--ember);}
+
+/* the wall of results */
+.wall{margin-top:26px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.wall .piece{border:1px solid var(--iron);background:var(--void-2);position:relative;overflow:hidden;}
+.wall .piece img,.wall .piece video{display:block;width:100%;height:auto;}
+.wall .piece .row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;
+  border-top:1px solid var(--iron);}
+.wall .piece .row span{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bone-dim);}
+.wall .piece .row a{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--acid);}
+.wall .cooking{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  aspect-ratio:16/10;color:var(--bone-dim);font-size:11px;letter-spacing:.1em;text-transform:uppercase;}
+.wall .cooking .dot{width:10px;height:10px;border-radius:50%;background:var(--ember);
+  animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+.empty{margin-top:40px;text-align:center;color:var(--iron-2);font-size:12px;letter-spacing:.08em;
+  text-transform:uppercase;}
+
+/* ============ the settings sheet — the part worth copying ============ */
+.scrim{position:fixed;inset:0;background:rgba(6,5,4,.7);opacity:0;pointer-events:none;transition:.2s;z-index:40;}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--panel);
+  border-top:1px solid var(--iron-2);max-height:82dvh;overflow-y:auto;padding:10px 18px 26px;
+  transform:translateY(102%);transition:transform .24s ease;-webkit-overflow-scrolling:touch;}
+body.sheet-open .scrim{opacity:1;pointer-events:auto;}
+body.sheet-open .sheet{transform:none;}
+.sheet .grab{width:44px;height:4px;border-radius:2px;background:var(--iron-2);margin:4px auto 14px;}
+.sheet .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sheet .head h2{font-size:17px;}
+.sheet .head button{background:none;border:none;color:var(--bone-dim);font-size:20px;line-height:1;}
+.sheet .head button:hover{color:var(--bone);}
+.sheet .sec{display:flex;align-items:center;gap:8px;margin:18px 0 10px;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);}
+
+/* option grid: two columns, like the sheet this is copied from */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.opts.wide{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));}
+.opt{display:flex;align-items:center;gap:10px;justify-content:flex-start;background:var(--void-2);
+  border:1px solid var(--iron);color:var(--bone);padding:13px 14px;font-size:14px;font-family:var(--body);}
+.opt.center{justify-content:center;}
+.opt:hover{border-color:var(--iron-2);}
+.opt.sel{border-color:var(--acid);background:#1b2208;color:var(--acid);}
+/* the little orientation glyph — a box shaped like the ratio it stands for */
+.glyph{flex:0 0 auto;border:1.5px solid currentColor;border-radius:2px;opacity:.75;}
+
+.sheet .done{display:block;width:100%;margin-top:22px;background:var(--acid);border:1px solid var(--acid);
+  color:var(--void);font-family:var(--disp);text-transform:uppercase;letter-spacing:.08em;font-size:14px;padding:13px;}
+
+@media(min-width:720px){
+  .sheet{left:50%;right:auto;transform:translate(-50%,102%);width:560px;border:1px solid var(--iron-2);
+    border-bottom:none;}
+  body.sheet-open .sheet{transform:translate(-50%,0);}
+}
