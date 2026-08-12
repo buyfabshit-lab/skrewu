@@ -421,9 +421,122 @@ function openDetail(n) {
 }
 function closeDetail() { sheet.classList.remove('open'); detailNode = null; renderAll(); }
 
+/* ---------- LIVE VIEW: the real tool, wired off its own buttons ---------- */
+let liveBtns = [];   // {key, label, x, y}  (x,y in stage coords)
+
+function labelOf(el) {
+  const pick = el.querySelector('.qc-t,.t-name,.pc-t');
+  const txt = (pick ? pick.textContent : el.textContent) || '';
+  return txt.trim().replace(/\s+/g, ' ').slice(0, 34);
+}
+
+function drawLive(n, t) {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const narrow = W < 640;
+
+  const live = document.createElement('div');
+  live.className = 'live';
+  const chips = document.createElement('div');
+  chips.className = 'chips';
+  stage.appendChild(live); stage.appendChild(chips);
+
+  const panelW = live.clientWidth, panelH = live.clientHeight;
+  const FRAME_W = 420;                       // render the tool at phone width
+  const scale = panelW / FRAME_W;
+
+  const frame = document.createElement('iframe');
+  frame.setAttribute('scrolling', 'no');
+  frame.setAttribute('tabindex', '-1');
+  frame.style.width = FRAME_W + 'px';
+  frame.style.height = Math.round(panelH / scale) + 'px';
+  frame.style.transform = `scale(${scale})`;
+  frame.src = t.href;
+  live.appendChild(frame);
+  const cap = document.createElement('div');
+  cap.className = 'lbl'; cap.textContent = 'live view · ' + (n.label || t.name);
+  live.appendChild(cap);
+
+  frame.addEventListener('load', () => {
+    let doc;
+    try { doc = frame.contentDocument; } catch { doc = null; }
+    if (!doc) { drawRadial(n, t); return; }        // cross-origin — fall back
+
+    // every real, pressable thing on the tool
+    const els = [...doc.querySelectorAll('[data-group][data-id], button[id], a[data-tab]')];
+    const seen = new Set();
+    liveBtns = [];
+    els.forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const x = live.offsetLeft + r.left * scale + (r.width * scale) / 2;
+      const y = live.offsetTop + r.top * scale + (r.height * scale) / 2;
+      if (y < live.offsetTop + 4 || y > live.offsetTop + panelH - 4) return;  // below the fold
+      const label = labelOf(el);
+      if (!label || (label.match(/[A-Za-z0-9]/g) || []).length < 2) return;  // icon-only, no name
+      const key = (el.dataset.id || el.id || label).toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      liveBtns.push({ key, label, x, y });
+    });
+
+    if (!liveBtns.length) { live.remove(); chips.remove(); drawRadial(n, t); return; }
+
+    // one wire chip per real button
+    chips.innerHTML = '';
+    liveBtns.forEach((b, i) => {
+      const lk = n.type + '#' + b.key;
+      const sid = state.links[lk] || null;
+      const svc = SERVICES[sid];
+      const col = sid ? serviceDot(sid) : 'var(--iron-2)';
+      const note = state.notes[lk];
+      const c = document.createElement('button');
+      c.type = 'button'; c.className = 'chipw';
+      c.style.borderColor = sid ? col : '';
+      c.innerHTML = `<span class="cd" style="color:${col};background:${col}"></span>
+        <span class="cw"><b>${esc(b.label)}</b><i style="color:${col}">${esc(svc ? svc.name : 'not wired')}</i>
+        ${note ? `<em>${esc(note)}</em>` : ''}</span>`;
+      c.addEventListener('click', () => openPicker(b.key, b.label, true));
+      chips.appendChild(c);
+      b.chip = c;
+    });
+
+    // wires: real button on the tool  →  its chip
+    let paths = '';
+    liveBtns.forEach(b => {
+      const cr = b.chip.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+      const tx = narrow ? cr.left + cr.width / 2 - sr.left : cr.left - sr.left;
+      const ty = narrow ? cr.top - sr.top : cr.top - sr.top + cr.height / 2;
+      const lk = n.type + '#' + b.key;
+      const col = state.links[lk] ? serviceDot(state.links[lk]) : 'rgba(196,241,53,0.45)';
+      const dx = narrow ? 0 : Math.max(30, (tx - b.x) * 0.45);
+      const dy = narrow ? Math.max(24, (ty - b.y) * 0.45) : 0;
+      paths += `<path d="M ${b.x} ${b.y} C ${b.x + dx} ${b.y + dy}, ${tx - dx} ${ty - dy}, ${tx} ${ty}"
+                 fill="none" stroke="${col}" stroke-width="1.5" opacity="0.75"></path>`;
+      const dot = document.createElement('span');
+      dot.className = 'dotb';
+      dot.style.left = b.x + 'px'; dot.style.top = b.y + 'px';
+      dot.style.color = col; dot.style.background = col;
+      stage.appendChild(dot);
+    });
+    spokes.innerHTML = paths;
+
+    const live_n = liveBtns.filter(b => { const s = SERVICES[state.links[n.type + '#' + b.key]]; return s && s.status === 'live'; }).length;
+    $('sheetCount').textContent = `${live_n}/${liveBtns.length}`;
+  });
+}
+
 function drawDetail() {
   if (!detailNode) return;
   const n = detailNode, t = TOOLS[n.type] || TOOLS.custom;
+  stage.querySelectorAll('.hubn,.cap,.live,.chips,.dotb').forEach(e => e.remove());
+  spokes.innerHTML = '';
+  liveBtns = [];
+  // a real page? show the tool itself and wire its own buttons
+  if (t.href && !/^https?:/.test(t.href)) { drawLive(n, t); return; }
+  drawRadial(n, t);
+}
+
+function drawRadial(n, t) {
   const caps = capsOf(n.type);
   const W = stage.clientWidth, H = stage.clientHeight;
   const cx = W / 2, cy = H / 2;
@@ -435,7 +548,7 @@ function drawDetail() {
   const rx = Math.max(hubHalf + capW / 2 + 10, W / 2 - capW / 2 - 8);
   const ry = Math.max(90, Math.min(H * 0.38, H / 2 - 58));
 
-  stage.querySelectorAll('.hubn,.cap').forEach(e => e.remove());
+  stage.querySelectorAll('.hubn,.cap,.live,.chips,.dotb').forEach(e => e.remove());
 
   const hub = document.createElement('div');
   hub.className = 'hubn';
@@ -475,11 +588,12 @@ function drawDetail() {
   $('sheetCount').textContent = `${w.n}/${w.total}`;
 }
 
-let pickChoice = null;
-function openPicker(i, capName) {
+let pickChoice = null, pickKey = '';
+function openPicker(i, capName, isLive) {
   pickIndex = i;
-  const key = detailNode.type + ':' + i;
-  pickChoice = linkOf(detailNode.type, i);
+  const key = isLive ? (detailNode.type + '#' + i) : (detailNode.type + ':' + i);
+  pickKey = key;
+  pickChoice = isLive ? (state.links[key] || null) : linkOf(detailNode.type, i);
   $('pickName').textContent = capName;
   $('pickNote').value = state.notes[key] || '';
   renderPickList();
@@ -499,7 +613,7 @@ function renderPickList() {
   }));
 }
 function savePick() {
-  const key = detailNode.type + ':' + pickIndex;
+  const key = pickKey;
   state.links[key] = pickChoice;
   const note = $('pickNote').value.trim();
   if (note) state.notes[key] = note; else delete state.notes[key];
