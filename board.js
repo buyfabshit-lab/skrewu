@@ -45,6 +45,11 @@ const TOOLS = {
   press:     { name: 'Heat Press',      desc: 'Physical step — film on shirt.',            href: null, status: 'manual' },
   manifest:  { name: 'Ship Manifest',   desc: 'Pull & pack sheet — out the door.',         href: 'order-manifest.html', status: 'live' },
   tracking:  { name: 'Cust. Tracking',  desc: 'What the buyer sees after ordering.',       href: 'order-confirmation.html', status: 'live' },
+  // The AI pieces are parts on the line like everything else — not their own
+  // rooms. Give each one its page or endpoint in `href` when it's ready.
+  aiimage:   { name: 'AI Image',        desc: 'Make art from a prompt.',                   href: null, status: 'key' },
+  aivideo:   { name: 'AI Video',        desc: 'Turn a design into a clip for the feed.',    href: null, status: 'key' },
+  fusion:    { name: 'Fusion Command',  desc: 'Your own AI — point it at your endpoint.',   href: null, status: 'key' },
   custom:    { name: 'Custom Step',     desc: 'Your own step in the line.',                href: null, status: 'manual' },
   folder:    { name: '📁 Folder',       desc: 'Where the files land.',                     href: null, status: 'manual' },
 };
@@ -91,6 +96,9 @@ const CAPS = {
   manifest:  [['Build the pull sheet','supabase'], ['Mark shipped','supabase'], ['Tracking number','hands']],
   tracking:  [['Look up an order','supabase'], ['Show status','browser']],
   folder:    [['Set the folder','folder'], ['Files land here','folder']],
+  aiimage:   [['Write the prompt','browser'], ['Make the image','anthropic'], ['Clean it up','bgremove'], ['Keep it','supabase']],
+  aivideo:   [['Pick the design','supabase'], ['Make the clip','hedra'], ['Save it','supabase']],
+  fusion:    [['Send it over','mine'], ['Get the answer back','mine'], ['Keep it','supabase']],
   custom:    [['Step one','hands']],
 };
 
@@ -794,3 +802,10 @@ else applyZoom();
 
 try { locked = localStorage.getItem(LOCK_KEY) === '1'; } catch {}
 applyLock(false);
+
+/* Came from the start screen? Show them the whole line at once and say so,
+   so the first thing they see is their own setup, not an empty grid. */
+if (new URLSearchParams(location.search).get('new')) {
+  fitLine();
+  setTimeout(() => toast('Your line is ready — drag anything, tap a block to look inside'), 350);
+}
