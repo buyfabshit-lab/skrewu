@@ -253,6 +253,7 @@ Either paste a **Stripe Payment Link** per product into `products.json`
 | Function | Endpoint | Needs |
 |---|---|---|
 | `locker.js` | `/api/locker` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
+| `tenants.js` | `/api/tenants` | same — the owner's side: make a space, set its face and tools, hand over the link. **The most sensitive endpoint here, because it mints access.** Four rules hold it: the caller proves themselves with their own key; only an owner or partner may set anyone up; a new space is always `client` and always parented to the caller (neither comes from the request, so escalation is impossible rather than merely checked); and every read and write is filtered by `parent_slug = caller`, so a partner only ever sees their own people. A child's key IS returned — handing over the link is the whole job — but the caller's own key never is. |
 | `shop.js` | `/api/shop?shop=<slug>` | same — returns only a tenant's **public** shop config (name, accent, domain, sheet variants). Deliberately a separate function from the locker so the locker's rule stays absolute: no key, no data. The select names its columns, so nothing secret can leak through it. |
 | `deploy-shopify.js` | `/api/deploy-shopify` | `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ADMIN_TOKEN` |
 | `shopify-order.js` | `/api/shopify-order` | `SHOPIFY_WEBHOOK_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — Shopify's `orders/create` webhook. Verifies the HMAC, then upserts into `omniflow_orders` keyed on `uct` (`UCT-SH-<shopify id>`), so redelivery can't duplicate an order. Pulls print files out of line-item properties into the order's notes. |
@@ -281,9 +282,12 @@ verifies and files it → OmniFlow → Ship Manifest → Customer Tracking. Ever
 channel is meant to land in `omniflow_orders` the same way; Shopify is the first
 one wired end to end.
 
-**Not started:** TikTok Shop (needs partner approval) · eBay · partner console
-for Jeff · order routing with partner attribution · true white-label (no SKREW U
-branding on a partner's client screens).
+**Not started:** TikTok Shop (needs partner approval) · eBay · order routing
+with partner attribution.
+
+**Setting people up:** `setup.html?who=<you>&k=<your key>` — this is the partner
+console. Jeff opens his own copy of it, sets up his own clients, sees only them,
+and hands each one a link. Same page, same code, different parent.
 
 **Known gaps worth naming**
 - `packs.json` ships empty. The store section and the sticker builder's art tray

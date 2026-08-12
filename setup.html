@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Set Someone Up</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --iron:#3a3530; --iron-2:#4b453d; --acid:#c4f135; --ember:#ff8a3d; --rust:#a32a1f; --rust-bright:#c43a2c;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:
+    radial-gradient(1000px 460px at 85% -10%, rgba(196,241,53,.06), transparent 60%),
+    var(--void);
+  color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;padding-bottom:70px;}
+h1,h2,h3{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.02em;line-height:1;}
+a{color:inherit;text-decoration:none;}
+button{font-family:var(--body);cursor:pointer;}
+:focus-visible{outline:3px solid var(--acid);outline-offset:2px;}
+.wrap{max-width:860px;margin:0 auto;padding:0 18px;}
+
+.top{border-bottom:1px solid var(--iron);}
+.top .row{display:flex;align-items:center;justify-content:space-between;height:56px;
+  max-width:860px;margin:0 auto;padding:0 18px;}
+.top .mark{font-family:var(--disp);letter-spacing:.15em;font-size:14px;}
+.top .who{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--bone-dim);}
+
+.head{padding:30px 0 8px;}
+.head h1{font-size:clamp(28px,6vw,48px);}
+.head h1 .g{color:var(--acid);}
+.head p{color:var(--bone-dim);max-width:58ch;margin-top:10px;font-size:14px;}
+
+.card{background:linear-gradient(180deg,var(--panel),var(--void-2));border:1px solid var(--iron);
+  padding:18px;margin-top:16px;}
+.card h2{font-size:15px;margin-bottom:6px;}
+.card .hint{font-size:11.5px;color:var(--bone-dim);margin-bottom:14px;}
+
+label{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);
+  margin:14px 0 6px;}
+input[type=text]{width:100%;background:var(--void);border:1px solid var(--iron);color:var(--bone);
+  font-family:var(--body);font-size:14px;padding:11px;}
+input:focus{border-color:var(--acid);outline:none;}
+.slugnote{font-size:11px;color:var(--iron-2);margin-top:6px;}
+.slugnote b{color:var(--bone-dim);}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{background:var(--void);border:1px solid var(--iron);color:var(--bone-dim);font-size:11.5px;
+  letter-spacing:.08em;padding:9px 13px;text-transform:capitalize;}
+.chip:hover{border-color:var(--iron-2);color:var(--bone);}
+.chip.on{border-color:var(--acid);color:var(--acid);}
+.chip .sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle;}
+
+.go{width:100%;background:var(--acid);border:0;color:#0a0908;font-family:var(--disp);
+  text-transform:uppercase;letter-spacing:.06em;font-weight:700;font-size:15px;padding:14px;margin-top:20px;}
+.go:disabled{opacity:.45;cursor:not-allowed;}
+
+.people{margin-top:10px;}
+.p{display:flex;align-items:center;gap:12px;background:var(--void-2);border:1px solid var(--iron);
+  padding:12px 14px;margin-bottom:8px;flex-wrap:wrap;}
+.p .nm{flex:1;min-width:150px;}
+.p .nm b{font-size:15px;}
+.p .nm span{display:block;font-size:11px;color:var(--iron-2);letter-spacing:.06em;margin-top:3px;}
+.p .face{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;border:1px solid var(--iron-2);
+  color:var(--bone-dim);padding:4px 8px;}
+.p button{background:transparent;border:1px solid var(--iron);color:var(--bone-dim);font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;padding:8px 11px;}
+.p button:hover{border-color:var(--acid);color:var(--acid);}
+.p.off{opacity:.5;}
+.empty{color:var(--iron-2);font-size:13px;padding:16px 0;}
+
+.link{margin-top:14px;border-left:3px solid var(--acid);background:var(--void-2);padding:14px 16px;display:none;}
+.link.show{display:block;}
+.link .k{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--acid);}
+.link .u{font-size:13px;color:var(--bone);margin-top:8px;word-break:break-all;line-height:1.5;}
+.link .warn{font-size:11px;color:var(--ember);margin-top:10px;}
+
+.msg{margin-top:14px;padding:11px 13px;border-left:3px solid var(--acid);background:var(--void-2);
+  font-size:12.5px;display:none;}
+.msg.show{display:block;}
+.msg.bad{border-color:var(--rust-bright);}
+</style>
+</head>
+<body data-page="Set Someone Up">
+
+<div class="top"><div class="row">
+  <span class="mark" data-brand="Setup">Setup</span>
+  <span class="who" id="meLabel">not connected</span>
+</div></div>
+
+<main class="wrap">
+  <header class="head">
+    <h1>Set someone <span class="g">up</span>.</h1>
+    <p>A name, a face, and which tools they get. They receive one link — it opens
+       their space and nobody else's, with no password to forget.</p>
+  </header>
+
+  <div class="card">
+    <h2>New space</h2>
+    <div class="hint">Takes about fifteen seconds.</div>
+
+    <label for="name">Who is it for</label>
+    <input type="text" id="name" placeholder="e.g. Rorion Gracie" autocomplete="off" maxlength="80">
+    <div class="slugnote">Their link will be <b id="slugPreview">…</b></div>
+
+    <label>Which face they see</label>
+    <div class="chips" id="faces"></div>
+
+    <label>What they get</label>
+    <div class="chips" id="tools"></div>
+
+    <button class="go" id="create" type="button">Make their space</button>
+    <div class="link" id="link">
+      <div class="k">Their link — send this</div>
+      <div class="u" id="linkUrl"></div>
+      <div class="warn">This link is the password. Anyone who has it is in.</div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Your people</h2>
+    <div class="hint">Everyone you've set up. Not anybody else's.</div>
+    <div class="people" id="people"><div class="empty">Loading…</div></div>
+  </div>
+</main>
+
+<script src="theme.js"></script>
+<script src="setup.js"></script>
+</body>
+</html>
