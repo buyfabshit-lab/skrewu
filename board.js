@@ -102,7 +102,7 @@ function applyZoom() {
   zoomOuter.style.width = (canvas.offsetWidth * zoom) + 'px';
   zoomOuter.style.height = (canvas.offsetHeight * zoom) + 'px';
 }
-function setZoom(z) { zoom = Math.max(0.35, Math.min(1.6, z)); applyZoom(); }
+function setZoom(z) { zoom = Math.max(0.12, Math.min(1.6, z)); applyZoom(); }
 
 /* The board is endless — it stretches whenever a block reaches an edge. */
 function growCanvas(rightEdge, bottomEdge) {
@@ -116,9 +116,11 @@ function growToFitAll() {
   state.nodes.forEach(n => { r = Math.max(r, n.x + 200); b = Math.max(b, n.y + 170); });
   growCanvas(r, b);
 }
+/* True fit: the whole line on screen, width AND height. */
 function fitLine() {
-  const maxX = state.nodes.reduce((m, n) => Math.max(m, n.x + 230), 400);
-  setZoom((viewport.clientWidth - 20) / maxX);
+  let maxX = 400, maxY = 300;
+  state.nodes.forEach(n => { maxX = Math.max(maxX, n.x + 210); maxY = Math.max(maxY, n.y + 175); });
+  setZoom(Math.min((viewport.clientWidth - 16) / maxX, (viewport.clientHeight - 16) / maxY));
   viewport.scrollLeft = 0; viewport.scrollTop = 0;
 }
 
@@ -324,5 +326,7 @@ $('zoomFit').addEventListener('click', fitLine);
 buildTray();
 renderAll();
 growToFitAll();
-/* phones open with the whole line in view; desktop opens 1:1 */
-if (window.innerWidth < 760) fitLine(); else applyZoom();
+/* Phones open zoomed to where the blocks are still readable (tap FIT for the
+   whole-line overview); desktop opens 1:1. */
+if (window.innerWidth < 760) { setZoom(0.7); viewport.scrollLeft = 0; viewport.scrollTop = 0; }
+else applyZoom();

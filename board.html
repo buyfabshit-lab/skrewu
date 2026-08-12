@@ -27,6 +27,12 @@ a{color:inherit;text-decoration:none;}
 .tbtn{background:var(--void-2);border:1px solid var(--iron);color:var(--bone-dim);padding:7px 12px;
   font-size:10px;text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;}
 .tbtn:hover{border-color:var(--acid);color:var(--acid);}
+@media(max-width:760px){
+  .top{gap:7px;padding:0 10px;}
+  .top .hint{display:none;}
+  .top .mark{font-size:12px;}
+  .tbtn{padding:7px 9px;font-size:9.5px;}
+}
 
 /* tray */
 .tray{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--iron);
