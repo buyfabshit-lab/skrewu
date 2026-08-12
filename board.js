@@ -792,19 +792,35 @@ $('rzFit').addEventListener('click', () => { ringZoom = ringFit; ringPanX = 0; r
 
 /* drag the empty space in here to move the map around */
 let rpid = null, rsx = 0, rsy = 0, rpx = 0, rpy = 0;
+let panArmed = false;
 stage.addEventListener('pointerdown', (e) => {
   if (!ringWrap) return;
-  if (e.target.closest('.chipr, .live, .cap, .hubn')) return;
-  rpid = e.pointerId; stage.setPointerCapture(rpid);
+  if (e.target.closest('.chipr, .cap, .hubn, .costs')) return;
+  rpid = e.pointerId;
   rsx = e.clientX; rsy = e.clientY; rpx = ringPanX; rpy = ringPanY;
+  // Zoomed in there's barely any empty space left, so a sideways drag across
+  // the tool moves the map too — up and down still scrolls the tool itself.
+  panArmed = !e.target.closest('.live');
+  if (panArmed) {
+    e.preventDefault();
+    stage.setPointerCapture(rpid);
+    stage.classList.add('panning');
+  }
 });
 stage.addEventListener('pointermove', (e) => {
   if (rpid === null || e.pointerId !== rpid) return;
-  ringPanX = rpx + (e.clientX - rsx);
-  ringPanY = rpy + (e.clientY - rsy);
+  const dx = e.clientX - rsx, dy = e.clientY - rsy;
+  if (!panArmed) {
+    if (Math.abs(dx) < 12 || Math.abs(dx) <= Math.abs(dy)) return;
+    panArmed = true;
+    try { stage.setPointerCapture(rpid); } catch {}
+    stage.classList.add('panning');
+  }
+  ringPanX = rpx + dx;
+  ringPanY = rpy + dy;
   applyRing();
 });
-const endRingPan = () => { rpid = null; };
+const endRingPan = () => { rpid = null; stage.classList.remove('panning'); };
 stage.addEventListener('pointerup', endRingPan);
 stage.addEventListener('pointercancel', endRingPan);
 
@@ -856,8 +872,11 @@ canvas.addEventListener('pointercancel', endPan);
 /* While locked, swallow page-level touch scrolling (Safari still bounces the
    window otherwise). The tool tray stays swipeable so you can still add steps. */
 document.addEventListener('touchmove', (e) => {
-  if (!locked) return;
-  if (e.target && e.target.closest && e.target.closest('.tray')) return;
+  const inSheet = sheet.classList.contains('open');
+  if (!locked && !inSheet) return;
+  const t = e.target;
+  // the tray, the tool panel, the cost list and the picker all still scroll
+  if (t && t.closest && t.closest('.tray, .live, .costs .cl, .pick .list, .pick .info')) return;
   if (e.cancelable) e.preventDefault();
 }, { passive: false });
 
