@@ -28,6 +28,11 @@ not add a fallback that silently reverts to unguarded access.
 **4. Products push as drafts.** Nothing publishes to a live storefront without an
 explicit choice.
 
+**5. This platform is not a shop.** Every shop on it is a tenant — DEATH CORPS
+included. Nothing about one shop (its domain, its Shopify variants, its
+branding) belongs in the code; it lives on that tenant's row. A hard-coded shop
+is a bug, because it means somebody else's customer ends up in the wrong cart.
+
 ---
 
 ## 1. What this system is
@@ -58,7 +63,7 @@ It serves four kinds of user, all on the same engine:
 | Automations (n8n workflows) | GitHub `buyfabshit-lab/machine` |
 | Hosting + serverless functions | Netlify project **skrewu** |
 | Database, file storage, edge functions | Supabase project `qmztuagvxopahowexrum` (us-west-2) |
-| Storefront | Shopify — **DEATH CORPS**, `deathcorps.shop` (admin domain `cae949-fc.myshopify.com`) |
+| A storefront (DEATH CORPS') | Shopify — `deathcorps.shop` (admin domain `cae949-fc.myshopify.com`) |
 | Art backup | Google Drive — folder **SKREW U — Art** |
 
 Static site, no build step. Serverless functions live in `netlify/functions/`
@@ -112,7 +117,18 @@ and are reachable at `/api/<name>` (see `netlify.toml`).
 ### Tenants and lockers — **locked down**
 | Table | Holds |
 |---|---|
-| `tenants` | slug, name, `parent_slug`, `kind` (owner/partner/client), `access_key`, branding, tools, active |
+| `tenants` | slug, name, `parent_slug`, `kind` (owner/partner/client), `access_key`, branding, tools, `shop`, active |
+
+`tenants.shop` is that tenant's storefront — public, non-secret config:
+
+```jsonc
+{ "domain": "deathcorps.shop",
+  "sheets": { "ltr": { "variant": "45551940698198", "price": 18 } } }
+```
+
+Today: `skrewu` is the owner (the platform), `deathcorps` and `rorion` are
+clients, `oceanaire` is a partner. DEATH CORPS is a customer of this system,
+not the system.
 | `locker_logos` | a tenant's logos (`tenant_slug`, name, url, storage_path, drive_file_id) |
 | `locker_shirts` | saved shirts (logo, base photo, print position, price, status) |
 | `locker_garments` | uploaded blank photos used as mockup bases |
@@ -235,6 +251,7 @@ Either paste a **Stripe Payment Link** per product into `products.json`
 | Function | Endpoint | Needs |
 |---|---|---|
 | `locker.js` | `/api/locker` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
+| `shop.js` | `/api/shop?shop=<slug>` | same — returns only a tenant's **public** shop config (name, accent, domain, sheet variants). Deliberately a separate function from the locker so the locker's rule stays absolute: no key, no data. The select names its columns, so nothing secret can leak through it. |
 | `deploy-shopify.js` | `/api/deploy-shopify` | `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ADMIN_TOKEN` |
 | `shopify-order.js` | `/api/shopify-order` | `SHOPIFY_WEBHOOK_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — Shopify's `orders/create` webhook. Verifies the HMAC, then upserts into `omniflow_orders` keyed on `uct` (`UCT-SH-<shopify id>`), so redelivery can't duplicate an order. Pulls print files out of line-item properties into the order's notes. |
 | `generate-description.js` | `/api/generate-description` | `ANTHROPIC_API_KEY` (optional) |

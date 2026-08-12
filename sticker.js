@@ -7,19 +7,20 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-  /* ---- the sheets we print. Edit the prices; the sizes are real UV DTF. ----
-     `variant` is the Shopify variant this size adds to the cart — from the
-     "Custom UV Sticker Sheet" product on DEATH CORPS. Keep the price here in
-     step with the price on that variant, or the cart will disagree with the
-     screen. Set variant to null and this size just can't be ordered online. */
-  const SHOP_DOMAIN = 'deathcorps.shop';
+  /* ---- the sheets we print. The sizes are real UV DTF. ----
+     Which shop this builder sells into is NOT baked in — it comes from the
+     tenant named in ?shop=, so the same page works for every shop running on
+     this platform and never sends one shop's order to another's cart. Prices
+     and Shopify variant ids come with it. A size the shop hasn't listed simply
+     can't be ordered; the sheet can still be built and exported. */
   const SHEETS = [
-    { id: '4x4',   label: '4 × 4"',    wIn: 4,   hIn: 4,  price: 6,  variant: '45551940632662' },
-    { id: '6x6',   label: '6 × 6"',    wIn: 6,   hIn: 6,  price: 11, variant: '45551940665430' },
-    { id: 'ltr',   label: '8.5 × 11"', wIn: 8.5, hIn: 11, price: 18, variant: '45551940698198' },
-    { id: '12x12', label: '12 × 12"',  wIn: 12,  hIn: 12, price: 26, variant: '45551940730966' },
-    { id: '12x24', label: '12 × 24"',  wIn: 12,  hIn: 24, price: 45, variant: '45551940763734' },
+    { id: '4x4',   label: '4 × 4"',    wIn: 4,   hIn: 4,  price: null, variant: null },
+    { id: '6x6',   label: '6 × 6"',    wIn: 6,   hIn: 6,  price: null, variant: null },
+    { id: 'ltr',   label: '8.5 × 11"', wIn: 8.5, hIn: 11, price: null, variant: null },
+    { id: '12x12', label: '12 × 12"',  wIn: 12,  hIn: 12, price: null, variant: null },
+    { id: '12x24', label: '12 × 24"',  wIn: 12,  hIn: 24, price: null, variant: null },
   ];
+  let shopName = null, shopDomain = null;
 
   /* Where a finished print file goes so the shop order can point at it. */
   const SUPABASE_URL = 'https://qmztuagvxopahowexrum.supabase.co';
@@ -59,7 +60,7 @@
   /* ---------------- art tray ---------------- */
   function renderSizes() {
     $('sizes').innerHTML = SHEETS.map(s =>
-      `<button class="seg-b${s.id === sheet.id ? ' on' : ''}" data-s="${s.id}" type="button">${s.label}<small>$${s.price}</small></button>`
+      `<button class="seg-b${s.id === sheet.id ? ' on' : ''}" data-s="${s.id}" type="button">${s.label}${s.price != null ? `<small>$${s.price}</small>` : ''}</button>`
     ).join('');
     $('sizes').querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => {
       sheet = SHEETS.find(s => s.id === b.dataset.s) || SHEETS[0];
@@ -120,6 +121,45 @@
       if (!data.ok) return;
       addArt((data.rows || []).filter(r => r.url).map(r => ({ url: r.url, name: r.name, src: 'locker' })));
     } catch { /* no locker, no problem — uploads still work */ }
+  }
+
+  /* Which shop are we building for? Without one the tool still works — you can
+     lay out a sheet and export the print file — there's just nowhere to buy it. */
+  const shopSlug = (params.get('shop') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+  async function loadShop() {
+    if (!shopSlug) { markOrdering(); return; }
+    try {
+      const res = await fetch('/api/shop?shop=' + encodeURIComponent(shopSlug));
+      const data = await res.json();
+      if (!data.ok) { markOrdering(); return; }
+      shopName = data.shop.name;
+      shopDomain = data.shop.domain;
+      const sheets = data.shop.sheets || {};
+      SHEETS.forEach(s => {
+        const cfg = sheets[s.id];
+        if (!cfg) return;
+        s.variant = cfg.variant || null;
+        if (cfg.price != null) s.price = Number(cfg.price);
+      });
+      if (shopName) {
+        const el = $('shopName');
+        if (el) el.textContent = shopName;
+      }
+    } catch { /* leave it un-orderable rather than guessing a shop */ }
+    markOrdering();
+    renderSizes();
+    draw();
+  }
+
+  /* Say plainly whether this sheet can be bought, instead of a button that
+     leads somewhere broken. */
+  function markOrdering() {
+    const can = !!(shopDomain && SHEETS.some(s => s.variant));
+    $('order').style.display = can ? '' : 'none';
+    $('ordernote').textContent = can
+      ? `${shopName || 'The shop'} prints it and ships it — your design goes with the order.`
+      : 'Export the print file and send it to your printer — online ordering isn’t set up for this shop.';
   }
 
   async function loadPackArt() {
@@ -190,8 +230,10 @@
       ? `${over} ${over === 1 ? "doesn't" : "don't"} fit — make them smaller, auto-arrange, or move up a sheet size.`
       : '';
     $('priceSize').textContent = sheet.label;
-    $('priceVal').textContent = n ? '$' + sheet.price : '$0';
-    $('order').textContent = n ? `Order this sheet — $${sheet.price}` : 'Order this sheet';
+    const priced = sheet.price != null;
+    $('price').style.display = priced ? '' : 'none';
+    $('priceVal').textContent = priced && n ? '$' + sheet.price : '$0';
+    $('order').textContent = priced && n ? `Order this sheet — $${sheet.price}` : 'Order this sheet';
   }
 
   /* Twenty of the same sticker is one line that says twenty — not twenty lines. */
@@ -326,6 +368,7 @@
      with the line item, so the order that lands in OmniFlow already has the
      file attached — nobody has to email artwork back and forth. */
   async function orderIt() {
+    if (!shopDomain) { toast('Online ordering isn’t set up for this shop', true); return; }
     if (!sheet.variant) { toast(`${sheet.label} isn’t set up in the shop yet`, true); return; }
     const keep = pieces.filter(fits);
     if (!keep.length) { toast('Put something on the sheet first', true); return; }
@@ -364,7 +407,7 @@
         prop('Print file', fileUrl),
       ].join('&');
 
-      location.href = `https://${SHOP_DOMAIN}/cart/add?${q}`;
+      location.href = `https://${shopDomain}/cart/add?${q}`;
     } catch (e) {
       toast('Could not reach the shop: ' + (e.message || e), true);
     } finally { btn.disabled = false; btn.textContent = orig; }
@@ -426,6 +469,7 @@
   renderSizes();
   renderTray();
   draw();
+  loadShop();
   loadLockerArt();
   loadPackArt();
 })();

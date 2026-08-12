@@ -128,7 +128,7 @@ footer{margin-top:40px;border-top:1px solid var(--iron);padding-top:16px;color:v
 <body>
 
 <div class="top"><div class="row">
-  <span class="mark">SKREW<b>U</b> · UV Sticker Sheets</span>
+  <span class="mark"><span id="shopName">UV Sticker Sheets</span></span>
   <span><a class="who" href="hub.html" style="margin-right:14px;">The Machine</a><a class="who" href="store.html" style="color:var(--acid);">Art packs →</a></span>
 </div></div>
 
@@ -182,13 +182,13 @@ footer{margin-top:40px;border-top:1px solid var(--iron);padding-top:16px;color:v
 
         <div class="pieces" id="pieces"><div class="empty">Nothing on the sheet yet.</div></div>
 
-        <div class="price">
+        <div class="price" id="price">
           <span class="l">One <span id="priceSize">4×4</span> sheet</span>
           <span class="n" id="priceVal">$0</span>
         </div>
 
-        <button class="btn" id="order" type="button">Order this sheet</button>
-        <div class="ordernote">We print it and ship it — your design goes with the order.</div>
+        <button class="btn" id="order" type="button" style="display:none;">Order this sheet</button>
+        <div class="ordernote" id="ordernote">Export the print file and send it to your printer.</div>
         <button class="btn ghost" id="export" type="button">Or export the 300 DPI print file</button>
         <button class="btn ghost" id="save" type="button">Save it to my locker</button>
       </div>

@@ -33,7 +33,7 @@ const TOOLS = {
   vault:     { name: 'Design Vault',    desc: 'The big archive — browse licensed art.',    href: 'tools-library/logo-vault/index.html', status: 'live' },
   shirts:    { name: 'Shirts Studio',   desc: 'Logo on a real blank — listing mockup.',    href: 'locker.html?who=rorion', status: 'live', scope: '#builder, #shirts' },
   gangsheet: { name: 'Gang Sheet',      desc: 'Pack logos → 300 DPI DTF print file.',      href: 'locker.html?who=rorion', status: 'live', scope: '#gsCanvas, #gsWidth, #gsItems' },
-  sticker:   { name: 'UV Stickers',     desc: 'Customer builds their own sticker sheet.',  href: 'sticker.html', status: 'live' },
+  sticker:   { name: 'UV Stickers',     desc: 'Customer builds their own sticker sheet.',  href: 'sticker.html?shop=deathcorps', status: 'live' },
   blanks:    { name: 'Blanks Catalog',  desc: 'Pick a blank from the S&S feed.',           href: 'tools-library/blanks-storefront/index.html', status: 'key' },
   deploy:    { name: 'Deploy Panel',    desc: 'One button → push product to stores.',      href: 'deploy.html', status: 'key' },
   shopify:   { name: 'Shopify Store',   desc: 'DEATH CORPS — deathcorps.shop.',            href: 'https://deathcorps.shop', status: 'live' },
