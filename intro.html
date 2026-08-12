@@ -60,6 +60,8 @@ button{font-family:var(--body);cursor:pointer;}
   .eye{animation:none;}
 }
 .hername{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--iron-2);margin-top:12px;}
+.reel{width:clamp(190px,58vw,300px);height:auto;border:1px solid var(--iron);background:#000;
+  display:block;filter:drop-shadow(0 0 26px rgba(0,0,0,.4));}
 
 /* what she says */
 .said{min-height:118px;margin:16px auto 0;max-width:34ch;text-align:center;font-size:clamp(16px,3.6vw,20px);
@@ -97,10 +99,10 @@ button{font-family:var(--body);cursor:pointer;}
 .opened a:hover{color:var(--acid);border-color:var(--acid);}
 </style>
 </head>
-<body>
+<body data-page="Come In">
 
 <div class="bar">
-  <span class="mark" id="mark">SKREW<b>U</b></span>
+  <span class="mark" id="mark" data-brand>SKREWU</span>
   <button class="skip" id="skip" type="button">Skip →</button>
 </div>
 
@@ -111,6 +113,9 @@ button{font-family:var(--body);cursor:pointer;}
   </div>
 
   <div class="her">
+    <!-- A skin with a real presenter shows her here instead of the drawn face.
+         Both are never on screen at once. -->
+    <video class="reel" id="reel" playsinline preload="metadata" style="display:none;"></video>
     <svg class="face" id="face" viewBox="0 0 200 210" role="img" aria-label="Your guide">
       <!-- plate -->
       <path class="plate" d="M40 46 Q100 18 160 46 L168 118 Q100 200 32 118 Z"/>

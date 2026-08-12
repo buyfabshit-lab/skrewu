@@ -1,5 +1,6 @@
 {
-  "_readme": "One engine, four faces. Same tools, same wiring — only the palette, the type and the words change. Pick one with ?theme=<id>, or set branding.theme on a tenant so their people always land in the right skin. Add a fifth by adding a block here; no code change.",
+  "_readme": "One engine, many faces. Same tools, same wiring — only the palette, the type and the words change. Pick one with ?theme=<id>, or set shop.theme on a tenant so their people always land in the right skin. Add another by adding a block here; no code change.",
+  "_video": "Any face can have a real presenter instead of the drawn one. Add \"video\": \"https://…/her.mp4\" and the intro plays that in place of the face — filmed, or generated with Hedra or the like. Add \"poster\" for the still it shows before it plays. She still types the same lines underneath, so the page works with the sound off and reads the same if the video never loads.",
   "default": "skrewu",
   "themes": {
     "skrewu": {
@@ -75,6 +76,31 @@
         "And you can change it any time. Add a step, move one, drop one. It's your line."
       ],
       "ask": "Which one's you?"
+    },
+
+    "tropical": {
+      "name": "Island",
+      "for": "Hawaiian and island shops — surf, sun, resort wear.",
+      "vars": {
+        "--void": "#04262b", "--void-2": "#0a3740", "--panel": "#0d4450",
+        "--bone": "#f2fbf7", "--bone-dim": "#93bfba",
+        "--iron": "#175a63", "--iron-2": "#2c7d84",
+        "--acid": "#ffc247", "--ember": "#ff7a59",
+        "--rust": "#e5544b", "--rust-bright": "#ff6a5c",
+        "--disp": "'Trebuchet MS','Gill Sans','Segoe UI',sans-serif",
+        "--body": "'Segoe UI',-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif"
+      },
+      "bodyBg": "radial-gradient(900px 520px at 50% -12%, rgba(255,194,71,.16), transparent 62%), radial-gradient(760px 460px at 8% 108%, rgba(255,122,89,.16), transparent 58%), #04262b",
+      "guide": "Your guide",
+      "intro": [
+        "Hey — twenty seconds and you're set.",
+        "Everything you make runs down one line. Art in one end, a packed order out the other.",
+        "It's all open from the start. Nothing locked, nothing to unlock.",
+        "You pick the way through — print sheets, shirts and resort wear, stickers and decals, or just the orders.",
+        "Any of them. They all come out the same end.",
+        "And nothing's set in stone. Add a step, move one, drop one. The line's yours."
+      ],
+      "ask": "Which one sounds like you?"
     },
 
     "critters": {

@@ -22,13 +22,20 @@ let SCRIPT = [
 const face = $('face');
 const said = $('said');
 let mode = 'type';          // 'type' | 'say'
+let hasReel = false;        // a real presenter for this skin, if it has one
 let running = false;
 let stop = false;
 
 const canSpeak = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 if (!canSpeak) $('mSay').style.display = 'none';
 
-const talking = (on) => face.classList.toggle('talking', !!on);
+function talking(on) {
+  face.classList.toggle('talking', !!on);
+  if (!hasReel) return;
+  const reel = $('reel');
+  if (on) { reel.play().catch(() => {}); }      // a phone may refuse until tapped
+  else { try { reel.pause(); } catch {} }
+}
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 /* Prefer a woman's voice when the device has one — she reads better with the
@@ -163,6 +170,24 @@ window.addEventListener('pagehide', () => { if (canSpeak) { try { speechSynthesi
 
 renderWays();
 
+/* A skin can bring a real presenter — filmed, or generated. She replaces the
+   drawn face and plays while the same lines type underneath, so the page still
+   works with the sound off and still reads right if the video never arrives. */
+function useReel(url, poster) {
+  const reel = $('reel');
+  if (!reel || !url) return false;
+  reel.src = url;
+  if (poster) reel.poster = poster;
+  reel.playsInline = true;
+  reel.addEventListener('error', () => {      // a dead link must not eat the intro
+    reel.style.display = 'none';
+    face.style.display = '';
+  }, { once: true });
+  reel.style.display = '';
+  face.style.display = 'none';
+  return true;
+}
+
 /* Say it in this skin's voice if there is one, otherwise say it in ours. */
 (window.themeReady || Promise.resolve(null)).then(theme => {
   if (theme) {
@@ -170,6 +195,11 @@ renderWays();
     if (theme.ask) $('forkAsk').textContent = theme.ask;
     if (theme.guide) $('hername').textContent = theme.guide;
     if (theme.name) $('mark').textContent = theme.name;   // each face wears its own name
+    if (theme.video) {
+      hasReel = useReel(theme.video, theme.poster);
+      // Her own voice is on the tape — don't have the phone read over her.
+      if (hasReel) { $('mSay').style.display = 'none'; mode = 'type'; }
+    }
   }
   play();
 });

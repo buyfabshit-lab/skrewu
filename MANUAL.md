@@ -320,7 +320,19 @@ words change. `themes.json` holds them; `theme.js` applies them.
 | `skrewu` | SKREW U | our own people — underground, shop floor |
 | `pro` | Studio | corporate and professional accounts |
 | `sport` | Team | schools, clubs, teams |
+| `tropical` | Island | Hawaiian and island shops, surf, resort wear |
 | `critters` | Critters | pet and people shops |
+
+**SKREW U is one face, not the product.** No page owns the brand: every place it
+appears is a `data-brand` element that `theme.js` fills in, and the tab title
+comes from `data-page` on the body plus the face's name. Rorion and Oceanaire
+are set to `pro`; nobody is handed somebody else's brand.
+
+**A real presenter, per face.** Add `"video"` (and optionally `"poster"`) to a
+face and the intro plays that instead of the drawn one — filmed or generated.
+The same lines still type underneath, so it works with the sound off and reads
+the same if the video never loads. A face with a video hides the "say it out
+loud" button, since her voice is already on the tape.
 
 Each carries its own intro script, so the guide says the same six true things
 in the right voice for whoever's listening.

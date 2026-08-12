@@ -63,6 +63,28 @@ window.themeReady = (async function applyTheme() {
   return window.THEME;
 })();
 
+/* Put this skin's name wherever the brand shows.
+     <span data-brand="The Machine"> → "Studio · The Machine"
+     <span data-brand>              → "Studio"
+   and the tab title alongside it. No page owns the brand any more; every one
+   of them is handed it. */
+function brandThePage(theme) {
+  if (!theme || !theme.name) return;
+  document.querySelectorAll('[data-brand]').forEach(el => {
+    const suffix = el.getAttribute('data-brand');
+    el.textContent = suffix ? `${theme.name} · ${suffix}` : theme.name;
+  });
+  const page = document.body && document.body.getAttribute('data-page');
+  if (page) document.title = `${theme.name} · ${page}`;
+}
+window.themeReady.then(theme => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => brandThePage(theme), { once: true });
+  } else {
+    brandThePage(theme);
+  }
+});
+
 /* Carry the chosen skin from page to page, so somebody looking at the corporate
    face doesn't get thrown back into ours by clicking a link. */
 window.addEventListener('DOMContentLoaded', () => {

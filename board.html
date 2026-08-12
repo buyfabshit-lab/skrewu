@@ -267,13 +267,13 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
-<body>
+<body data-page="The Board">
 
 <div class="top">
   <button class="tbtn lockbtn" id="lockBtn" type="button" aria-pressed="false" title="Lock the board so it can't slide while you move blocks">
     <span class="ic">🔓</span><span class="lbl">Board</span>
   </button>
-  <a class="mark" href="hub.html">SKREW<b>U</b> · Board</a>
+  <a class="mark" href="hub.html" data-brand="Board">SKREWU · Board</a>
   <span class="hint" id="hint">Drag blocks · drag empty space to slide the board · tap a right port then a left port to wire · tap a wire to cut</span>
   <button class="tbtn" id="zoomOut" type="button" title="Zoom out">−</button>
   <button class="tbtn" id="zoomFit" type="button" title="Fit the line on screen">Fit</button>
@@ -337,6 +337,7 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
 
 <div class="toast" id="toast"></div>
 
+<script src="theme.js"></script>
 <script src="board.js"></script>
 </body>
 </html>
