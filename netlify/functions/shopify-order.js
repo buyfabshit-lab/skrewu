@@ -60,6 +60,23 @@ async function sb(path, opts = {}) {
   return data;
 }
 
+/* Which shop this order belongs to.
+ *
+ * Shopify names the store it came from on every webhook, and each tenant
+ * records its own storefront domain, so the two match up without us having to
+ * be told. An order we can't place is refused rather than filed under whoever
+ * happens to be first — putting one shop's customer on another shop's list is
+ * worse than making Shopify retry.
+ */
+async function tenantForShop(domain) {
+  const d = String(domain || '').toLowerCase().trim();
+  if (!d) return null;
+  const rows = await sb(
+    `tenants?shop->>domain=eq.${encodeURIComponent(d)}&active=is.true&select=slug`
+  );
+  return (rows && rows[0] && rows[0].slug) || null;
+}
+
 /* Line-item properties are where a customer's own work rides along —
    the sticker builder attaches "Print file" to the line it adds to the cart. */
 const FILE_KEYS = /^(print file|design|artwork|art file|proof)$/i;
@@ -127,6 +144,19 @@ exports.handler = async (event) => {
   try { order = JSON.parse(raw.toString('utf8')); } catch { return json(400, { ok: false, error: 'Invalid payload' }); }
   if (!order || !order.id) return json(400, { ok: false, error: 'Not an order' });
 
+  const shopDomain = headers['x-shopify-shop-domain'] || headers['X-Shopify-Shop-Domain'];
+  let tenantSlug;
+  try {
+    tenantSlug = await tenantForShop(shopDomain);
+  } catch (e) {
+    return json(502, { ok: false, error: String(e.message || e) });
+  }
+  if (!tenantSlug) {
+    // 404, not 200: Shopify keeps retrying, which is what we want while the
+    // storefront's domain is being filled in on its tenant record.
+    return json(404, { ok: false, error: 'No shop on this platform matches ' + (shopDomain || 'that store') });
+  }
+
   const items = order.line_items || [];
   const units = items.reduce((n, li) => n + (Number(li.quantity) || 0), 0);
   const art = artworkFrom(order);
@@ -147,6 +177,7 @@ exports.handler = async (event) => {
     // Deterministic, and `uct` is unique — so a redelivered webhook updates the
     // same row instead of creating a second order.
     uct: 'UCT-SH-' + order.id,
+    tenant_slug: tenantSlug,
     source: 'shopify',
     platform_order_no: order.name || ('#' + order.order_number),
     customer_name: order.customer
