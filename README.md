@@ -61,6 +61,9 @@ server-side by the functions — it never reaches the browser.
 | `SHOPIFY_API_VERSION` | Shopify | Optional. Defaults to `2024-10`. |
 | `ANTHROPIC_API_KEY` | Auto-description | Optional. Without it, the "Auto-fill" button uses a built-in template. |
 | `ANTHROPIC_MODEL` | Auto-description | Optional. Defaults to `claude-sonnet-5`. |
+| `SUPABASE_URL` | Lockers | **Required now.** `https://qmztuagvxopahowexrum.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Lockers | **Required now.** Supabase → Project Settings → API → `service_role` secret. Server-side only — the locker function uses it to enforce who can see what. Without it the lockers won't load. |
+| `STRIPE_SECRET_KEY` | Store checkout | Optional — only if you want checkout built server-side instead of pasting Stripe Payment Links into `products.json`. |
 | `DEPLOY_SHARED_KEY` | Access gate | Optional but recommended. If set, the deploy function requires a matching `x-deploy-key`; enter it once in the panel (double-click the top-right tag to reveal the field). |
 
 ### How to create the Shopify token

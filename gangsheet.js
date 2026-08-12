@@ -61,10 +61,21 @@
     } catch { return null; }
   }
 
+  const ACCESS_KEY = new URLSearchParams(location.search).get('k') || '';
+  async function api(action, payload = {}) {
+    try {
+      const res = await fetch('/api/locker', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, who: slug, key: ACCESS_KEY, ...payload }),
+      });
+      return await res.json();
+    } catch (e) { return { ok: false, error: String(e.message || e) }; }
+  }
+
   async function loadLogos() {
-    const { data, error } = await sb.from('locker_logos').select('id,url,name').eq('owner_slug', slug).order('created_at', { ascending: false });
-    if (error) { console.error(error); return; }
-    logos = data || [];
+    const r = await api('list', { table: 'logos' });
+    if (!r.ok) { console.error(r.error); return; }
+    logos = (r.rows || []).map(x => ({ id: x.id, url: x.url, name: x.name }));
     renderLogoPick();
   }
   function renderWidths() {
@@ -176,10 +187,10 @@
         const { error: upErr } = await sb.storage.from('listing-photos').upload(path, blob, { contentType: 'image/png', upsert: false });
         if (!upErr) {
           const sheetUrl = sb.storage.from('listing-photos').getPublicUrl(path).data.publicUrl;
-          await sb.from('locker_gang_sheets').insert({
-            owner_slug: slug, name: fname, width_in: widthIn, height_in: Number(totalHeightIn.toFixed(2)),
+          await api('insert', { table: 'gangsheets', row: {
+            name: fname, width_in: widthIn, height_in: Number(totalHeightIn.toFixed(2)),
             items, sheet_url: sheetUrl,
-          });
+          } });
         }
       } catch (e) { console.warn('sheet save skipped', e); }
 

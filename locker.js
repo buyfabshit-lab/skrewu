@@ -3,9 +3,23 @@
 
 const SUPABASE_URL = 'https://qmztuagvxopahowexrum.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_cbwgMdVv6XDxLp0WOBsM-w_irvs7BAh';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // files only
 const BUCKET = 'listing-photos';
+
+/* Art lives behind the server door now — the key in your link is what opens it,
+   and it only ever opens your own locker. */
+const ACCESS_KEY = new URLSearchParams(location.search).get('k') || '';
+async function api(action, payload = {}) {
+  try {
+    const res = await fetch('/api/locker', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, who: slug, key: ACCESS_KEY, ...payload }),
+    });
+    return await res.json();
+  } catch (e) {
+    return { ok: false, error: String(e.message || e) };
+  }
+}
 const $ = (id) => document.getElementById(id);
 
 const slug = (new URLSearchParams(location.search).get('who') || 'rorion').toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -69,9 +83,9 @@ async function uploadImageFile(file, subdir) {
 /* ================= LOGOS ================= */
 let logos = [];
 async function loadLogos() {
-  const { data, error } = await sb.from('locker_logos').select('*').eq('owner_slug', slug).order('created_at', { ascending: false });
-  if (error) { console.error(error); toast('Could not load logos', true); return; }
-  logos = data || []; renderVault();
+  const r = await api('list', { table: 'logos' });
+  if (!r.ok) { toast(r.error || 'Could not load logos', true); return; }
+  logos = r.rows || []; renderVault();
 }
 function renderVault() {
   const grid = $('vault');
@@ -95,10 +109,10 @@ async function handleLogoFiles(fileList) {
   for (const file of files) {
     try {
       const { url, path } = await uploadImageFile(file, '');
-      const { data: row, error } = await sb.from('locker_logos')
-        .insert({ owner_slug: slug, name: file.name.replace(/\.[^.]+$/, ''), url, storage_path: path }).select().single();
-      if (error) throw error;
-      logos.unshift(row); ok++; renderVault();
+      const r = await api('insert', { table: 'logos',
+        row: { name: file.name.replace(/\.[^.]+$/, ''), url, storage_path: path } });
+      if (!r.ok) throw new Error(r.error);
+      logos.unshift(r.row); ok++; renderVault();
     } catch (e) { console.error(e); toast('One file failed: ' + (e.message || e), true); }
   }
   if (ok) toast(`${ok} logo${ok === 1 ? '' : 's'} in your locker`);
@@ -106,8 +120,8 @@ async function handleLogoFiles(fileList) {
 async function removeLogo(id) {
   const item = logos.find(l => l.id === id);
   if (!item || !confirm('Remove this logo?')) return;
-  const { error } = await sb.from('locker_logos').delete().eq('id', id);
-  if (error) { toast('Could not remove it', true); return; }
+  const r = await api('remove', { table: 'logos', id });
+  if (!r.ok) { toast(r.error || 'Could not remove it', true); return; }
   if (item.storage_path) sb.storage.from(BUCKET).remove([item.storage_path]).catch(() => {});
   logos = logos.filter(l => l.id !== id); renderVault(); toast('Removed');
 }
@@ -115,9 +129,9 @@ async function removeLogo(id) {
 /* ================= GARMENTS (real blank photos) ================= */
 let garments = [];
 async function loadGarments() {
-  const { data, error } = await sb.from('locker_garments').select('*').eq('owner_slug', slug).order('created_at', { ascending: false });
-  if (error) { console.error(error); return; }
-  garments = data || [];
+  const r = await api('list', { table: 'garments' });
+  if (!r.ok) { console.error(r.error); return; }
+  garments = r.rows || [];
 }
 async function handleGarmentFiles(fileList) {
   const files = [...fileList].filter(f => f.type.startsWith('image/'));
@@ -126,10 +140,10 @@ async function handleGarmentFiles(fileList) {
   for (const file of files) {
     try {
       const { url, path } = await uploadImageFile(file, 'blanks');
-      const { data: row, error } = await sb.from('locker_garments')
-        .insert({ owner_slug: slug, name: file.name.replace(/\.[^.]+$/, ''), url, storage_path: path }).select().single();
-      if (error) throw error;
-      garments.unshift(row);
+      const r = await api('insert', { table: 'garments',
+        row: { name: file.name.replace(/\.[^.]+$/, ''), url, storage_path: path } });
+      if (!r.ok) throw new Error(r.error);
+      const row = r.row; garments.unshift(row);
       base = { type: 'photo', garment: row };
       refreshGarmentPick(); setMockDom();
     } catch (e) { console.error(e); toast('Blank upload failed: ' + (e.message || e), true); }
@@ -140,7 +154,7 @@ async function removeGarment(id, ev) {
   if (ev) ev.stopPropagation();
   const g = garments.find(x => x.id === id);
   if (!g || !confirm('Remove this blank?')) return;
-  await sb.from('locker_garments').delete().eq('id', id);
+  await api('remove', { table: 'garments', id });
   if (g.storage_path) sb.storage.from(BUCKET).remove([g.storage_path]).catch(() => {});
   garments = garments.filter(x => x.id !== id);
   if (base.type === 'photo' && base.garment && base.garment.id === id) { base = { type: 'color', color: SHIRT_COLORS[0].h }; }
@@ -154,9 +168,9 @@ let base = { type: 'color', color: SHIRT_COLORS[0].h, garment: null };
 let print = { ...DEFAULT_PRINT };
 
 async function loadShirts() {
-  const { data, error } = await sb.from('locker_shirts').select('*').eq('owner_slug', slug).order('created_at', { ascending: false });
-  if (error) { console.error(error); return; }
-  shirts = data || []; renderShirts();
+  const r = await api('list', { table: 'shirts' });
+  if (!r.ok) { console.error(r.error); return; }
+  shirts = r.rows || []; renderShirts();
 }
 function shirtBaseHtml(s) {
   return s.base_url ? `<img class="sl-base" src="${s.base_url}" alt="">` : teeSvg(s.shirt_color || '#141414');
@@ -314,22 +328,22 @@ async function saveShirt() {
       if (!error) mockupUrl = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
     }
     const row = {
-      owner_slug: slug, name, price: Number(price), logo_url: bLogo.url,
+      name, price: Number(price), logo_url: bLogo.url,
       shirt_color: base.type === 'color' ? base.color : null,
       base_url: base.type === 'photo' && base.garment ? base.garment.url : null,
       print, mockup_url: mockupUrl, status: 'draft',
     };
-    const { data: saved, error } = await sb.from('locker_shirts').insert(row).select().single();
-    if (error) throw error;
-    shirts.unshift(saved); renderShirts(); closeBuilder(); toast('Shirt saved to your locker');
+    const r = await api('insert', { table: 'shirts', row });
+    if (!r.ok) throw new Error(r.error);
+    shirts.unshift(r.row); renderShirts(); closeBuilder(); toast('Shirt saved to your locker');
   } catch (e) { console.error(e); toast('Save failed: ' + (e.message || e), true); }
   finally { btn.disabled = false; btn.textContent = orig; }
 }
 async function removeShirt(id) {
   const s = shirts.find(x => x.id === id);
   if (!s || !confirm('Remove this shirt?')) return;
-  const { error } = await sb.from('locker_shirts').delete().eq('id', id);
-  if (error) { toast('Could not remove it', true); return; }
+  const r = await api('remove', { table: 'shirts', id });
+  if (!r.ok) { toast(r.error || 'Could not remove it', true); return; }
   shirts = shirts.filter(x => x.id !== id); renderShirts(); toast('Removed');
 }
 async function pushToShop(id) {
@@ -345,7 +359,7 @@ async function pushToShop(id) {
       }),
     });
     const data = await res.json();
-    if (data.ok) { await sb.from('locker_shirts').update({ status: 'in_shop' }).eq('id', id); s.status = 'in_shop'; renderShirts(); toast('Pushed to shop as a draft ✓'); }
+    if (data.ok) { await api('update', { table: 'shirts', id, patch: { status: 'in_shop' } }); s.status = 'in_shop'; renderShirts(); toast('Pushed to shop as a draft ✓'); }
     else toast(data.error && /configured/i.test(data.error) ? 'Connect Shopify first (token not set)' : ('Shop push failed: ' + (data.error || 'error')), true);
   } catch (e) { toast('Shop push failed: ' + (e.message || e), true); }
 }
