@@ -193,6 +193,13 @@ Values below are placeholders.
 | `SHOPIFY_STORE_DOMAIN` | `cae949-fc.myshopify.com` |
 | `SHOPIFY_ADMIN_TOKEN` | `REPLACE_WITH_SHOPIFY_ADMIN_TOKEN` (`shpat_…`) |
 | `SHOPIFY_API_VERSION` | optional, defaults `2024-10` |
+| `SHOPIFY_WEBHOOK_SECRET` | `REPLACE_WITH_SHOPIFY_WEBHOOK_SECRET` — shown when you create the `orders/create` webhook. Without it `/api/shopify-order` refuses every call, which is correct: an unsigned order endpoint lets anyone write into your order list. |
+
+**Turning on live order intake:** Shopify admin → Settings → Notifications →
+Webhooks → Create webhook → event **Order creation**, format **JSON**, URL
+`https://skrewu.netlify.app/api/shopify-order`. Copy the signing secret it
+shows into `SHOPIFY_WEBHOOK_SECRET`. Every paid order then lands in OmniFlow
+within seconds, with any customer-designed print file attached to it.
 
 Create the token: Shopify admin → Settings → Apps and sales channels → Develop
 apps → Create an app → scopes `write_products`, `read_products` → Install →
@@ -229,6 +236,7 @@ Either paste a **Stripe Payment Link** per product into `products.json`
 |---|---|---|
 | `locker.js` | `/api/locker` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
 | `deploy-shopify.js` | `/api/deploy-shopify` | `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ADMIN_TOKEN` |
+| `shopify-order.js` | `/api/shopify-order` | `SHOPIFY_WEBHOOK_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — Shopify's `orders/create` webhook. Verifies the HMAC, then upserts into `omniflow_orders` keyed on `uct` (`UCT-SH-<shopify id>`), so redelivery can't duplicate an order. Pulls print files out of line-item properties into the order's notes. |
 | `generate-description.js` | `/api/generate-description` | `ANTHROPIC_API_KEY` (optional) |
 | `checkout.js` | `/api/checkout` | `STRIPE_SECRET_KEY` — prices come from `products.json` + `packs.json` in the repo, never from the browser |
 
@@ -244,8 +252,15 @@ vault is needed.
 the store front-end, OmniFlow (24 real orders), wholesale form, ship manifest,
 customer tracking, tenant wall.
 
-**Built, waiting on a key:** Shopify push · Stripe checkout · Google Drive
-backup · S&S blanks catalogue.
+**Built, waiting on a key:** Shopify push · live order intake (the
+`orders/create` webhook above) · Stripe checkout · Google Drive backup ·
+S&S blanks catalogue.
+
+**How an order flows now:** customer builds a sticker sheet → print file goes to
+storage → Shopify cart → they pay → `orders/create` fires → `/api/shopify-order`
+verifies and files it → OmniFlow → Ship Manifest → Customer Tracking. Every
+channel is meant to land in `omniflow_orders` the same way; Shopify is the first
+one wired end to end.
 
 **Not started:** TikTok Shop (needs partner approval) · eBay · partner console
 for Jeff · order routing with partner attribution · true white-label (no SKREW U
