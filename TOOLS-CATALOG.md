@@ -10,6 +10,7 @@ API surface live in each tool's README.
 | [wholesale-order-form](tools-library/wholesale-order-form/) | A shop-facing drop-off form — buyers submit multi-item print/merch orders (sizes, artwork, notes) straight into your production queue. | ✅ Ready | Supabase `shop_orders` + `order-artwork` bucket |
 | [logo-vault](tools-library/logo-vault/) | Sell licensed brand art with tiered licensing. | ✅ Ready (placeholder catalog — awaiting MVP zip) | Shopify Storefront + Supabase `print-assets` (private, signed URLs) |
 | [blanks-storefront](tools-library/blanks-storefront/) | Pick a blank, then design it — a live apparel-blanks catalog with a Design-this-blank button into your designer. | ✅ Ready (add S&S creds) | `ss-products` function → S&S Activewear API |
+| [camo-tool](tools-library/camo-tool/) | Fill any logo with 169 seamless camo patterns — solid or camo fill, inside/outside stroke, 300 DPI transparent PNG export. | ✅ Ready | Supabase `open-block/camo` public storage (pattern library) |
 | gang-sheet-logo-maker | Lay out customer logos into a print-ready gang sheet for DTF/transfer runs. | ⏳ Pending source — not present in this repo | TBD |
 
 ## Notes

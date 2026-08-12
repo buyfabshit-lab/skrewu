@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CAMO LOGO LAB</title>
+<style>
+  :root {
+    --bg: #0a0a08;
+    --panel: #12130d;
+    --panel2: #191b12;
+    --line: #2a2d1e;
+    --olive: #5a6142;
+    --olive-hi: #8a936a;
+    --ink: #d8d6c9;
+    --dim: #8b8a7d;
+    --accent: #ffd400;
+    --accent-dim: #b89a00;
+    --danger: #e01919;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    overscroll-behavior: none;
+  }
+  button { font-family: var(--mono); cursor: pointer; }
+
+  /* ---------- layout ---------- */
+  #app { display: flex; flex-direction: column; height: 100dvh; }
+  header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    flex: 0 0 auto;
+  }
+  header h1 { font-size: 14px; letter-spacing: 3px; color: var(--accent); font-weight: 700; }
+  header .sub { color: var(--dim); font-size: 10px; letter-spacing: 1px; }
+  header .spacer { flex: 1; }
+
+  #main { display: flex; flex: 1 1 auto; min-height: 0; }
+
+  /* pattern grid (left) */
+  #patterns {
+    width: 218px; flex: 0 0 auto;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  #patterns .panel-title, .panel .panel-title {
+    padding: 8px 10px; font-size: 10px; letter-spacing: 2px;
+    color: var(--olive-hi); border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  #patSearch {
+    margin: 8px 10px 0; padding: 6px 8px; width: calc(100% - 20px);
+    background: var(--bg); border: 1px solid var(--line); color: var(--ink);
+    font-family: var(--mono); font-size: 11px; outline: none;
+  }
+  #patSearch:focus { border-color: var(--olive); }
+  #patGrid {
+    flex: 1; overflow-y: auto; padding: 10px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    align-content: start;
+  }
+  .pat-tile {
+    aspect-ratio: 1; background-size: cover; background-position: center;
+    border: 1px solid var(--line); position: relative; cursor: pointer;
+    background-color: var(--panel2);
+  }
+  .pat-tile:hover { border-color: var(--olive-hi); }
+  .pat-tile.active { border: 2px solid var(--accent); }
+  .pat-tile .lbl {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: rgba(5,5,3,.78); color: var(--ink);
+    font-size: 8px; padding: 2px 3px; letter-spacing: .5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pat-tile.loading::after {
+    content: "LOADING"; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(5,5,3,.6); color: var(--accent); font-size: 8px; letter-spacing: 2px;
+  }
+
+  /* center canvas */
+  #stage {
+    flex: 1 1 auto; min-width: 0; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 18px; position: relative;
+    background:
+      radial-gradient(ellipse at center, #10110b 0%, var(--bg) 75%);
+  }
+  #canvasWrap {
+    max-width: 100%; max-height: 100%;
+    position: relative;
+    /* transparency checkerboard */
+    background-image:
+      linear-gradient(45deg, #1c1d15 25%, transparent 25%, transparent 75%, #1c1d15 75%),
+      linear-gradient(45deg, #1c1d15 25%, transparent 25%, transparent 75%, #1c1d15 75%);
+    background-color: #14150e;
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+    border: 1px solid var(--line);
+    box-shadow: 0 0 40px rgba(0,0,0,.6);
+  }
+  #preview { display: block; max-width: 100%; max-height: calc(100dvh - 220px); touch-action: none; cursor: grab; }
+  #preview.dragging { cursor: grabbing; }
+  #dropHint {
+    position: absolute; inset: 0; display: flex; flex-direction: column; gap: 10px;
+    align-items: center; justify-content: center; text-align: center;
+    color: var(--dim); font-size: 12px; letter-spacing: 1px; padding: 30px;
+  }
+  #dropHint b { color: var(--accent); letter-spacing: 3px; }
+  #stage.dragover #canvasWrap { border-color: var(--accent); }
+  #dragTip {
+    position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; color: var(--dim); letter-spacing: 1px; pointer-events: none;
+  }
+
+  /* controls (right) */
+  #controls {
+    width: 252px; flex: 0 0 auto;
+    background: var(--panel); border-left: 1px solid var(--line);
+    overflow-y: auto; min-height: 0;
+  }
+  .panel { border-bottom: 1px solid var(--line); }
+  .panel .body { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .row label { font-size: 10px; color: var(--dim); letter-spacing: 1px; flex: 0 0 auto; }
+  .row .val { margin-left: auto; color: var(--accent); font-size: 10px; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 3px; background: var(--line); border-radius: 0;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px; margin-top: -8px;
+    background: var(--accent); border: 2px solid var(--bg); border-radius: 50%;
+  }
+  input[type=range]::-moz-range-track { height: 3px; background: var(--line); }
+  input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px; background: var(--accent); border: 2px solid var(--bg); border-radius: 50%;
+  }
+  input[type=color] {
+    width: 34px; height: 28px; border: 1px solid var(--line); background: var(--bg); padding: 2px; cursor: pointer;
+  }
+  .btn {
+    background: var(--panel2); border: 1px solid var(--line); color: var(--ink);
+    padding: 7px 10px; font-size: 10px; letter-spacing: 1px;
+  }
+  .btn:hover { border-color: var(--olive-hi); }
+  .btn.primary { background: var(--accent); color: #111; border-color: var(--accent); font-weight: 700; }
+  .btn.primary:hover { background: #ffe25a; }
+  .btn.active { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .seg { display: flex; }
+  .seg .btn { flex: 1; }
+  .seg .btn + .btn { border-left: none; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sw {
+    width: 26px; height: 26px; border: 1px solid var(--line); cursor: pointer; padding: 0;
+  }
+  .sw:hover { border-color: var(--ink); }
+  .sw.active { outline: 2px solid var(--accent); }
+
+  /* export bar */
+  footer {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-top: 1px solid var(--line); background: var(--panel);
+    flex-wrap: wrap;
+  }
+  footer .fname { color: var(--dim); font-size: 10px; flex: 1; min-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  select {
+    background: var(--panel2); color: var(--ink); border: 1px solid var(--line);
+    font-family: var(--mono); font-size: 11px; padding: 6px;
+  }
+  #status { font-size: 10px; color: var(--olive-hi); letter-spacing: 1px; }
+
+  input[type=file] { display: none; }
+
+  #mobileTabs { display: none; }
+
+  /* ---------- mobile: art stays on screen, one panel opens under it ---------- */
+  @media (max-width: 900px) {
+    #main { flex-direction: column; overflow-y: auto; }
+    #stage { flex: 0 0 auto; min-height: 36dvh; padding: 10px; order: 0; }
+    #preview { max-height: 33dvh; }
+    #mobileTabs {
+      display: flex; order: 1;
+      background: var(--panel);
+      border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    }
+    #mobileTabs button {
+      flex: 1; background: none; border: none; color: var(--dim);
+      padding: 11px 0; font-size: 11px; letter-spacing: 2px;
+      border-bottom: 2px solid transparent;
+    }
+    #mobileTabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+    #patterns {
+      width: 100%; border-right: none; border-top: none;
+      order: 2; max-height: 34dvh; display: none;
+    }
+    #patGrid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+    #controls { width: 100%; border-left: none; order: 3; overflow: visible; }
+    #controls .panel { display: none; }
+    #controls .panel .panel-title { display: none; } /* tab already names it */
+    body[data-mtab="fill"] #controls .p-fill,
+    body[data-mtab="camo"] #controls .p-camo,
+    body[data-mtab="stroke"] #controls .p-stroke { display: block; }
+    body[data-mtab="camo"] #patterns { display: flex; }
+    footer { position: sticky; bottom: 0; z-index: 5; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>CAMO LOGO LAB</h1>
+    <span class="sub">// MASK &amp; FILL OPS</span>
+    <span class="spacer"></span>
+    <span id="status">READY</span>
+    <button class="btn" id="btnDemo">TEST LOGO</button>
+    <button class="btn primary" id="btnUpload">UPLOAD LOGO</button>
+    <input type="file" id="fileInput" accept="image/png,image/svg+xml,image/webp,image/gif">
+  </header>
+
+  <div id="main">
+    <!-- LEFT: pattern grid -->
+    <aside id="patterns">
+      <div class="panel-title"><span>CAMO LIBRARY</span><span id="patCount" style="color:var(--dim)"></span></div>
+      <input id="patSearch" type="search" placeholder="search patterns…" autocomplete="off">
+      <div id="patGrid"></div>
+    </aside>
+
+    <!-- CENTER: live preview -->
+    <section id="stage">
+      <div id="canvasWrap">
+        <canvas id="preview" width="900" height="600"></canvas>
+        <div id="dropHint">
+          <b>DROP LOGO HERE</b>
+          <span>PNG with transparency or SVG.<br>The alpha channel becomes the mask —<br>white logos work fine.</span>
+        </div>
+        <div id="dragTip" hidden>DRAG CANVAS TO MOVE PATTERN</div>
+      </div>
+    </section>
+
+    <nav id="mobileTabs">
+      <button data-mtab="fill">FILL</button>
+      <button data-mtab="camo">CAMO</button>
+      <button data-mtab="stroke">STROKE</button>
+    </nav>
+
+    <!-- RIGHT: controls -->
+    <aside id="controls">
+      <div class="panel p-fill">
+        <div class="panel-title">FILL</div>
+        <div class="body">
+          <div class="seg">
+            <button class="btn" data-fillmode="original" id="modeOriginal">ORIGINAL</button>
+            <button class="btn" data-fillmode="solid" id="modeSolid">SOLID</button>
+            <button class="btn" data-fillmode="camo" id="modeCamo">CAMO</button>
+          </div>
+          <div class="swatches" id="swatches"></div>
+          <div class="row">
+            <label>COLOR</label>
+            <input type="color" id="fillColor" value="#e01919">
+            <button class="btn" id="fillEye" title="eyedropper" hidden>PICK</button>
+            <span class="val" id="fillColorVal">#E01919</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel p-camo">
+        <div class="panel-title">CAMO CONTROL</div>
+        <div class="body">
+          <div class="row"><label>SCALE</label><span class="val" id="scaleVal">1.00×</span></div>
+          <input type="range" id="patScale" min="-1.7" max="0.9" step="0.01" value="-0.3">
+          <div class="row"><label>ROTATION</label><span class="val" id="rotVal">0°</span></div>
+          <input type="range" id="patRot" min="0" max="360" step="1" value="0">
+          <div class="row">
+            <button class="btn" id="patReset" style="flex:1">RESET POSITION</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel p-stroke">
+        <div class="panel-title">STROKE</div>
+        <div class="body">
+          <div class="seg">
+            <button class="btn active" data-strokeside="outside" id="strokeOutside">OUTSIDE</button>
+            <button class="btn" data-strokeside="inside" id="strokeInside">INSIDE</button>
+          </div>
+          <div class="row"><label>WIDTH</label><span class="val" id="strokeWVal">0 px (off)</span></div>
+          <input type="range" id="strokeW" min="0" max="40" step="1" value="0">
+          <div class="row">
+            <label>COLOR</label>
+            <input type="color" id="strokeColor" value="#ffd400">
+            <button class="btn" id="strokeEye" title="eyedropper" hidden>PICK</button>
+            <span class="val" id="strokeColorVal">#FFD400</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- BOTTOM: export bar -->
+  <footer>
+    <label style="font-size:10px;color:var(--dim);letter-spacing:1px">EXPORT</label>
+    <select id="exportSize">
+      <option value="1">1× original</option>
+      <option value="2">2×</option>
+      <option value="4">4×</option>
+    </select>
+    <span style="font-size:10px;color:var(--dim)">PNG · 300 DPI · transparent</span>
+    <span class="fname" id="fnamePreview">—</span>
+    <button class="btn primary" id="btnExport" disabled>EXPORT PNG</button>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+/* ================= CONFIG ================= */
+// Per-customer branding + backend live in ./config.json (or ?config=<url>).
+// Everything below is the built-in default so the tool always runs even when
+// config.json is unreachable (file://, missing file) — see README.
+let CAMO_BASE = 'https://nbrahnwdrtezjpnuccrg.supabase.co/storage/v1/object/public/open-block/camo';
+
+async function loadConfig() {
+  const url = new URLSearchParams(location.search).get('config') || './config.json';
+  let cfg;
+  try { cfg = await (await fetch(url, { cache: 'no-cache' })).json(); } catch (e) { return; }
+  if (!cfg || typeof cfg !== 'object') return;
+  if (cfg.camoLibraryBase) CAMO_BASE = String(cfg.camoLibraryBase).replace(/\/+$/, '');
+  if (cfg.toolTitle) {
+    document.title = cfg.toolTitle;
+    document.querySelector('header h1').textContent = cfg.toolTitle;
+  }
+  if (cfg.tagline) document.querySelector('header .sub').textContent = cfg.tagline;
+  for (const [k, v] of Object.entries(cfg.colors || {})) {
+    document.documentElement.style.setProperty('--' + k.replace(/[A-Z]/g, c => '-' + c.toLowerCase()), v);
+  }
+}
+// Fallback tile list, used when {CAMO_BASE}/manifest.json is missing.
+const FALLBACK_TILES = [
+  'a-tacs-au','a-tacs-fg','a-tacs-ix','a-tacs-le','advisor-tiger-stripe',
+  'afghan-forest-hyperstealth','aor-2','argentine-monte','australian-dpcu',
+  'australian-dpdu','austrian-flecktarn','belarusian-woodland','belgian-jigsaw',
+  'belgian-para','brazilian-digital','british-arctic-dpm','british-desert-dpm',
+  'british-dpm','british-dpm-95','british-mtp','british-urban-mtp',
+  'brunei-digital','cabelas-zonz','cadpat-ar','cadpat-mt','cadpat-tw',
+  'chilean-lautaro','chinese-type-07-snow','chinese-type-07-universal',
+  'cold-war-soviet-birch','colombian-pixelado','concamo-green',
+  'croatian-hv-woodland','cuban-lizard','czech-vz-60-jehlici','czech-vz-95',
+  'danish-m01','danish-m84-desert','danish-m84-flecktarn','dense-tiger-stripe',
+  'duck-hunter','egyptian-desert','erdl-highland','erdl-lowland',
+  'estonian-estdcu','finnish-m05-snow','finnish-m05-woodland',
+  'first-lite-cipher','french-alpine-tundra','french-cce','french-ce-alpine',
+  'french-daguet','french-lizard','french-urban-cce','georgian-digital',
+  'german-flecktarn-5-color','german-snow-flecktarn','german-tropentarn',
+  'german-tropentarn-3-color','greek-lizard','hungarian-2015m',
+  'indian-pattern-2009','israeli-desert','italian-alpine','italian-desertato',
+  'italian-snow-vegetato','italian-vegetato','japanese-gsdf',
+  'john-wayne-tiger-stripe','jordanian-ka2','kenyan-digital','korean-granite-b',
+  'korean-snow','kryptek-altitude','kryptek-highlander','kryptek-mandrake',
+  'kryptek-nomad','kryptek-raid','kryptek-typhon','kuiu-verde',
+  'kuwaiti-desert','latvian-m20-woodlatpat','leibermuster-1945',
+  'lithuanian-m05','m81-woodland','malaysian-multicam','marpat-desert',
+  'marpat-woodland','mexican-marine-digital','mossy-oak-bottomland',
+  'mossy-oak-break-up','mossy-oak-elements','mossy-oak-greenleaf',
+  'mossy-oak-styx','mothwing-spring-mimicry','multicam-alpine',
+  'multicam-arid','multicam-black','multicam-original','multicam-tropic',
+  'namibian-desert','natural-gear','nigerian-digital','norwegian-m98',
+  'norwegian-snow','ocp-scorpion-w2','pakistani-desert','pakistani-ssg',
+  'pencott-badlands','pencott-greenzone','pencott-metropolis',
+  'pencott-snowdrift','peruvian-digital-woodland','polish-mapa',
+  'polish-pantera-wz93','polish-snow','portuguese-lizard',
+  'predator-deception','realtree-ap','realtree-edge','realtree-max-5',
+  'realtree-timber','realtree-xtra','rhodesian-brushstroke','rok-marine',
+  'romanian-m94-leaf','russian-emr-desert','russian-emr-flora',
+  'russian-flora','russian-partizan','russian-sumrak','saudi-desert',
+  'serbian-m93-oak-leaf','singaporean-no-4','sitka-elevated-ii',
+  'slovak-vzor-2007','slovenian-digital','south-african-nutria',
+  'south-african-soldier-2000','soviet-klmk','spanish-pixelado-boscoso',
+  'sparse-tiger-stripe','strichtarn-east-german','sudanese-desert',
+  'swedish-m90-winter','swedish-m90f','swiss-alpenflage','swiss-taz-83',
+  'swiss-taz-90-desert','thai-royal-guard','truetimber-strata',
+  'turkish-snow','turkish-woodland','ukrainian-mm-14',
+  'under-armour-ridge-reaper','us-3-color-desert-dcu',
+  'us-6-color-desert-chocolate-chip','us-army-ucp-acu','us-navy-aor-2',
+  'us-navy-nwu-type-i-blue','us-overwhite','us-snow-overwhite',
+  'vietnam-cidg-tiger','vietnam-tiger-stripe-dense','vietnamese-k20',
+  'ww2-german-splinter-a','ww2-german-sumpfmuster',
+  'ww2-italian-telo-mimetico','ww2-us-frogskin'
+];
+const PREVIEW_MAX = 1400;   // working resolution cap for the live preview
+const SVG_RASTER_SIZE = 1600;
+const SWATCH_COLORS = ['#e01919','#ffffff','#111111','#ffd400','#4b5320','#1f6feb','#e0621a','#b64bd8'];
+
+/* ================= STATE ================= */
+const state = {
+  logo: null,                 // {name, img, w, h}
+  fill: { mode: 'original', color: '#e01919', camoId: null, camoImg: null, camoFullImg: null },
+  pat:  { scale: 0.5, rot: 0, nx: 0, ny: 0 },   // nx/ny normalized to logo width/height
+  stroke: { side: 'outside', color: '#ffd400', width: 0 },
+};
+const tileImgCache = new Map();   // id -> {thumb: Image|null, full: Image|null, fullLoading: bool}
+let TILES = [];
+
+/* ================= DOM ================= */
+const $ = id => document.getElementById(id);
+const preview = $('preview');
+const pctx = preview.getContext('2d');
+const statusEl = $('status');
+
+function setStatus(t, warn) {
+  statusEl.textContent = t;
+  statusEl.style.color = warn ? 'var(--accent)' : 'var(--olive-hi)';
+}
+
+/* ================= RENDER CACHES ================= */
+let maskP = null;          // preview-res mask canvas
+let bandCache = { key: '', canvas: null };
+
+function mkCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w));
+  c.height = Math.max(1, Math.round(h));
+  return c;
+}
+
+/* Build alpha mask at given size from the logo image */
+function makeMask(w, h) {
+  const c = mkCanvas(w, h);
+  const ctx = c.getContext('2d');
+  ctx.drawImage(state.logo.img, 0, 0, c.width, c.height);
+  return c;
+}
+
+/* Disk offsets used for dilate/erode; radius in px */
+function diskOffsets(r) {
+  const offs = [];
+  let rr = r;
+  const ringStep = Math.max(1, r / 3);
+  while (rr > 0.4) {
+    const n = Math.min(192, Math.max(8, Math.ceil((2 * Math.PI * rr) / 1.5)));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 2 * Math.PI;
+      offs.push([rr * Math.cos(a), rr * Math.sin(a)]);
+    }
+    rr -= ringStep;
+  }
+  return offs;
+}
+
+function dilate(mask, r) {
+  const c = mkCanvas(mask.width, mask.height);
+  const ctx = c.getContext('2d');
+  ctx.drawImage(mask, 0, 0);
+  for (const [dx, dy] of diskOffsets(r)) ctx.drawImage(mask, dx, dy);
+  return c;
+}
+
+function erode(mask, r) {
+  const c = mkCanvas(mask.width, mask.height);
+  const ctx = c.getContext('2d');
+  ctx.drawImage(mask, 0, 0);
+  ctx.globalCompositeOperation = 'destination-in';
+  for (const [dx, dy] of diskOffsets(r)) ctx.drawImage(mask, dx, dy);
+  return c;
+}
+
+/* Fill a canvas's opaque pixels with a color (in place) */
+function colorize(c, color) {
+  const ctx = c.getContext('2d');
+  ctx.globalCompositeOperation = 'source-in';
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.globalCompositeOperation = 'source-over';
+  return c;
+}
+
+function copyCanvas(src) {
+  const c = mkCanvas(src.width, src.height);
+  c.getContext('2d').drawImage(src, 0, 0);
+  return c;
+}
+
+/* Stroke band for the given mask. side: 'outside'|'inside' */
+function strokeBand(mask, width, side, color) {
+  let band;
+  if (side === 'outside') {
+    band = dilate(mask, width);
+    const ctx = band.getContext('2d');
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.drawImage(mask, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+  } else {
+    band = copyCanvas(mask);
+    const er = erode(mask, width);
+    const ctx = band.getContext('2d');
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.drawImage(er, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  return colorize(band, color);
+}
+
+/* Fill layer clipped to the mask */
+function fillLayer(mask, W, H) {
+  const f = state.fill;
+  if (f.mode === 'original') {
+    return copyCanvas(mask); // mask *is* the original logo drawing
+  }
+  if (f.mode === 'solid') {
+    return colorize(copyCanvas(mask), f.color);
+  }
+  // camo
+  const img = f.camoFullImg || f.camoImg;
+  const c = mkCanvas(W, H);
+  const ctx = c.getContext('2d');
+  if (!img) { // camo selected but nothing loaded yet
+    ctx.drawImage(mask, 0, 0);
+    return c;
+  }
+  const pat = ctx.createPattern(img, 'repeat');
+  // scale=1 -> one tile spans the logo width, independent of source resolution
+  const k = state.pat.scale * (W / img.width);
+  const m = new DOMMatrix()
+    .translate(W * (0.5 + state.pat.nx), H * (0.5 + state.pat.ny))
+    .rotate(state.pat.rot)
+    .scale(k);
+  pat.setTransform(m);
+  ctx.fillStyle = pat;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.drawImage(mask, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
+  return c;
+}
+
+/* Full composite into ctx at W×H using the given mask */
+function composite(ctx, W, H, mask, strokeWidthPx) {
+  ctx.clearRect(0, 0, W, H);
+  const s = state.stroke;
+  const fl = fillLayer(mask, W, H);
+  if (s.width > 0 && s.side === 'outside') {
+    ctx.drawImage(strokeBandCached(mask, strokeWidthPx, 'outside', s.color), 0, 0);
+    ctx.drawImage(fl, 0, 0);
+  } else if (s.width > 0 && s.side === 'inside') {
+    ctx.drawImage(fl, 0, 0);
+    ctx.drawImage(strokeBandCached(mask, strokeWidthPx, 'inside', s.color), 0, 0);
+  } else {
+    ctx.drawImage(fl, 0, 0);
+  }
+}
+
+/* Band cache keyed on everything that affects it (preview only) */
+function strokeBandCached(mask, width, side, color) {
+  const key = [mask.width, mask.height, width, side, color, state.logo && state.logo.name].join('|');
+  if (bandCache.key !== key) {
+    bandCache = { key, canvas: strokeBand(mask, width, side, color) };
+  }
+  return bandCache.canvas;
+}
+
+let renderQueued = false;
+function render() {
+  if (renderQueued || !state.logo) return;
+  renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    composite(pctx, preview.width, preview.height, maskP, state.stroke.width * (preview.width / state.logo.w));
+  });
+}
+
+/* ================= LOGO INTAKE ================= */
+function loadLogoFile(file) {
+  const name = file.name.replace(/\.[^.]+$/, '');
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) { w = SVG_RASTER_SIZE; h = SVG_RASTER_SIZE; } // SVG w/o intrinsic size
+    if (file.type === 'image/svg+xml' && Math.max(w, h) < SVG_RASTER_SIZE) {
+      const k = SVG_RASTER_SIZE / Math.max(w, h);
+      w = Math.round(w * k); h = Math.round(h * k);
+    }
+    setLogo(name, img, w, h);
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = () => { setStatus('COULD NOT READ FILE', true); URL.revokeObjectURL(url); };
+  img.src = url;
+}
+
+function setLogo(name, img, w, h) {
+  state.logo = { name, img, w, h };
+  // preview working resolution
+  const k = Math.min(1, PREVIEW_MAX / Math.max(w, h));
+  preview.width = Math.round(w * k);
+  preview.height = Math.round(h * k);
+  maskP = makeMask(preview.width, preview.height);
+  bandCache = { key: '', canvas: null };
+  // warn if the image has no transparency at all
+  const ctx = maskP.getContext('2d');
+  const d = ctx.getImageData(0, 0, maskP.width, maskP.height).data;
+  let transparent = 0;
+  for (let i = 3; i < d.length; i += 4 * 97) { if (d[i] < 250) { transparent++; if (transparent > 3) break; } }
+  if (transparent <= 3) setStatus('NO ALPHA DETECTED — USE PNG W/ TRANSPARENCY', true);
+  else setStatus('LOGO LOCKED: ' + name.toUpperCase());
+  $('dropHint').style.display = 'none';
+  $('dragTip').hidden = state.fill.mode !== 'camo';
+  $('btnExport').disabled = false;
+  updateFilename();
+  render();
+}
+
+/* Built-in test logo (white star + text) for quick verification */
+function demoLogo() {
+  const c = mkCanvas(1200, 900);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  const cx = 600, cy = 400, R = 300, r = 120;
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const rad = i % 2 === 0 ? R : r;
+    ctx[i ? 'lineTo' : 'moveTo'](cx + rad * Math.cos(a), cy + rad * Math.sin(a));
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.font = '700 120px ui-monospace, Menlo, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('MF', cx, 840);
+  const img = new Image();
+  img.onload = () => setLogo('test-logo', img, 1200, 900);
+  img.src = c.toDataURL('image/png');
+}
+
+/* ================= PATTERN LIBRARY ================= */
+function tileUrl(id)  { return CAMO_BASE + '/' + id + '.png'; }
+function thumbUrl(id) { return CAMO_BASE + '/thumb/' + id + '.png'; }
+function tileLabel(id){ return id.replace(/-/g, ' ').toUpperCase(); }
+
+async function loadManifest() {
+  try {
+    const r = await fetch(CAMO_BASE + '/manifest.json', { cache: 'no-cache' });
+    if (!r.ok) throw 0;
+    const j = await r.json();
+    const list = Array.isArray(j) ? j : j.tiles;
+    if (!Array.isArray(list) || !list.length) throw 0;
+    TILES = list.map(t => (typeof t === 'string' ? t : t.id)).filter(Boolean);
+    setStatus('MANIFEST LOADED: ' + TILES.length + ' PATTERNS');
+  } catch (e) {
+    TILES = FALLBACK_TILES;
+    setStatus('MANIFEST MISSING — FALLBACK SET (' + TILES.length + ')');
+  }
+  buildGrid();
+}
+
+function buildGrid() {
+  const grid = $('patGrid');
+  grid.innerHTML = '';
+  const q = $('patSearch').value.trim().toLowerCase();
+  let shown = 0;
+  for (const id of TILES) {
+    if (q && !id.includes(q)) continue;
+    shown++;
+    const el = document.createElement('div');
+    el.className = 'pat-tile' + (state.fill.camoId === id ? ' active' : '');
+    el.dataset.id = id;
+    el.style.backgroundImage = `url("${thumbUrl(id)}")`;
+    el.innerHTML = `<span class="lbl">${tileLabel(id)}</span>`;
+    el.addEventListener('click', () => selectCamo(id, el));
+    grid.appendChild(el);
+  }
+  $('patCount').textContent = shown + '/' + TILES.length;
+}
+
+function loadImg(url) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = () => res(im);
+    im.onerror = rej;
+    im.src = url;
+  });
+}
+
+async function selectCamo(id, el) {
+  state.fill.mode = 'camo';
+  state.fill.camoId = id;
+  state.fill.camoImg = null;
+  state.fill.camoFullImg = null;
+  syncFillButtons();
+  document.querySelectorAll('.pat-tile.active').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  $('dragTip').hidden = !state.logo;
+  updateFilename();
+
+  let entry = tileImgCache.get(id);
+  if (!entry) { entry = { thumb: null, full: null, fullLoading: false }; tileImgCache.set(id, entry); }
+
+  // instant preview off the thumb, then swap in the full-res tile
+  if (entry.thumb) { state.fill.camoImg = entry.thumb; render(); }
+  else {
+    if (el) el.classList.add('loading');
+    try {
+      entry.thumb = await loadImg(thumbUrl(id));
+      if (state.fill.camoId === id) { state.fill.camoImg = entry.thumb; render(); }
+    } catch (e) { /* thumb missing — full tile still coming */ }
+  }
+  if (entry.full) {
+    if (state.fill.camoId === id) { state.fill.camoFullImg = entry.full; render(); }
+    if (el) el.classList.remove('loading');
+    return;
+  }
+  if (!entry.fullLoading) {
+    entry.fullLoading = true;
+    setStatus('LOADING FULL-RES: ' + tileLabel(id));
+    try {
+      entry.full = await loadImg(tileUrl(id));
+      if (state.fill.camoId === id) {
+        state.fill.camoFullImg = entry.full;
+        setStatus('PATTERN READY: ' + tileLabel(id));
+        render();
+      }
+    } catch (e) {
+      setStatus('TILE FAILED TO LOAD', true);
+    } finally {
+      entry.fullLoading = false;
+      if (el) el.classList.remove('loading');
+    }
+  }
+}
+
+/* ================= FILL CONTROLS ================= */
+function syncFillButtons() {
+  document.querySelectorAll('[data-fillmode]').forEach(b =>
+    b.classList.toggle('active', b.dataset.fillmode === state.fill.mode));
+}
+
+function setFillMode(mode) {
+  state.fill.mode = mode;
+  syncFillButtons();
+  $('dragTip').hidden = !(mode === 'camo' && state.logo);
+  updateFilename();
+  render();
+}
+
+function buildSwatches() {
+  const box = $('swatches');
+  for (const col of SWATCH_COLORS) {
+    const b = document.createElement('button');
+    b.className = 'sw';
+    b.style.background = col;
+    b.title = col;
+    b.addEventListener('click', () => {
+      state.fill.color = col;
+      $('fillColor').value = col;
+      $('fillColorVal').textContent = col.toUpperCase();
+      document.querySelectorAll('.sw.active').forEach(s => s.classList.remove('active'));
+      b.classList.add('active');
+      setFillMode('solid');
+    });
+    box.appendChild(b);
+  }
+}
+
+/* ================= EXPORT ================= */
+function ts() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+function patternSlug() {
+  const f = state.fill;
+  if (f.mode === 'camo' && f.camoId) return f.camoId;
+  if (f.mode === 'solid') return 'solid-' + f.color.replace('#', '');
+  return 'original';
+}
+function exportFilename() {
+  const logo = state.logo ? state.logo.name.replace(/[^a-z0-9_-]+/gi, '-').toLowerCase() : 'logo';
+  return `${logo}-${patternSlug()}-${ts()}.png`;
+}
+function updateFilename() {
+  $('fnamePreview').textContent = state.logo ? exportFilename() : '—';
+}
+
+/* Insert a pHYs chunk (300 DPI) into PNG bytes */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function pngWith300Dpi(buf) {
+  const src = new Uint8Array(buf);
+  const ppm = 11811; // 300 dpi in pixels/metre
+  const chunk = new Uint8Array(21); // 4 len + 4 type + 9 data + 4 crc
+  const dv = new DataView(chunk.buffer);
+  dv.setUint32(0, 9);
+  chunk.set([0x70, 0x48, 0x59, 0x73], 4); // 'pHYs'
+  dv.setUint32(8, ppm);
+  dv.setUint32(12, ppm);
+  chunk[16] = 1; // unit: metre
+  dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+  const ihdrEnd = 8 + 4 + 4 + 13 + 4; // sig + IHDR
+  const out = new Uint8Array(src.length + 21);
+  out.set(src.subarray(0, ihdrEnd), 0);
+  out.set(chunk, ihdrEnd);
+  out.set(src.subarray(ihdrEnd), ihdrEnd + 21);
+  return out;
+}
+
+async function doExport() {
+  if (!state.logo) return;
+  const mult = parseInt($('exportSize').value, 10);
+  const W = state.logo.w * mult, H = state.logo.h * mult;
+  if (W * H > 64_000_000) { setStatus('EXPORT TOO LARGE FOR THIS DEVICE', true); return; }
+  setStatus('EXPORTING ' + W + '×' + H + '…');
+  $('btnExport').disabled = true;
+  try {
+    // make sure the full-res tile is in before a print export
+    if (state.fill.mode === 'camo' && state.fill.camoId && !state.fill.camoFullImg) {
+      const entry = tileImgCache.get(state.fill.camoId);
+      state.fill.camoFullImg = (entry && entry.full) || await loadImg(tileUrl(state.fill.camoId));
+    }
+    await new Promise(r => setTimeout(r, 30)); // let status paint
+    const mask = makeMask(W, H);
+    const out = mkCanvas(W, H);
+    const savedBand = bandCache; bandCache = { key: '', canvas: null };
+    composite(out.getContext('2d'), W, H, mask, state.stroke.width * mult);
+    bandCache = savedBand;
+    const blob = await new Promise(r => out.toBlob(r, 'image/png'));
+    const withDpi = pngWith300Dpi(await blob.arrayBuffer());
+    const dl = new Blob([withDpi], { type: 'image/png' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(dl);
+    a.download = exportFilename();
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 15000);
+    setStatus('EXPORTED ' + W + '×' + H + ' @ 300DPI');
+  } catch (e) {
+    console.error(e);
+    setStatus('EXPORT FAILED: ' + (e && e.message || e), true);
+  } finally {
+    $('btnExport').disabled = false;
+    updateFilename();
+  }
+}
+
+/* ================= DRAG PATTERN ================= */
+let drag = null;
+preview.addEventListener('pointerdown', e => {
+  if (!state.logo || state.fill.mode !== 'camo') return;
+  drag = { x: e.clientX, y: e.clientY, nx: state.pat.nx, ny: state.pat.ny };
+  preview.setPointerCapture(e.pointerId);
+  preview.classList.add('dragging');
+});
+preview.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const rect = preview.getBoundingClientRect();
+  state.pat.nx = drag.nx + (e.clientX - drag.x) / rect.width;
+  state.pat.ny = drag.ny + (e.clientY - drag.y) / rect.height;
+  render();
+});
+['pointerup', 'pointercancel'].forEach(ev => preview.addEventListener(ev, () => {
+  drag = null;
+  preview.classList.remove('dragging');
+}));
+
+/* ================= WIRE UP ================= */
+$('btnUpload').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) loadLogoFile(e.target.files[0]);
+  e.target.value = '';
+});
+$('btnDemo').addEventListener('click', demoLogo);
+
+// drag & drop logo
+const stage = $('stage');
+['dragenter', 'dragover'].forEach(ev => stage.addEventListener(ev, e => {
+  e.preventDefault(); stage.classList.add('dragover');
+}));
+['dragleave', 'drop'].forEach(ev => stage.addEventListener(ev, e => {
+  e.preventDefault(); stage.classList.remove('dragover');
+}));
+stage.addEventListener('drop', e => {
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) loadLogoFile(f);
+});
+
+// fill mode buttons
+document.querySelectorAll('[data-fillmode]').forEach(b =>
+  b.addEventListener('click', () => {
+    if (b.dataset.fillmode === 'camo' && !state.fill.camoId) {
+      setStatus('PICK A PATTERN FROM THE LIBRARY', true);
+      return;
+    }
+    setFillMode(b.dataset.fillmode);
+  }));
+
+$('fillColor').addEventListener('input', e => {
+  state.fill.color = e.target.value;
+  $('fillColorVal').textContent = e.target.value.toUpperCase();
+  if (state.fill.mode !== 'solid') setFillMode('solid'); else { updateFilename(); render(); }
+});
+
+// camo controls
+$('patScale').addEventListener('input', e => {
+  state.pat.scale = Math.pow(10, parseFloat(e.target.value)); // log slider: 0.02×–8×
+  $('scaleVal').textContent = state.pat.scale.toFixed(2) + '×';
+  render();
+});
+$('patRot').addEventListener('input', e => {
+  state.pat.rot = parseFloat(e.target.value);
+  $('rotVal').textContent = state.pat.rot + '°';
+  render();
+});
+$('patReset').addEventListener('click', () => {
+  state.pat.nx = 0; state.pat.ny = 0; state.pat.rot = 0; state.pat.scale = 0.5;
+  $('patRot').value = 0; $('rotVal').textContent = '0°';
+  $('patScale').value = Math.log10(0.5); $('scaleVal').textContent = '0.50×';
+  render();
+});
+
+// stroke controls
+document.querySelectorAll('[data-strokeside]').forEach(b =>
+  b.addEventListener('click', () => {
+    state.stroke.side = b.dataset.strokeside;
+    document.querySelectorAll('[data-strokeside]').forEach(x =>
+      x.classList.toggle('active', x === b));
+    bandCache = { key: '', canvas: null };
+    render();
+  }));
+$('strokeW').addEventListener('input', e => {
+  state.stroke.width = parseInt(e.target.value, 10);
+  $('strokeWVal').textContent = state.stroke.width ? state.stroke.width + ' px' : '0 px (off)';
+  render();
+});
+$('strokeColor').addEventListener('input', e => {
+  state.stroke.color = e.target.value;
+  $('strokeColorVal').textContent = e.target.value.toUpperCase();
+  render();
+});
+
+// eyedropper (Chrome/Edge desktop; hidden elsewhere)
+if (window.EyeDropper) {
+  for (const [btnId, apply] of [
+    ['fillEye', c => { state.fill.color = c; $('fillColor').value = c; $('fillColorVal').textContent = c.toUpperCase(); setFillMode('solid'); }],
+    ['strokeEye', c => { state.stroke.color = c; $('strokeColor').value = c; $('strokeColorVal').textContent = c.toUpperCase(); render(); }],
+  ]) {
+    const btn = $(btnId);
+    btn.hidden = false;
+    btn.addEventListener('click', async () => {
+      try { apply((await new EyeDropper().open()).sRGBHex); } catch (e) { /* cancelled */ }
+    });
+  }
+}
+
+// mobile tab bar: one panel at a time, right under the art; tap active tab to collapse
+const mtabBtns = document.querySelectorAll('#mobileTabs button');
+function setMtab(t) {
+  document.body.dataset.mtab = t;
+  mtabBtns.forEach(b => b.classList.toggle('active', b.dataset.mtab === t));
+}
+mtabBtns.forEach(b => b.addEventListener('click', () =>
+  setMtab(document.body.dataset.mtab === b.dataset.mtab ? '' : b.dataset.mtab)));
+setMtab('fill');
+
+$('patSearch').addEventListener('input', buildGrid);
+$('btnExport').addEventListener('click', doExport);
+
+// init
+$('scaleVal').textContent = '0.50×';
+buildSwatches();
+syncFillButtons();
+loadConfig().then(loadManifest);
+</script>
+</body>
+</html>

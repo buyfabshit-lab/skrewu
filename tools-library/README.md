@@ -38,6 +38,7 @@ pitch of each. Current modules:
 - **[wholesale-order-form](wholesale-order-form/)** — shop-facing multi-item order drop-off form.
 - **[logo-vault](logo-vault/)** — sell licensed brand art with tiered licensing (Shopify checkout + signed-URL delivery).
 - **[blanks-storefront](blanks-storefront/)** — pick a blank, then design it; live S&S Activewear catalog via the bundled `ss-products` function.
+- **[camo-tool](camo-tool/)** — fill any logo with 169 seamless camo patterns; stroke it, export a 300 DPI transparent PNG.
 
 ## Configuring a tool for a customer
 

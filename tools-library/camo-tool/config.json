@@ -1,0 +1,12 @@
+{
+  "businessName": "SKREW U",
+  "toolTitle": "CAMO TOOL",
+  "tagline": "// MASK & FILL OPS",
+  "camoLibraryBase": "https://nbrahnwdrtezjpnuccrg.supabase.co/storage/v1/object/public/open-block/camo",
+  "colors": {
+    "accent": "#ffd400",
+    "accentDim": "#b89a00",
+    "olive": "#5a6142",
+    "oliveHi": "#8a936a"
+  }
+}
