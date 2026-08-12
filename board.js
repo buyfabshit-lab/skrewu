@@ -422,7 +422,15 @@ function openDetail(n) {
 function closeDetail() { sheet.classList.remove('open'); detailNode = null; renderAll(); }
 
 /* ---------- LIVE VIEW: the real tool, wired off its own buttons ---------- */
-let liveBtns = [];   // {key, label, x, y}  (x,y in stage coords)
+let liveBtns = [];   // {key, label, px, py}  (positions inside the tool panel)
+let ringWrap = null, ringZoom = 1, ringFit = 1, ringPanX = 0, ringPanY = 0;
+
+function applyRing() {
+  if (!ringWrap) return;
+  ringWrap.style.transform =
+    `translate(-50%,-50%) translate(${ringPanX}px,${ringPanY}px) scale(${ringZoom})`;
+}
+function setRingZoom(z) { ringZoom = Math.max(0.2, Math.min(2, z)); applyRing(); }
 
 function labelOf(el) {
   const pick = el.querySelector('.qc-t,.t-name,.pc-t');
@@ -434,13 +442,34 @@ function drawLive(n, t) {
   const W = stage.clientWidth, H = stage.clientHeight;
   const narrow = W < 640;
 
-  const live = document.createElement('div');
-  live.className = 'live';
-  const chips = document.createElement('div');
-  chips.className = 'chips';
-  stage.appendChild(live); stage.appendChild(chips);
+  // Build the whole map full size, then scale it to the screen — a phone opens
+  // zoomed out with all of it in view, and you can zoom in from there.
+  // Shape the canvas like the screen so no space goes to waste.
+  const aspect = Math.max(0.45, Math.min(2.2, W / H));
+  const VW = Math.round(980 * Math.sqrt(aspect));
+  const VH = Math.round(980 / Math.sqrt(aspect));
+  const chipW = 124, chipH = 40;
+  const panelW = Math.round(Math.min(430, VW * 0.42));
+  const panelH = Math.round(Math.min(560, VH * 0.46));
 
-  const panelW = live.clientWidth, panelH = live.clientHeight;
+  const wrap = document.createElement('div');
+  wrap.className = 'ringwrap';
+  wrap.style.width = VW + 'px'; wrap.style.height = VH + 'px';
+  stage.appendChild(wrap);
+
+  ringFit = Math.min((W - 16) / VW, (H - 16) / VH);
+  ringZoom = ringFit; ringPanX = 0; ringPanY = 0;
+  ringWrap = wrap;
+  applyRing();
+
+  const ringSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  wrap.appendChild(ringSvg);
+
+  const live = document.createElement('div');
+  live.className = 'live center';
+  live.style.width = panelW + 'px';
+  live.style.height = panelH + 'px';
+  wrap.appendChild(live);
   // Render at the tool's own layout width so it fills the panel edge to edge
   // (too wide and the tool centres itself, leaving dead bars down both sides).
   const FRAME_W = 520;
@@ -495,57 +524,71 @@ function drawLive(n, t) {
       });
     });
 
-    if (!liveBtns.length) { live.remove(); chips.remove(); drawRadial(n, t); return; }
+    if (!liveBtns.length) { wrap.remove(); drawRadial(n, t); return; }
 
-    // one wire chip per real button
-    chips.innerHTML = '';
-    liveBtns.forEach((b, i) => {
+    // one connector per real button, ringed around the tool
+    liveBtns.forEach(b => {
       const lk = n.type + '#' + b.key;
       const sid = state.links[lk] || null;
       const svc = SERVICES[sid];
       const col = sid ? serviceDot(sid) : 'var(--iron-2)';
-      const note = state.notes[lk];
       const c = document.createElement('button');
-      c.type = 'button'; c.className = 'chipw';
+      c.type = 'button'; c.className = 'chipr';
       c.style.borderColor = sid ? col : '';
-      c.innerHTML = `<span class="cd" style="color:${col};background:${col}"></span>
-        <span class="cw"><b>${esc(b.label)}</b><i style="color:${col}">${esc(svc ? svc.name : 'not wired')}</i>
-        ${note ? `<em>${esc(note)}</em>` : ''}</span>`;
+      c.innerHTML = `<b>${esc(b.label)}</b><i style="color:${col}">${esc(svc ? svc.name : 'not wired')}</i>`;
       c.addEventListener('click', () => openPicker(b.key, b.label, true));
-      chips.appendChild(c);
+      wrap.appendChild(c);
       b.chip = c;
     });
 
-    // wires: real button on the tool  →  its chip (redrawn as the panel scrolls)
+    // Ring the connectors around the tool and wire each to its real button.
+    // Only what's on screen in the tool gets a connector, so the ring never
+    // crowds — scroll the tool and the ring re-forms around what you see.
+    const cx = VW / 2, cy = VH / 2;
+    const rx = VW / 2 - chipW / 2 - 10;
+    const ry = VH / 2 - chipH / 2 - 10;
+
     function layoutWires() {
-      stage.querySelectorAll('.dotb').forEach(d => d.remove());
-      const sr = stage.getBoundingClientRect();
+      wrap.querySelectorAll('.dotb').forEach(d => d.remove());
       const top = live.offsetTop, bottom = top + live.clientHeight;
-      let paths = '';
+
+      const shown = [];
       liveBtns.forEach(b => {
         const x = live.offsetLeft + b.px;
         const y = top + b.py - live.scrollTop;
-        if (y < top + 3 || y > bottom - 3) return;            // scrolled out of sight
-        const cr = b.chip.getBoundingClientRect();
-        const tx = narrow ? cr.left + cr.width / 2 - sr.left : cr.left - sr.left;
-        const ty = narrow ? cr.top - sr.top : cr.top - sr.top + cr.height / 2;
-        const lk = n.type + '#' + b.key;
-        const col = state.links[lk] ? serviceDot(state.links[lk]) : 'rgba(196,241,53,0.45)';
-        const dx = narrow ? 0 : Math.max(30, (tx - x) * 0.45);
-        const dy = narrow ? Math.max(24, (ty - y) * 0.45) : 0;
-        paths += `<path d="M ${x} ${y} C ${x + dx} ${y + dy}, ${tx - dx} ${ty - dy}, ${tx} ${ty}"
-                   fill="none" stroke="${col}" stroke-width="1.5" opacity="0.75"></path>`;
+        const visible = y > top + 3 && y < bottom - 3;
+        b.chip.style.display = visible ? '' : 'none';
+        if (visible) shown.push({ b, x, y, a: Math.atan2(y - cy, x - cx) });
+      });
+
+      // spread them evenly around the ring, keeping their natural direction
+      shown.sort((p, q) => p.a - q.a);
+      const step = (Math.PI * 2) / Math.max(shown.length, 1);
+      const start = shown.length ? shown[0].a : 0;
+
+      let paths = '';
+      shown.forEach((s, i) => {
+        const a = start + i * step;
+        const tx = cx + Math.cos(a) * rx;
+        const ty = cy + Math.sin(a) * ry;
+        s.b.chip.style.left = tx + 'px';
+        s.b.chip.style.top = ty + 'px';
+
+        const lk = n.type + '#' + s.b.key;
+        const col = state.links[lk] ? serviceDot(state.links[lk]) : 'rgba(196,241,53,0.5)';
+        const mx = (s.x + tx) / 2, my = (s.y + ty) / 2;
+        paths += `<path d="M ${s.x} ${s.y} Q ${mx} ${my}, ${tx} ${ty}"
+                   fill="none" stroke="${col}" stroke-width="1.5" opacity="0.8"></path>`;
         const dot = document.createElement('span');
         dot.className = 'dotb';
-        dot.style.left = x + 'px'; dot.style.top = y + 'px';
+        dot.style.left = s.x + 'px'; dot.style.top = s.y + 'px';
         dot.style.color = col; dot.style.background = col;
-        stage.appendChild(dot);
+        wrap.appendChild(dot);
       });
-      spokes.innerHTML = paths;
+      ringSvg.innerHTML = paths;
     }
     layoutWires();
     live.addEventListener('scroll', layoutWires, { passive: true });
-    chips.addEventListener('scroll', layoutWires, { passive: true });
 
     const live_n = liveBtns.filter(b => { const s = SERVICES[state.links[n.type + '#' + b.key]]; return s && s.status === 'live'; }).length;
     $('sheetCount').textContent = `${live_n}/${liveBtns.length}`;
@@ -555,9 +598,9 @@ function drawLive(n, t) {
 function drawDetail() {
   if (!detailNode) return;
   const n = detailNode, t = TOOLS[n.type] || TOOLS.custom;
-  stage.querySelectorAll('.hubn,.cap,.live,.chips,.dotb').forEach(e => e.remove());
+  stage.querySelectorAll('.hubn,.cap,.live,.chips,.chipr,.dotb,.ringwrap').forEach(e => e.remove());
   spokes.innerHTML = '';
-  liveBtns = [];
+  liveBtns = []; ringWrap = null;
   // a real page? show the tool itself and wire its own buttons
   if (t.href && !/^https?:/.test(t.href)) { drawLive(n, t); return; }
   drawRadial(n, t);
@@ -575,7 +618,7 @@ function drawRadial(n, t) {
   const rx = Math.max(hubHalf + capW / 2 + 10, W / 2 - capW / 2 - 8);
   const ry = Math.max(90, Math.min(H * 0.38, H / 2 - 58));
 
-  stage.querySelectorAll('.hubn,.cap,.live,.chips,.dotb').forEach(e => e.remove());
+  stage.querySelectorAll('.hubn,.cap,.live,.chips,.chipr,.dotb,.ringwrap').forEach(e => e.remove());
 
   const hub = document.createElement('div');
   hub.className = 'hubn';
@@ -650,6 +693,28 @@ function savePick() {
 
 $('pickSave').addEventListener('click', savePick);
 $('pickCancel').addEventListener('click', () => $('pick').classList.remove('open'));
+$('rzIn').addEventListener('click', () => setRingZoom(ringZoom * 1.25));
+$('rzOut').addEventListener('click', () => setRingZoom(ringZoom / 1.25));
+$('rzFit').addEventListener('click', () => { ringZoom = ringFit; ringPanX = 0; ringPanY = 0; applyRing(); });
+
+/* drag the empty space in here to move the map around */
+let rpid = null, rsx = 0, rsy = 0, rpx = 0, rpy = 0;
+stage.addEventListener('pointerdown', (e) => {
+  if (!ringWrap) return;
+  if (e.target.closest('.chipr, .live, .cap, .hubn')) return;
+  rpid = e.pointerId; stage.setPointerCapture(rpid);
+  rsx = e.clientX; rsy = e.clientY; rpx = ringPanX; rpy = ringPanY;
+});
+stage.addEventListener('pointermove', (e) => {
+  if (rpid === null || e.pointerId !== rpid) return;
+  ringPanX = rpx + (e.clientX - rsx);
+  ringPanY = rpy + (e.clientY - rsy);
+  applyRing();
+});
+const endRingPan = () => { rpid = null; };
+stage.addEventListener('pointerup', endRingPan);
+stage.addEventListener('pointercancel', endRingPan);
+
 $('sheetBack').addEventListener('click', closeDetail);
 $('pick').addEventListener('click', (e) => { if (e.target === $('pick')) $('pick').classList.remove('open'); });
 window.addEventListener('resize', () => { if (detailNode) drawDetail(); });
