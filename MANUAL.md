@@ -356,7 +356,17 @@ by then.
 
 `&bg=1` paints a solid background for setting it up · `&show=tally,feed,drop`
 picks the panels · `&every=<seconds>` sets how often it checks (10 by default,
-5 at the fastest).
+5 at the fastest) · `&layout=wide|portrait`.
+
+**TikTok / portrait.** A tall browser source is laid out for a phone-shaped
+live automatically — you don't have to remember the flag. TikTok's own
+furniture covers roughly the top 9.5% (live header), the bottom 26% (comments,
+gifts, caption) and the right 16% (the button rail), so everything sits in the
+band that stays clear and the type is bigger. Set it up with `&bg=1` and those
+three areas are drawn in so you can see exactly what TikTok will cover; they
+never appear over a live stream. If TikTok moves its furniture, the four
+`--safe-*` values at the top of the portrait block in `live.html` are the only
+thing to change.
 
 Fed by `/api/live`, which is guarded on two points that must not be relaxed:
 

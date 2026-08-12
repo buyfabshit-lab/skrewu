@@ -22,10 +22,10 @@ body{color:var(--bone);font-family:var(--body);overflow:hidden;
 /* the running total, top left */
 .tally{position:absolute;left:26px;top:26px;display:flex;align-items:stretch;gap:0;
   border:2px solid var(--acid);background:rgba(10,9,8,.72);backdrop-filter:blur(5px);}
-.tally .cell{padding:11px 17px;}
+.tally .cell{padding:11px 17px;white-space:nowrap;}
 .tally .cell + .cell{border-left:1px solid rgba(196,241,53,.35);}
-.tally .n{font-family:var(--disp);font-size:34px;line-height:.95;color:var(--acid);}
-.tally .l{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--bone-dim);margin-top:4px;}
+.tally .n{display:block;font-family:var(--disp);font-size:34px;line-height:.95;color:var(--acid);}
+.tally .l{display:block;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--bone-dim);margin-top:4px;}
 .tally .shop{display:flex;align-items:center;padding:11px 17px;background:var(--acid);color:#0a0908;
   font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:17px;text-shadow:none;}
 
@@ -46,6 +46,48 @@ body{color:var(--bone);font-family:var(--body);overflow:hidden;
 .drop .t{font-family:var(--disp);text-transform:uppercase;font-size:26px;line-height:1.05;margin-top:6px;}
 .drop .u{font-size:14px;color:var(--bone-dim);margin-top:8px;word-break:break-all;}
 .drop .u b{color:var(--bone);}
+
+/* ===== TikTok / portrait =====
+   A phone-shaped live has TikTok's own furniture on it, and anything we put
+   underneath it is wasted. Comments and the gift bar own the bottom, the
+   action buttons own the right rail, the live header owns the top. So
+   everything sits in the band down the middle-left that stays clear, and the
+   type goes up, because this is being watched on a phone. */
+body[data-layout=portrait]{
+  --safe-top:9.5%;      /* live header, viewer count */
+  --safe-bottom:26%;    /* comments, gift bar, caption */
+  --safe-right:16%;     /* like / share / gift rail */
+  --safe-left:4%;
+}
+body[data-layout=portrait] .tally{left:var(--safe-left);right:var(--safe-right);top:var(--safe-top);}
+body[data-layout=portrait] .tally .shop{flex:1;min-width:0;}
+body[data-layout=portrait] .tally .n{font-size:44px;}
+body[data-layout=portrait] .tally .l{font-size:11px;}
+body[data-layout=portrait] .tally .shop{font-size:21px;}
+
+body[data-layout=portrait] .feed{
+  left:var(--safe-left);right:var(--safe-right);width:auto;
+  bottom:calc(var(--safe-bottom) + 2%);}
+body[data-layout=portrait] .ord{padding:14px 18px;}
+body[data-layout=portrait] .ord .top{font-size:25px;}
+body[data-layout=portrait] .ord .what{font-size:16px;}
+
+/* the offer goes up top under the tally — never bottom-right, that's the rail */
+body[data-layout=portrait] .drop{
+  right:auto;left:var(--safe-left);bottom:auto;
+  top:calc(var(--safe-top) + 118px);max-width:64%;}
+body[data-layout=portrait] .drop .t{font-size:31px;}
+body[data-layout=portrait] .drop .u{font-size:17px;}
+
+/* only drawn with ?bg=1 — shows you what TikTok will cover */
+body[data-layout=portrait].solid .zones{display:block;}
+.zones{display:none;position:absolute;inset:0;pointer-events:none;}
+.zones i{position:absolute;background:rgba(216,64,47,.16);border:1px dashed rgba(216,64,47,.5);
+  font-style:normal;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#ffb4ab;
+  display:flex;align-items:center;justify-content:center;text-align:center;}
+.zones .z-top{left:0;right:0;top:0;height:9.5%;}
+.zones .z-bot{left:0;right:0;bottom:0;height:26%;}
+.zones .z-right{right:0;top:9.5%;bottom:26%;width:16%;}
 
 .off{display:none !important;}
 /* Setting it up: only shown with ?bg=1, never over a live stream. */
@@ -71,6 +113,12 @@ body{color:var(--bone);font-family:var(--body);overflow:hidden;
     <div class="k">Get yours</div>
     <div class="t" id="dropTitle">Build your own</div>
     <div class="u" id="dropUrl"></div>
+  </div>
+
+  <div class="zones">
+    <i class="z-top">TikTok header</i>
+    <i class="z-right">buttons</i>
+    <i class="z-bot">comments &amp; gifts</i>
   </div>
 
   <div class="help off" id="help"></div>

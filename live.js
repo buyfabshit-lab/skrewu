@@ -5,6 +5,9 @@
 /*                                                                            */
 /*   live.html?shop=<slug>&k=<access key>                                     */
 /*                                                                            */
+/* &layout=portrait lays it out for a TikTok live — clear of the comments,    */
+/* the gift bar and the button rail — and is assumed on any tall source.       */
+/*                                                                            */
 /* Options: &bg=1 solid background (for setting up) · &show=tally,feed,drop   */
 /* &every=<seconds> how often to check (10 by default, 5 at the fastest).      */
 
@@ -22,6 +25,14 @@
   const wants = (part) => show.includes(part);
 
   if (solid) document.body.classList.add('solid');
+
+  /* Wide for a desktop stream, portrait for TikTok. Nobody should have to
+     remember which — a browser source that's taller than it is wide is a
+     phone-shaped live, so assume that unless told otherwise. */
+  const layout = ['wide', 'portrait'].includes(p.get('layout'))
+    ? p.get('layout')
+    : (window.innerHeight > window.innerWidth ? 'portrait' : 'wide');
+  document.body.dataset.layout = layout;
 
   /* Anything wrong with the setup is said only on the solid background. Over a
      live stream, a broken overlay should be invisible, not an error message
