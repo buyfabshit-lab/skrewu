@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Line · Full Show</title>
+<meta name="description" content="Every tool gets its own sheet — full screen, one at a time, in the order the work happens."/>
+<style>
+/* ============ THE FULL SHOW ============ */
+/* One tool per sheet. Nothing crammed: each part of the line gets a whole   */
+/* screen — a big name, one true sentence, an action shot built from the     */
+/* tool's own shapes, a price, a way in. Scroll is the whole interface.      */
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --acid:#c4f135; --ember:#ff8a3d; --rust:#d8402f; --steel:#7f95b0; --iron:#3a3530; --iron-2:#4b453d;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--void);color:var(--bone);font-family:var(--body);font-size:15px;}
+h1,h2,h3{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.01em;line-height:.92;}
+a{color:inherit;text-decoration:none;}
+button{font-family:var(--body);cursor:pointer;}
+
+.top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;height:54px;padding:0 18px;
+  background:linear-gradient(180deg,rgba(10,9,8,.92),rgba(10,9,8,0));}
+.top .mark{font-family:var(--disp);letter-spacing:.14em;font-size:14px;text-transform:uppercase;}
+.top .mark b{color:var(--acid);}
+.top .lk{margin-left:auto;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-dim);}
+.top .lk:hover{color:var(--acid);}
+
+/* the reel */
+.reel{scroll-snap-type:y proximity;}
+.sheet{min-height:100dvh;scroll-snap-align:start;display:flex;align-items:center;position:relative;
+  overflow:hidden;border-bottom:1px solid #16130f;}
+.sheet .glow{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(900px 480px at 78% 18%, var(--tint, rgba(196,241,53,.07)), transparent 60%);}
+.sheet .in{position:relative;width:100%;max-width:1120px;margin:0 auto;padding:92px 22px 64px;
+  display:grid;grid-template-columns:1fr;gap:34px;align-items:center;}
+@media(min-width:880px){ .sheet .in{grid-template-columns:1.05fr .95fr;gap:56px;} }
+
+.copy .stage{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;}
+.copy .stage .n{font-family:var(--disp);font-size:15px;color:var(--iron-2);letter-spacing:.2em;}
+.copy .stage .b{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--acc,var(--acid));
+  border:1px solid currentColor;padding:3px 8px;}
+.copy h2{font-size:clamp(44px,8.5vw,92px);}
+.copy h2 em{font-style:normal;color:var(--acc,var(--acid));}
+.copy .tag{margin-top:14px;font-size:15px;color:var(--bone-dim);max-width:44ch;line-height:1.6;}
+.copy ul{list-style:none;margin-top:20px;display:flex;flex-direction:column;gap:8px;}
+.copy li{display:flex;gap:10px;color:var(--bone-dim);font-size:13px;}
+.copy li::before{content:"—";color:var(--acc,var(--acid));}
+.copy .deal{display:flex;align-items:center;gap:18px;margin-top:28px;flex-wrap:wrap;}
+.copy .price{font-family:var(--disp);font-size:40px;line-height:1;}
+.copy .price small{display:block;font-family:var(--body);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--bone-dim);margin-top:5px;}
+.copy .acts{display:flex;gap:10px;}
+.btn{font-family:var(--disp);text-transform:uppercase;letter-spacing:.07em;font-size:14px;
+  padding:13px 24px;border:1px solid var(--iron-2);color:var(--bone);background:none;}
+.btn:hover{border-color:var(--bone);}
+.btn.buy{background:var(--acc,var(--acid));border-color:var(--acc,var(--acid));color:var(--void);}
+.btn.buy:disabled{opacity:.55;cursor:default;}
+
+/* the action shot — a stage the vignette performs on */
+.shot{position:relative;aspect-ratio:4/3;border:1px solid var(--iron);
+  background:
+    radial-gradient(circle, #16130e 1px, transparent 1px) 0 0/22px 22px,
+    linear-gradient(180deg,#100e0b,var(--void-2));
+  display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.shot .cap{position:absolute;left:12px;bottom:10px;font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--iron-2);}
+/* the vignettes are drawn at phone scale; on a big screen let them fill the stage */
+@media(min-width:880px){ .shot > :not(.cap){transform:scale(1.3);} }
+
+/* the closing sheet */
+.fin{min-height:88dvh;scroll-snap-align:start;display:flex;align-items:center;justify-content:center;text-align:center;}
+.fin h2{font-size:clamp(40px,9vw,88px);}
+.fin h2 em{font-style:normal;color:var(--acid);}
+.fin p{color:var(--bone-dim);margin-top:14px;}
+.fin .acts{display:flex;gap:12px;justify-content:center;margin-top:26px;flex-wrap:wrap;}
+
+/* the rail — where you are in the show */
+.rail{position:fixed;right:12px;top:50%;transform:translateY(-50%);z-index:20;
+  display:flex;flex-direction:column;gap:9px;}
+.rail button{width:8px;height:8px;border-radius:50%;border:1px solid var(--iron-2);background:none;padding:0;}
+.rail button.on{background:var(--acid);border-color:var(--acid);}
+@media(max-width:600px){ .rail{display:none;} }
+
+.hero{min-height:100dvh;scroll-snap-align:start;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;position:relative;border-bottom:1px solid #16130f;}
+.hero .eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--rust);}
+.hero h1{font-size:clamp(52px,12vw,132px);margin-top:16px;}
+.hero h1 em{font-style:normal;color:var(--acid);}
+.hero p{color:var(--bone-dim);margin-top:16px;max-width:46ch;padding:0 20px;}
+.hero .cue{position:absolute;bottom:26px;color:var(--iron-2);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;animation:sink 2s ease-in-out infinite;}
+@keyframes sink{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(7px);opacity:1}}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(18px);background:var(--rust);
+  color:#fff;font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:13px;
+  padding:12px 20px;opacity:0;pointer-events:none;transition:.22s;z-index:60;max-width:92vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body data-page="Full Show">
+
+<div class="top">
+  <span class="mark" data-brand="The Line">The <b>Line</b></span>
+  <a class="lk" href="store.html">Plain list →</a>
+</div>
+
+<div class="hero">
+  <div class="eyebrow">Built in a real print shop</div>
+  <h1>One line.<br/><em>Every part.</em></h1>
+  <p>Each tool gets its own sheet. Scroll through the line the way the work flows — art in one end, a boxed order out the other.</p>
+  <div class="cue">Scroll ↓</div>
+</div>
+
+<main class="reel" id="reel"></main>
+
+<div class="fin">
+  <div>
+    <h2>Run the <em>machine.</em></h2>
+    <p>Or walk the line yourself first — every tool has a free door.</p>
+    <div class="acts">
+      <a class="btn buy" href="intro.html">Start the intro</a>
+      <a class="btn" href="hub.html">See every tool</a>
+    </div>
+  </div>
+</div>
+
+<nav class="rail" id="rail" aria-label="Position"></nav>
+<div class="toast" id="toast"></div>
+
+<script src="showcase.js"></script>
+<script src="theme.js"></script>
+</body>
+</html>
