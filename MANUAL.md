@@ -406,6 +406,30 @@ without touching the services, prompts and rates you set up.
 wiring. Arranging is layout; wiring is work, and the two shouldn't share a
 delete button.
 
+### The house rule for blank photos
+
+**A women's style is shown on a women's medium. A men's or unisex style is shown
+on a men's large.** That's not a preference, it's the reference the whole mockup
+system hangs off, so it lives in the database rather than in someone's head:
+`locker_garments.fit` and `.ref_size`, with `.chest_in` and `.print_w_in` for
+that size.
+
+Why it matters: the garment in the photo sets the scale. Cut-out width in pixels
+÷ real chest width in inches = pixels per inch for that image. With that number
+recorded, an 11" chest print placed once is placed correctly on a tank, a tee
+and a hoodie. Without it, every mockup is positioned by eye and the same design
+sits differently on every blank.
+
+So each catalogue photo becomes two derivatives from one cut-out:
+
+| | What it's for | How it's built |
+|---|---|---|
+| **thumb** | the tile in the picker | trimmed, scaled to fill, small margin — just needs to look right |
+| **base** | placing art on | trimmed, then scaled so real garment width is consistent across every style, centred on the same canvas with the same margin |
+
+The margin is not decoration. Without it the cut-out's soft edge gets clipped
+flat at the frame, and art near a collar or sleeve has nowhere to go.
+
 ### Stage control — the swappable elements
 
 `stage.html?shop=<slug>&k=<access key>` — the logo, the headline, the line
