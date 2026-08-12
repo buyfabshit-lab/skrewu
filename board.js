@@ -4,7 +4,25 @@
 /* Layout persists in localStorage; "Reset line" restores the default flow.   */
 
 const $ = (id) => document.getElementById(id);
-const STORE_KEY = 'skrewu_board_v2';
+const STORE_KEY = 'skrewu_board_v3';
+
+/* ---- tiny IndexedDB store (holds real folder handles on desktop) ---- */
+function idb() {
+  return new Promise((resolve, reject) => {
+    const r = indexedDB.open('skrewu-board', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+async function idbSet(key, val) {
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('kv', 'readwrite');
+    tx.objectStore('kv').put(val, key);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  });
+}
 
 /* ---- the catalog of steps ---- */
 const TOOLS = {
@@ -25,6 +43,7 @@ const TOOLS = {
   manifest:  { name: 'Ship Manifest',   desc: 'Pull & pack sheet — out the door.',         href: 'order-manifest.html', status: 'live' },
   tracking:  { name: 'Cust. Tracking',  desc: 'What the buyer sees after ordering.',       href: 'order-confirmation.html', status: 'live' },
   custom:    { name: 'Custom Step',     desc: 'Your own step in the line.',                href: null, status: 'manual' },
+  folder:    { name: '📁 Folder',       desc: 'Where the files land.',                     href: null, status: 'manual' },
 };
 const STATUS_LABEL = { live: 'Wired', key: 'Needs key', gated: 'Gated', manual: 'Hands-on' };
 
@@ -44,12 +63,13 @@ function defaultState() {
       { id: 'n10',type: 'ticket',    x: 620,  y: 330 },
       { id: 'n11',type: 'press',     x: 900,  y: 390 },
       { id: 'n12',type: 'drive',     x: 340,  y: 540 },
+      { id: 'n13',type: 'folder',    x: 620,  y: 560, label: null },
     ],
     wires: [
       ['n1','n2'], ['n2','n3'], ['n3','n4'], ['n3','n5'],
       ['n4','n6'], ['n5','n6'], ['n6','n7'], ['n6','n8'],
       ['n1','n9'], ['n9','n10'], ['n10','n11'], ['n11','n7'],
-      ['n1','n12'],
+      ['n1','n12'], ['n9','n13'],
     ],
   };
 }
@@ -71,7 +91,23 @@ function toast(msg) {
 }
 
 const canvas = $('canvas'), svg = $('wires'), viewport = $('viewport');
+const zoomOuter = $('zoomOuter');
 let armedOut = null; // node id whose OUT port is armed for wiring
+
+/* ---- zoom (mobile fits the line; desktop can lean in) ---- */
+let zoom = 1;
+function applyZoom() {
+  canvas.style.transform = `scale(${zoom})`;
+  canvas.style.transformOrigin = '0 0';
+  zoomOuter.style.width = (canvas.offsetWidth * zoom) + 'px';
+  zoomOuter.style.height = (canvas.offsetHeight * zoom) + 'px';
+}
+function setZoom(z) { zoom = Math.max(0.35, Math.min(1.6, z)); applyZoom(); }
+function fitLine() {
+  const maxX = state.nodes.reduce((m, n) => Math.max(m, n.x + 230), 400);
+  setZoom((viewport.clientWidth - 20) / maxX);
+  viewport.scrollLeft = 0; viewport.scrollTop = 0;
+}
 
 /* ---- rendering ---- */
 function nodeEl(id) { return canvas.querySelector(`.node[data-id="${id}"]`); }
@@ -79,25 +115,53 @@ function nodeEl(id) { return canvas.querySelector(`.node[data-id="${id}"]`); }
 function renderNode(n) {
   const t = TOOLS[n.type] || TOOLS.custom;
   const el = document.createElement('div');
-  el.className = 'node';
+  el.className = 'node' + (n.type === 'folder' ? ' folder' : '');
   el.dataset.id = n.id;
   el.dataset.status = t.status;
   el.style.left = n.x + 'px';
   el.style.top = n.y + 'px';
-  const name = n.label || t.name;
-  el.innerHTML = `
-    <div class="head"><span class="dotst"></span><h3>${esc(name)}</h3><button class="rm" title="Remove">&times;</button></div>
-    <div class="body">
-      <div class="desc">${esc(t.desc)}</div>
-      <div class="row">
-        <span class="st">${STATUS_LABEL[t.status] || ''}</span>
-        ${t.href ? `<button class="open" data-href="${esc(t.href)}">Open →</button>` : ''}
+  if (n.type === 'folder') {
+    el.innerHTML = `
+      <div class="head"><span class="dotst"></span><h3>Save location</h3><button class="rm" title="Remove">&times;</button></div>
+      <div class="loc ${n.label ? '' : 'unset'}">${esc(n.label || 'No folder set')}</div>
+      <div class="sub">${n.label ? 'files land here' : 'tap set folder'}</div>
+      <div class="row"><button class="open" data-setfolder="1">Set folder</button></div>
+      <span class="port in" data-port="in"></span>
+      <span class="port out" data-port="out"></span>`;
+  } else {
+    const name = n.label || t.name;
+    el.innerHTML = `
+      <div class="head"><span class="dotst"></span><h3>${esc(name)}</h3><button class="rm" title="Remove">&times;</button></div>
+      <div class="body">
+        <div class="desc">${esc(t.desc)}</div>
+        <div class="row">
+          <span class="st">${STATUS_LABEL[t.status] || ''}</span>
+          ${t.href ? `<button class="open" data-href="${esc(t.href)}">Open →</button>` : ''}
+        </div>
       </div>
-    </div>
-    <span class="port in" data-port="in"></span>
-    <span class="port out" data-port="out"></span>`;
+      <span class="port in" data-port="in"></span>
+      <span class="port out" data-port="out"></span>`;
+  }
   canvas.appendChild(el);
   wireNodeEvents(el, n);
+}
+
+/* Pick a real folder on this device (desktop Chrome/Edge). Elsewhere, name the spot. */
+async function setFolder(n, el) {
+  if (window.showDirectoryPicker) {
+    try {
+      const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      n.label = handle.name;
+      try { await idbSet('artFolder', handle); } catch {}
+      save(); renderAll();
+      toast(`Folder set: ${handle.name} — gang sheet exports will save there`);
+    } catch { /* user cancelled */ }
+  } else {
+    const label = (prompt('Name the save spot (e.g. Downloads, iCloud/Art):', n.label || 'Downloads') || '').trim();
+    if (!label) return;
+    n.label = label; save(); renderAll();
+    toast('On this device, exports go to your Downloads — label saved');
+  }
 }
 
 function renderAll() {
@@ -147,7 +211,7 @@ function wireNodeEvents(el, n) {
   });
   head.addEventListener('pointermove', (e) => {
     if (pid === null || e.pointerId !== pid) return;
-    const dx = e.clientX - sx, dy = e.clientY - sy;
+    const dx = (e.clientX - sx) / zoom, dy = (e.clientY - sy) / zoom;
     if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
     n.x = Math.max(0, Math.min(canvas.offsetWidth - el.offsetWidth, ox + dx));
     n.y = Math.max(0, Math.min(canvas.offsetHeight - el.offsetHeight, oy + dy));
@@ -169,6 +233,7 @@ function wireNodeEvents(el, n) {
 
   const open = el.querySelector('.open');
   if (open) open.addEventListener('click', () => {
+    if (open.dataset.setfolder) { setFolder(n, el); return; }
     const href = open.dataset.href;
     if (/^https?:/.test(href)) window.open(href, '_blank', 'noopener');
     else location.href = href;
@@ -230,6 +295,13 @@ $('resetBtn').addEventListener('click', () => {
   state = defaultState(); save(); renderAll(); toast('Line reset');
 });
 
+/* ---- zoom buttons ---- */
+$('zoomIn').addEventListener('click', () => setZoom(zoom + 0.15));
+$('zoomOut').addEventListener('click', () => setZoom(zoom - 0.15));
+$('zoomFit').addEventListener('click', fitLine);
+
 /* ---- go ---- */
 buildTray();
 renderAll();
+/* phones open with the whole line in view; desktop opens 1:1 */
+if (window.innerWidth < 760) fitLine(); else applyZoom();

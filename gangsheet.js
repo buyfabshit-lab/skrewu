@@ -35,6 +35,32 @@
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
+  /* If a save folder was picked on the Board (desktop Chrome/Edge), also write
+     the export straight into it. Returns the folder name, or null. */
+  async function saveToBoardFolder(blob, fname) {
+    try {
+      if (!('indexedDB' in window)) return null;
+      const db = await new Promise((res, rej) => {
+        const r = indexedDB.open('skrewu-board', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      });
+      const handle = await new Promise((res, rej) => {
+        const tx = db.transaction('kv', 'readonly');
+        const g = tx.objectStore('kv').get('artFolder');
+        g.onsuccess = () => res(g.result); g.onerror = () => rej(g.error);
+      });
+      if (!handle || !handle.createWritable && !handle.getFileHandle) return null;
+      let perm = await handle.queryPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') perm = await handle.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') return null;
+      const fh = await handle.getFileHandle(fname, { create: true });
+      const w = await fh.createWritable();
+      await w.write(blob); await w.close();
+      return handle.name || 'your folder';
+    } catch { return null; }
+  }
+
   async function loadLogos() {
     const { data, error } = await sb.from('locker_logos').select('id,url,name').eq('owner_slug', slug).order('created_at', { ascending: false });
     if (error) { console.error(error); return; }
@@ -139,6 +165,10 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+      // Also drop it in the folder picked on the Board, if one is set on this device
+      const folderName = await saveToBoardFolder(blob, fname);
+      if (folderName) toast(`Saved to “${folderName}” ✓`);
 
       // Best-effort: save a copy to the locker (storage + table)
       try {

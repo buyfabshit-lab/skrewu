@@ -77,6 +77,19 @@ a{color:inherit;text-decoration:none;}
 .port:hover{border-color:var(--acid);}
 .port.armed{border-color:var(--acid);background:var(--acid);box-shadow:0 0 12px var(--acid);}
 
+/* folder endpoint blocks */
+.node.folder{width:172px;border-color:var(--iron-2);background:linear-gradient(180deg,#1a160f,var(--void-2));}
+.node.folder::before{content:"";position:absolute;top:-9px;left:10px;width:52px;height:9px;
+  background:#1a160f;border:1px solid var(--iron-2);border-bottom:none;}
+.node.folder .head{cursor:grab;border-bottom:1px solid var(--iron);}
+.node.folder .head h3{font-size:12.5px;color:var(--bone-dim);}
+.node.folder .loc{padding:9px 10px 4px;font-size:12px;color:var(--acid);word-break:break-all;line-height:1.35;}
+.node.folder .loc.unset{color:var(--iron-2);}
+.node.folder .sub{padding:0 10px;font-size:9px;color:var(--iron-2);letter-spacing:.06em;text-transform:uppercase;}
+.node.folder .row{padding:8px 10px 10px;display:flex;gap:6px;}
+.node.folder .open{flex:1;text-align:center;}
+.node.folder .port.out{display:none;}
+
 /* toast */
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(16px);background:var(--acid);color:var(--void);
   font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:12.5px;padding:10px 18px;
@@ -89,14 +102,19 @@ a{color:inherit;text-decoration:none;}
 <div class="top">
   <a class="mark" href="hub.html">SKREW<b>U</b> · Board</a>
   <span class="hint" id="hint">Drag blocks · tap a right port, then a left port to wire · tap a wire to cut it</span>
+  <button class="tbtn" id="zoomOut" type="button" title="Zoom out">−</button>
+  <button class="tbtn" id="zoomFit" type="button" title="Fit the line on screen">Fit</button>
+  <button class="tbtn" id="zoomIn" type="button" title="Zoom in">+</button>
   <button class="tbtn" id="resetBtn" type="button">Reset line</button>
 </div>
 
 <div class="tray" id="tray"><span class="tl">Add a step:</span></div>
 
 <div class="viewport" id="viewport">
-  <div class="canvas" id="canvas">
-    <svg id="wires"></svg>
+  <div id="zoomOuter">
+    <div class="canvas" id="canvas">
+      <svg id="wires"></svg>
+    </div>
   </div>
 </div>
 
