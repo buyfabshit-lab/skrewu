@@ -103,6 +103,19 @@ function applyZoom() {
   zoomOuter.style.height = (canvas.offsetHeight * zoom) + 'px';
 }
 function setZoom(z) { zoom = Math.max(0.35, Math.min(1.6, z)); applyZoom(); }
+
+/* The board is endless — it stretches whenever a block reaches an edge. */
+function growCanvas(rightEdge, bottomEdge) {
+  let grew = false;
+  if (rightEdge + 260 > canvas.offsetWidth)  { canvas.style.width  = (rightEdge + 600) + 'px'; grew = true; }
+  if (bottomEdge + 260 > canvas.offsetHeight){ canvas.style.height = (bottomEdge + 600) + 'px'; grew = true; }
+  if (grew) applyZoom();
+}
+function growToFitAll() {
+  let r = 0, b = 0;
+  state.nodes.forEach(n => { r = Math.max(r, n.x + 200); b = Math.max(b, n.y + 170); });
+  growCanvas(r, b);
+}
 function fitLine() {
   const maxX = state.nodes.reduce((m, n) => Math.max(m, n.x + 230), 400);
   setZoom((viewport.clientWidth - 20) / maxX);
@@ -199,30 +212,34 @@ function drawWires() {
 
 /* ---- node events: drag, remove, open, ports ---- */
 function wireNodeEvents(el, n) {
-  const head = el.querySelector('.head');
   let sx = 0, sy = 0, ox = 0, oy = 0, moved = false, pid = null;
 
-  head.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.rm')) return;
+  // Grab the block anywhere — not just its title bar. Controls still work.
+  el.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.rm, .open, .port')) return;
     e.preventDefault();
-    pid = e.pointerId; head.setPointerCapture(pid);
+    pid = e.pointerId; el.setPointerCapture(pid);
     sx = e.clientX; sy = e.clientY; ox = n.x; oy = n.y; moved = false;
     el.classList.add('dragging');
   });
-  head.addEventListener('pointermove', (e) => {
+  el.addEventListener('pointermove', (e) => {
     if (pid === null || e.pointerId !== pid) return;
     const dx = (e.clientX - sx) / zoom, dy = (e.clientY - sy) / zoom;
     if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
-    n.x = Math.max(0, Math.min(canvas.offsetWidth - el.offsetWidth, ox + dx));
-    n.y = Math.max(0, Math.min(canvas.offsetHeight - el.offsetHeight, oy + dy));
+    // Free placement: only stop at the top/left edge, and the board grows to meet you.
+    n.x = Math.max(0, ox + dx);
+    n.y = Math.max(0, oy + dy);
     el.style.left = n.x + 'px'; el.style.top = n.y + 'px';
+    growCanvas(n.x + el.offsetWidth, n.y + el.offsetHeight);
     drawWires();
   });
-  head.addEventListener('pointerup', (e) => {
-    if (pid === null || e.pointerId !== pid) return;
+  const endDrag = (e) => {
+    if (pid === null || (e && e.pointerId !== pid)) return;
     pid = null; el.classList.remove('dragging');
     if (moved) save();
-  });
+  };
+  el.addEventListener('pointerup', endDrag);
+  el.addEventListener('pointercancel', endDrag);
 
   el.querySelector('.rm').addEventListener('click', () => {
     if (!confirm('Remove this step from the line?')) return;
@@ -280,9 +297,12 @@ function buildTray() {
         if (!label) return;
       }
       const id = 'n' + Date.now();
-      const node = { id, type, x: viewport.scrollLeft + 60, y: viewport.scrollTop + 140, label };
+      // drop it where you're actually looking (zoom-aware)
+      const node = { id, type, label,
+        x: Math.round(viewport.scrollLeft / zoom) + 50,
+        y: Math.round(viewport.scrollTop / zoom) + 110 };
       state.nodes.push(node); save();
-      renderNode(node); drawWires();
+      renderNode(node); growToFitAll(); drawWires();
       toast((label || t.name) + ' added — drag it into the line');
     });
     tray.appendChild(b);
@@ -303,5 +323,6 @@ $('zoomFit').addEventListener('click', fitLine);
 /* ---- go ---- */
 buildTray();
 renderAll();
+growToFitAll();
 /* phones open with the whole line in view; desktop opens 1:1 */
 if (window.innerWidth < 760) fitLine(); else applyZoom();
