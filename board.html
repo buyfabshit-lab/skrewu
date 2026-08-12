@@ -278,7 +278,26 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   <button class="tbtn" id="zoomOut" type="button" title="Zoom out">−</button>
   <button class="tbtn" id="zoomFit" type="button" title="Fit the line on screen">Fit</button>
   <button class="tbtn" id="zoomIn" type="button" title="Zoom in">+</button>
+  <button class="tbtn" id="setupsBtn" type="button" title="Save this setup, or load one you saved">Setups</button>
   <button class="tbtn" id="resetBtn" type="button">Reset line</button>
+</div>
+
+<!-- saved setups: keep the arrangement you like and come back to it -->
+<div class="pick" id="setups">
+  <div class="card">
+    <div class="ph"><div class="k">Your setups</div><div class="n">Save this one, or load one back</div></div>
+    <div class="list" id="setupList"></div>
+    <div class="info">
+      <label for="setupName">Save what's on the board now as…</label>
+      <input type="text" id="setupName" placeholder="e.g. Tuesday gang sheets" maxlength="60"
+             style="width:100%;background:var(--void);border:1px solid var(--iron);color:var(--bone);
+                    font-family:var(--body);font-size:13px;padding:10px;">
+    </div>
+    <div class="pf">
+      <button class="tbtn" id="setupSave" type="button">Save it</button>
+      <button class="tbtn" id="setupClose" type="button">Close</button>
+    </div>
+  </div>
 </div>
 
 <div class="tray" id="tray"><span class="tl">Add a step:</span></div>

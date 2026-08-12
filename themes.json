@@ -7,11 +7,17 @@
       "name": "SKREW U",
       "for": "Our own people. Underground, print shop floor, no polish.",
       "vars": {
-        "--void": "#0a0908", "--void-2": "#12100d", "--panel": "#17130e",
-        "--bone": "#e8e2d4", "--bone-dim": "#a49c8d",
-        "--iron": "#3a3530", "--iron-2": "#4b453d",
-        "--acid": "#c4f135", "--ember": "#ff8a3d",
-        "--rust": "#a32a1f", "--rust-bright": "#c43a2c",
+        "--void": "#0a0908",
+        "--void-2": "#12100d",
+        "--panel": "#17130e",
+        "--bone": "#e8e2d4",
+        "--bone-dim": "#a49c8d",
+        "--iron": "#3a3530",
+        "--iron-2": "#4b453d",
+        "--acid": "#c4f135",
+        "--ember": "#ff8a3d",
+        "--rust": "#a32a1f",
+        "--rust-bright": "#c43a2c",
         "--disp": "'Arial Narrow','Helvetica Neue',sans-serif",
         "--body": "'Courier New',ui-monospace,Menlo,monospace"
       },
@@ -25,18 +31,25 @@
         "Any of them. They all come out the same end.",
         "And it's never stuck. Add a part, move one, throw one out. The line is yours."
       ],
-      "ask": "So — which one sounds like you?"
+      "ask": "So — which one sounds like you?",
+      "backdrop": "blobs",
+      "backdropSub": "Print shop · no gatekeepers"
     },
-
     "pro": {
       "name": "Studio",
       "for": "Corporate and professional accounts. Calm, clean, nothing shouting.",
       "vars": {
-        "--void": "#f7f8fa", "--void-2": "#ffffff", "--panel": "#ffffff",
-        "--bone": "#16202c", "--bone-dim": "#5b6875",
-        "--iron": "#dde3ea", "--iron-2": "#b9c3ce",
-        "--acid": "#1d6fe0", "--ember": "#b7791f",
-        "--rust": "#1d4ed8", "--rust-bright": "#2563eb",
+        "--void": "#f7f8fa",
+        "--void-2": "#ffffff",
+        "--panel": "#ffffff",
+        "--bone": "#16202c",
+        "--bone-dim": "#5b6875",
+        "--iron": "#dde3ea",
+        "--iron-2": "#b9c3ce",
+        "--acid": "#1d6fe0",
+        "--ember": "#b7791f",
+        "--rust": "#1d4ed8",
+        "--rust-bright": "#2563eb",
         "--disp": "'Helvetica Neue',Helvetica,Arial,sans-serif",
         "--body": "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
       },
@@ -50,18 +63,25 @@
         "Each route ends in the same place — a completed, trackable order.",
         "And nothing is fixed. Add a step, reorder it, remove it. The process is yours to shape."
       ],
-      "ask": "Which of these describes your work?"
+      "ask": "Which of these describes your work?",
+      "backdrop": "grid",
+      "backdropSub": "Design · print · deliver"
     },
-
     "sport": {
       "name": "Team",
       "for": "Schools, clubs and teams. Loud, fast, roster-and-season shaped.",
       "vars": {
-        "--void": "#0b1220", "--void-2": "#111c31", "--panel": "#16233c",
-        "--bone": "#eef4ff", "--bone-dim": "#93a6c4",
-        "--iron": "#26364f", "--iron-2": "#3a4d6b",
-        "--acid": "#ffd400", "--ember": "#ff6b2c",
-        "--rust": "#c8102e", "--rust-bright": "#e01b3c",
+        "--void": "#0b1220",
+        "--void-2": "#111c31",
+        "--panel": "#16233c",
+        "--bone": "#eef4ff",
+        "--bone-dim": "#93a6c4",
+        "--iron": "#26364f",
+        "--iron-2": "#3a4d6b",
+        "--acid": "#ffd400",
+        "--ember": "#ff6b2c",
+        "--rust": "#c8102e",
+        "--rust-bright": "#e01b3c",
         "--disp": "'Arial Black','Arial Narrow',Helvetica,sans-serif",
         "--body": "'Helvetica Neue',Helvetica,Arial,sans-serif"
       },
@@ -75,18 +95,25 @@
         "Any of them. They all finish the same way.",
         "And you can change it any time. Add a step, move one, drop one. It's your line."
       ],
-      "ask": "Which one's you?"
+      "ask": "Which one's you?",
+      "backdrop": "stripes",
+      "backdropSub": "Team gear, done right"
     },
-
     "tropical": {
       "name": "Island",
       "for": "Hawaiian and island shops — surf, sun, resort wear.",
       "vars": {
-        "--void": "#04262b", "--void-2": "#0a3740", "--panel": "#0d4450",
-        "--bone": "#f2fbf7", "--bone-dim": "#93bfba",
-        "--iron": "#175a63", "--iron-2": "#2c7d84",
-        "--acid": "#ffc247", "--ember": "#ff7a59",
-        "--rust": "#e5544b", "--rust-bright": "#ff6a5c",
+        "--void": "#04262b",
+        "--void-2": "#0a3740",
+        "--panel": "#0d4450",
+        "--bone": "#f2fbf7",
+        "--bone-dim": "#93bfba",
+        "--iron": "#175a63",
+        "--iron-2": "#2c7d84",
+        "--acid": "#ffc247",
+        "--ember": "#ff7a59",
+        "--rust": "#e5544b",
+        "--rust-bright": "#ff6a5c",
         "--disp": "'Trebuchet MS','Gill Sans','Segoe UI',sans-serif",
         "--body": "'Segoe UI',-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif"
       },
@@ -100,18 +127,25 @@
         "Any of them. They all come out the same end.",
         "And nothing's set in stone. Add a step, move one, drop one. The line's yours."
       ],
-      "ask": "Which one sounds like you?"
+      "ask": "Which one sounds like you?",
+      "backdrop": "blobs",
+      "backdropSub": "Island made"
     },
-
     "critters": {
       "name": "Critters",
       "for": "Pet and people shops. Warm, friendly, nothing technical-sounding.",
       "vars": {
-        "--void": "#fbf6ef", "--void-2": "#ffffff", "--panel": "#fffdfa",
-        "--bone": "#2f2318", "--bone-dim": "#7a6857",
-        "--iron": "#e8ddcd", "--iron-2": "#c9b79f",
-        "--acid": "#2e9e6b", "--ember": "#e08c2f",
-        "--rust": "#c2553d", "--rust-bright": "#d9674c",
+        "--void": "#fbf6ef",
+        "--void-2": "#ffffff",
+        "--panel": "#fffdfa",
+        "--bone": "#2f2318",
+        "--bone-dim": "#7a6857",
+        "--iron": "#e8ddcd",
+        "--iron-2": "#c9b79f",
+        "--acid": "#2e9e6b",
+        "--ember": "#e08c2f",
+        "--rust": "#c2553d",
+        "--rust-bright": "#d9674c",
         "--disp": "'Trebuchet MS','Segoe UI',Helvetica,sans-serif",
         "--body": "'Segoe UI',-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif"
       },
@@ -125,7 +159,10 @@
         "Whichever you pick, they all end up in the same happy place.",
         "And you can change your mind whenever. Add a step, move one, take one away. It's yours."
       ],
-      "ask": "Which one sounds like you?"
+      "ask": "Which one sounds like you?",
+      "backdrop": "blobs",
+      "backdropSub": "For the ones with fur"
     }
-  }
+  },
+  "_backdrop": "Each face also brings a backdrop — the layer that goes behind you on a stream. \"backdrop\" is one of blobs|stripes|grid|plain and \"backdropSub\" is the line under the name."
 }

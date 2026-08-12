@@ -415,10 +415,97 @@ function buildTray() {
   });
 }
 
-/* ---- reset ---- */
+/* ---- reset ----
+   Reset only puts the blocks back; the wiring, prompts and rates you set are
+   work, and work isn't what "reset the layout" should throw away. */
 $('resetBtn').addEventListener('click', () => {
-  if (!confirm('Reset the board to the default production line?')) return;
-  state = defaultState(); save(); renderAll(); toast('Line reset');
+  if (!confirm('Put the blocks back to the default line?\n\nYour wiring, prompts and rates are kept.')) return;
+  const keep = { links: state.links, notes: state.notes, prompts: state.prompts, costs: state.costs };
+  state = defaultState();
+  Object.assign(state, keep);
+  save(); renderAll(); toast('Blocks reset — your wiring kept');
+});
+
+/* ---- saved setups ----
+   Once a line is arranged the way somebody likes it, they should be able to
+   keep it and come back to it. Setups live on this device, alongside the
+   board itself. */
+const SETUPS_KEY = 'skrewu_board_setups';
+
+function loadSetups() {
+  try { return JSON.parse(localStorage.getItem(SETUPS_KEY)) || []; } catch { return []; }
+}
+function writeSetups(list) {
+  try { localStorage.setItem(SETUPS_KEY, JSON.stringify(list)); return true; }
+  catch { toast("This browser won't save setups"); return false; }
+}
+
+function renderSetups() {
+  const list = loadSetups();
+  const el = $('setupList');
+  if (!list.length) {
+    el.innerHTML = `<div style="color:var(--iron-2);font-size:12px;padding:12px 2px;">
+      Nothing saved yet. Arrange the board how you like it, name it below, and save.</div>`;
+    return;
+  }
+  el.innerHTML = list.map((s, i) => `
+    <div class="li" style="display:flex;align-items:center;gap:10px;">
+      <span style="flex:1;">
+        <b>${esc(s.name)}</b>
+        <span style="display:block;font-size:10px;color:var(--iron-2);letter-spacing:.08em;">
+          ${(s.nodes || []).length} steps · ${(s.wires || []).length} hand-offs</span>
+      </span>
+      <button class="tbtn" data-load="${i}" type="button">Load</button>
+      <button class="tbtn" data-drop="${i}" type="button" title="Delete this setup">&times;</button>
+    </div>`).join('');
+
+  el.querySelectorAll('[data-load]').forEach(b => b.addEventListener('click', () => {
+    const s = loadSetups()[Number(b.dataset.load)];
+    if (!s) return;
+    // Their wiring and rates carry across — a setup is an arrangement, not a wipe.
+    state.nodes = (s.nodes || []).map(n => ({ ...n }));
+    state.wires = (s.wires || []).map(w => [...w]);
+    save(); renderAll(); growToFitAll(); fitLine();
+    $('setups').classList.remove('open');
+    toast(`Loaded “${s.name}”`);
+  }));
+
+  el.querySelectorAll('[data-drop]').forEach(b => b.addEventListener('click', () => {
+    const list2 = loadSetups();
+    const s = list2[Number(b.dataset.drop)];
+    if (!s || !confirm(`Delete the setup “${s.name}”?`)) return;
+    list2.splice(Number(b.dataset.drop), 1);
+    writeSetups(list2); renderSetups();
+  }));
+}
+
+$('setupsBtn').addEventListener('click', () => {
+  renderSetups();
+  $('setupName').value = '';
+  $('setups').classList.add('open');
+});
+$('setupClose').addEventListener('click', () => $('setups').classList.remove('open'));
+$('setups').addEventListener('click', (e) => {
+  if (e.target === $('setups')) $('setups').classList.remove('open');
+});
+
+$('setupSave').addEventListener('click', () => {
+  const name = ($('setupName').value || '').trim();
+  if (!name) { toast('Give it a name first'); return; }
+  const list = loadSetups();
+  const entry = {
+    name,
+    nodes: state.nodes.map(n => ({ ...n })),
+    wires: state.wires.map(w => [...w]),
+  };
+  const at = list.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
+  if (at >= 0) {
+    if (!confirm(`Replace the setup “${list[at].name}”?`)) return;
+    list[at] = entry;
+  } else {
+    list.push(entry);
+  }
+  if (writeSetups(list)) { renderSetups(); $('setupName').value = ''; toast(`Saved “${name}”`); }
 });
 
 /* =================================================================

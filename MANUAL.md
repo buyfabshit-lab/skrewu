@@ -371,6 +371,30 @@ The overlay also stays silent when something's wrong — a bad key or a dropped
 connection shows nothing over a live stream, and explains itself only under
 `&bg=1`. An error message in front of an audience is worse than a blank corner.
 
+### The backdrop — the layer behind you
+
+`backdrop.html?theme=<id>` (or `?shop=<slug>`) — a browser source that goes
+*under* your camera, where the overlay goes over it. Each face brings its own
+look: `blobs`, `stripes`, `grid` or `plain`, set per face in `themes.json`.
+
+`&style=` · `&words=center|corner|off` · `&name=` `&sub=` to override the
+wording · `&still=1` to stop all motion.
+
+Nothing animates in JavaScript. The machine is already encoding video, so the
+movement is CSS on transform and opacity only and the compositor carries it.
+Keep it that way — an animation loop competing with an encoder drops frames.
+
+### Saved setups
+
+The Board's **Setups** button keeps an arrangement you like and loads it back
+later; they live on the device next to the board itself. A setup stores the
+blocks and the hand-offs, never the wiring — so loading one rearranges the line
+without touching the services, prompts and rates you set up.
+
+**Reset line** follows the same rule: it puts the blocks back and keeps your
+wiring. Arranging is layout; wiring is work, and the two shouldn't share a
+delete button.
+
 **Not yet:** a QR code on the drop panel. Worth doing — a QR converts a viewer
 faster than a typed URL — but it needs a real encoder written in, and a wrong
 one is worse than none.
