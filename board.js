@@ -26,11 +26,13 @@ async function idbSet(key, val) {
 
 /* ---- the catalog of steps ---- */
 const TOOLS = {
-  locker:    { name: 'Locker',          desc: 'Logos in — each person’s own vault.',      href: 'locker.html?who=rorion', status: 'live' },
+  // `scope` keeps a node to its own part of a shared page — the Locker, the
+  // Shirts Studio and the Gang Sheet all live on locker.html.
+  locker:    { name: 'Locker',          desc: 'Logos in — each person’s own vault.',      href: 'locker.html?who=rorion', status: 'live', scope: '#drop, #vault' },
   logomaker: { name: 'Logo Maker',      desc: 'Strip backgrounds → clean print PNG.',      href: 'tools-library/gang-sheet-logo-maker/index.html', status: 'live' },
   vault:     { name: 'Design Vault',    desc: 'The big archive — browse licensed art.',    href: 'tools-library/logo-vault/index.html', status: 'live' },
-  shirts:    { name: 'Shirts Studio',   desc: 'Logo on a real blank — listing mockup.',    href: 'locker.html?who=rorion', status: 'live' },
-  gangsheet: { name: 'Gang Sheet',      desc: 'Pack logos → 300 DPI DTF print file.',      href: 'locker.html?who=rorion', status: 'live' },
+  shirts:    { name: 'Shirts Studio',   desc: 'Logo on a real blank — listing mockup.',    href: 'locker.html?who=rorion', status: 'live', scope: '#builder, #shirts' },
+  gangsheet: { name: 'Gang Sheet',      desc: 'Pack logos → 300 DPI DTF print file.',      href: 'locker.html?who=rorion', status: 'live', scope: '#gsCanvas, #gsWidth, #gsItems' },
   blanks:    { name: 'Blanks Catalog',  desc: 'Pick a blank from the S&S feed.',           href: 'tools-library/blanks-storefront/index.html', status: 'key' },
   deploy:    { name: 'Deploy Panel',    desc: 'One button → push product to stores.',      href: 'deploy.html', status: 'key' },
   shopify:   { name: 'Shopify Store',   desc: 'DEATH CORPS — deathcorps.shop.',            href: 'https://deathcorps.shop', status: 'live' },
@@ -508,8 +510,24 @@ function drawLive(n, t) {
     if (full > frame.clientHeight) frame.style.height = full + 'px';
     inner.style.height = Math.round(full * scale) + 'px';
 
-    // every real, pressable thing on the tool
-    const els = [...doc.querySelectorAll('[data-group][data-id], button[id], a[data-tab]')];
+    // Only this node's own part of the page — three nodes share locker.html,
+    // and scanning the whole thing showed each of them the others' buttons.
+    let roots = [doc];
+    if (t.scope) {
+      const found = [];
+      doc.querySelectorAll(t.scope).forEach(el => {
+        const sec = el.closest('section') || el;
+        if (!found.includes(sec)) found.push(sec);
+      });
+      if (found.length) {
+        roots = found;
+        // show that section rather than the top of the page
+        const topY = Math.min(...found.map(s => s.getBoundingClientRect().top));
+        live.scrollTop = Math.max(0, topY * scale - 8);
+      }
+    }
+    const sel = '[data-group][data-id], button[id], button[class], a[data-tab]';
+    const els = roots.flatMap(r => [...r.querySelectorAll(sel)]);
     const seen = new Set();
     liveBtns = [];
     els.forEach(el => {
@@ -548,17 +566,31 @@ function drawLive(n, t) {
     // Ring the connectors around the tool and wire each to its real button.
     // Only what's on screen in the tool gets a connector, so the ring never
     // crowds — scroll the tool and the ring re-forms around what you see.
-    const cx = VW / 2, cy = VH / 2;
-    const rx = VW / 2 - chipW / 2 - 10;
-    const ry = VH / 2 - chipH / 2 - 10;
+    // Size the ring to how many connectors there actually are, then resize the
+    // canvas to match — a tool with three buttons opens big instead of tiny in
+    // the middle of a ring built for twenty.
+    const nBtn = Math.max(3, liveBtns.length);
+    const need = (nBtn * (chipW + 30)) / (2 * Math.PI);
+    const rx = Math.max(panelW / 2 + chipW / 2 + 24, need);
+    const ry = Math.max(panelH / 2 + chipH / 2 + 20, need * 0.85);
+    const RW = Math.round(2 * (rx + chipW / 2 + 12));
+    const RH = Math.round(2 * (ry + chipH / 2 + 12));
+    wrap.style.width = RW + 'px'; wrap.style.height = RH + 'px';
+    ringFit = Math.min((W - 16) / RW, (H - 16) / RH);
+    ringZoom = ringFit; ringPanX = 0; ringPanY = 0; applyRing();
+    const cx = RW / 2, cy = RH / 2;
+
+    // The panel is centred with a translate, so its real top-left isn't
+    // offsetLeft/offsetTop — measure it from the middle of the canvas.
+    const panelLeft = cx - panelW / 2, panelTop = cy - panelH / 2;
 
     function layoutWires() {
       wrap.querySelectorAll('.dotb').forEach(d => d.remove());
-      const top = live.offsetTop, bottom = top + live.clientHeight;
+      const top = panelTop, bottom = top + live.clientHeight;
 
       const shown = [];
       liveBtns.forEach(b => {
-        const x = live.offsetLeft + b.px;
+        const x = panelLeft + b.px;
         const y = top + b.py - live.scrollTop;
         const visible = y > top + 3 && y < bottom - 3;
         b.chip.style.display = visible ? '' : 'none';
