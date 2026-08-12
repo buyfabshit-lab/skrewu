@@ -36,7 +36,7 @@ button{font-family:var(--body);cursor:pointer;}
 .how button{background:var(--void-2);border:1px solid var(--iron);color:var(--bone-dim);
   font-size:11px;letter-spacing:.13em;text-transform:uppercase;padding:9px 15px;transition:.15s;}
 .how button:hover{border-color:var(--iron-2);color:var(--bone);}
-.how button.on{border-color:var(--acid);color:var(--acid);background:rgba(196,241,53,.08);}
+.how button.on{border-color:var(--acid);color:var(--acid);background:transparent;}
 
 /* her */
 .her{display:flex;flex-direction:column;align-items:center;padding:22px 0 6px;}
@@ -100,7 +100,7 @@ button{font-family:var(--body);cursor:pointer;}
 <body>
 
 <div class="bar">
-  <span class="mark">SKREW<b>U</b></span>
+  <span class="mark" id="mark">SKREW<b>U</b></span>
   <button class="skip" id="skip" type="button">Skip →</button>
 </div>
 
@@ -136,7 +136,7 @@ button{font-family:var(--body);cursor:pointer;}
   <div class="said" id="said"></div>
 
   <section class="fork" id="fork">
-    <h2>So — which one sounds like you?</h2>
+    <h2 id="forkAsk">So — which one sounds like you?</h2>
     <div class="sub">Pick any of them. You can change it later, and nothing is switched off.</div>
     <div class="ways" id="ways"></div>
     <div class="same">
@@ -149,6 +149,7 @@ button{font-family:var(--body);cursor:pointer;}
   </section>
 </main>
 
+<script src="theme.js"></script>
 <script src="starters.js"></script>
 <script src="intro.js"></script>
 </body>

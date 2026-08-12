@@ -306,3 +306,28 @@ branding on a partner's client screens).
    automatically by the Board.
 5. Adding a person = one row in `tenants` (set `parent_slug` for a partner's
    client) + hand them `locker.html?who=<slug>&k=<their key>`.
+
+---
+
+## 10. Four faces, one engine
+
+Same tools, same wiring, same database — only the palette, the type and the
+words change. `themes.json` holds them; `theme.js` applies them.
+
+| id | Called | For |
+|---|---|---|
+| `skrewu` | SKREW U | our own people — underground, shop floor |
+| `pro` | Studio | corporate and professional accounts |
+| `sport` | Team | schools, clubs, teams |
+| `critters` | Critters | pet and people shops |
+
+Each carries its own intro script, so the guide says the same six true things
+in the right voice for whoever's listening.
+
+Which face, in order: `?theme=<id>` → the shop's `shop.theme` → whatever they
+picked last on this device → the default in `themes.json`. A pinned `?theme=`
+is carried onto same-site links, so nobody looking at the corporate face gets
+thrown back into ours by clicking through.
+
+**Adding a fifth is a block in `themes.json` — no code.** Adding a *tool*
+still needs `board.js`. Keep it that way: skins are content, tools are code.

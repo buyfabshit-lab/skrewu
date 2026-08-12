@@ -72,6 +72,8 @@ exports.handler = async (event) => {
       accent: (tenant.branding || {}).accent || null,
       domain: shop.domain || null,
       sheets: shop.sheets || {},
+      // which of the four faces this shop's people should land in
+      theme: shop.theme || (tenant.branding || {}).theme || null,
     },
   });
 };

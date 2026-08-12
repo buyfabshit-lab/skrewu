@@ -8,8 +8,9 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
   ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
 /* Short lines. Somebody standing in a shop with their phone out reads these,
-   and every one of them is a true thing about the software. */
-const SCRIPT = [
+   and every one of them is a true thing about the software. Each skin says the
+   same six things in its own voice — themes.json carries the wording. */
+let SCRIPT = [
   "Alright — this'll take twenty seconds.",
   'Everything you make runs down one line. Art in one end, a boxed order out the other.',
   "It's all open. Every tool, right now. Nothing locked, nothing to unlock.",
@@ -161,4 +162,14 @@ $('skip').addEventListener('click', skip);
 window.addEventListener('pagehide', () => { if (canSpeak) { try { speechSynthesis.cancel(); } catch {} } });
 
 renderWays();
-play();
+
+/* Say it in this skin's voice if there is one, otherwise say it in ours. */
+(window.themeReady || Promise.resolve(null)).then(theme => {
+  if (theme) {
+    if (Array.isArray(theme.intro) && theme.intro.length) SCRIPT = theme.intro;
+    if (theme.ask) $('forkAsk').textContent = theme.ask;
+    if (theme.guide) $('hername').textContent = theme.guide;
+    if (theme.name) $('mark').textContent = theme.name;   // each face wears its own name
+  }
+  play();
+});
