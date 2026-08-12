@@ -37,7 +37,11 @@ const STAND_IN = [
 function json(statusCode, body) {
   return {
     statusCode,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=600' },
+    // Cache the catalogue, never an error — see the note in shop.js.
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': statusCode === 200 ? 'public, max-age=600' : 'no-store',
+    },
     body: JSON.stringify(body),
   };
 }

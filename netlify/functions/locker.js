@@ -64,10 +64,17 @@ function keyMatches(a, b) {
   return diff === 0;
 }
 
+/* Which of the required variables are missing, by name. A name is not a
+   secret; the value never appears. Saying "one of these two" is what makes a
+   missing key take an hour to find. */
+function missingEnv(names) {
+  return names.filter((n) => !process.env[n]);
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'Method not allowed' });
   if (!env().ok) {
-    return json(500, { ok: false, error: 'Server not configured: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Netlify.' });
+    return json(500, { ok: false, error: 'Server not configured: missing ' + missingEnv(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']).join(' and ') + ' in Netlify.' });
   }
 
   let body;

@@ -60,7 +60,7 @@ footer{margin-top:48px;border-top:1px solid var(--iron);padding-top:18px;color:v
 
 <div class="top"><div class="row">
   <span class="mark" data-brand="The Machine">SKREWU · The Machine</span>
-  <span><a class="who" href="setup.html" style="color:var(--bone-dim);margin-right:14px;">Set someone up</a><a class="who" href="intro.html" style="color:var(--bone-dim);margin-right:14px;">Intro</a><a class="who" href="store.html" style="color:var(--bone-dim);margin-right:14px;">Shop tools</a><a class="who" href="board.html" style="color:var(--acid);">Board view →</a></span>
+  <span><a class="who" data-keyed href="setup.html" style="color:var(--bone-dim);margin-right:14px;">Set someone up</a><a class="who" href="intro.html" style="color:var(--bone-dim);margin-right:14px;">Intro</a><a class="who" href="store.html" style="color:var(--bone-dim);margin-right:14px;">Shop tools</a><a class="who" href="board.html" style="color:var(--acid);">Board view →</a></span>
 </div></div>
 
 <main class="wrap">
@@ -73,7 +73,7 @@ footer{margin-top:48px;border-top:1px solid var(--iron);padding-top:18px;color:v
   <section class="stage">
     <div class="stage-head"><span class="stage-num">01</span><span class="stage-name">Design &amp; Prep</span><span class="stage-role">Art in, cleaned up, turned into a print file.</span></div>
     <div class="grid">
-      <a class="tile" href="locker.html?who=rorion">
+      <a class="tile" data-keyed href="locker.html">
         <h3>Personal Locker</h3><p>Per-person space. Logos stay theirs, build shirt mockups, pack a gang sheet.</p>
         <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
       </a>
@@ -85,7 +85,19 @@ footer{margin-top:48px;border-top:1px solid var(--iron);padding-top:18px;color:v
         <h3>Logo Vault</h3><p>The brand-art archive — licensed art, tagged and searchable.</p>
         <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
       </a>
-      <a class="tile" href="sticker.html?shop=deathcorps">
+      <a class="tile" data-keyed href="credits.html">
+        <h3>Credits</h3><p>What the AI tools cost to run, what's left, and topping up. Credits don't expire.</p>
+        <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" data-keyed href="aiimage.html">
+        <h3>AI Image</h3><p>Make artwork from a prompt — aspect, resolution, batch. Straight onto the line.</p>
+        <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" data-keyed href="aivideo.html">
+        <h3>AI Video</h3><p>A prompt becomes a clip for the feed — portrait for TikTok, wide for the rest.</p>
+        <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
+      </a>
+      <a class="tile" data-keyed="shop who" href="sticker.html">
         <h3>UV Sticker Sheets</h3><p>Customer lays out their own sheet — drag it, size it, export 300 DPI.</p>
         <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
       </a>
@@ -95,7 +107,7 @@ footer{margin-top:48px;border-top:1px solid var(--iron);padding-top:18px;color:v
   <section class="stage">
     <div class="stage-head"><span class="stage-num">02</span><span class="stage-name">Build &amp; Deploy</span><span class="stage-role">Design becomes a product, pushed to the stores.</span></div>
     <div class="grid">
-      <a class="tile" href="locker.html?who=rorion">
+      <a class="tile" data-keyed href="locker.html">
         <h3>Shirts Studio</h3><p>Logo on a real blank photo, drag + size the print, save the listing image.</p>
         <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
       </a>
@@ -107,7 +119,7 @@ footer{margin-top:48px;border-top:1px solid var(--iron);padding-top:18px;color:v
         <h3>Blank Normalizer</h3><p>Cut-outs onto one canvas at true scale, with a real border. No sleeve clipped.</p>
         <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
       </a>
-      <a class="tile" href="blanks.html?who=deathcorps">
+      <a class="tile" data-keyed href="blanks.html">
         <h3>Blanks Picker</h3><p>Browse by brand and line, tick the ones you'd actually print. They become your shop's blanks.</p>
         <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
       </a>
@@ -139,7 +151,7 @@ footer{margin-top:48px;border-top:1px solid var(--iron);padding-top:18px;color:v
   <section class="stage">
     <div class="stage-head"><span class="stage-num">04</span><span class="stage-name">Orders &amp; Fulfillment</span><span class="stage-role">Order lands → track → pull → print → ship.</span></div>
     <div class="grid">
-      <a class="tile" href="tools-library/omniflow-command/index.html">
+      <a class="tile" data-keyed href="tools-library/omniflow-command/index.html">
         <h3>OmniFlow Command</h3><p>Every channel's orders in one console — triage, classify, status. 24 already in it.</p>
         <div class="foot"><span class="chip built">In use</span><span class="go">Open →</span></div>
       </a>
@@ -151,11 +163,11 @@ footer{margin-top:48px;border-top:1px solid var(--iron);padding-top:18px;color:v
         <h3>Customer Tracking</h3><p>The post-order page a customer sees to follow their order.</p>
         <div class="foot"><span class="chip built">Built</span><span class="go">Open →</span></div>
       </a>
-      <a class="tile" href="live.html?bg=1">
+      <a class="tile" data-keyed="shop" href="live.html?bg=1">
         <h3>Live Overlay</h3><p>Streaming? Orders land on screen as they're paid. Browser source for OBS or TikTok LIVE Studio.</p>
         <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
       </a>
-      <a class="tile" href="stage.html">
+      <a class="tile" data-keyed="shop" href="stage.html">
         <h3>Stage Control</h3><p>Swap the logo, headline, picture or clip mid-stream from your phone. The overlay picks it up.</p>
         <div class="foot"><span class="chip live">Live</span><span class="go">Open →</span></div>
       </a>
@@ -168,6 +180,7 @@ footer{margin-top:48px;border-top:1px solid var(--iron);padding-top:18px;color:v
 
   <footer><span data-brand></span> — one machine, assembled.</footer>
 </main>
+<script src="session.js"></script>
 <script src="theme.js"></script>
 </body>
 </html>

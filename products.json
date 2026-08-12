@@ -49,10 +49,22 @@
       "paymentLink": null
     },
     {
+      "id": "all-access",
+      "name": "All Access",
+      "tagline": "Every tool, one subscription",
+      "blurb": "The whole line — every tool we have now and every tool we add, branded to your shop. Nothing to pick, nothing locked. Stop whenever you want and you've lost nothing.",
+      "bullets": ["Every tool, current and future", "Your name and colors on all of it", "Client lockers + order console included", "Cancel any time"],
+      "price": 200,
+      "billing": "per month",
+      "badge": "Everything",
+      "demo": "hub.html",
+      "paymentLink": null
+    },
+    {
       "id": "shop-kit",
       "name": "The Whole Shop Kit",
-      "tagline": "All of it, branded to you",
-      "blurb": "Every tool above, set up under your own name and colors, plus the order intake and ship manifest. This is the setup we run — handed to you.",
+      "tagline": "All of it, yours for good",
+      "blurb": "Same everything as All Access, paid once. Four and a half months of the subscription and it's bought — this is the setup we run, handed to you.",
       "bullets": ["Every tool, your branding", "Client lockers included", "Order console + manifest", "Setup help to get running"],
       "price": 899,
       "billing": "one-time",

@@ -18,8 +18,15 @@ const DEFAULT_CONFIG = {
     colors: { accent: '#3b82f6', accent2: '#2563eb', positive: '#22c55e' },
   },
   backend: {
-    supabaseUrl: 'https://qmztuagvxopahowexrum.supabase.co',
-    supabaseAnonKey: 'sb_publishable_cbwgMdVv6XDxLp0WOBsM-w_irvs7BAh',
+    // Preferred: a guarded endpoint that authenticates the shop and answers
+    // with that shop's orders only. Opened as ?who=<slug>&k=<access key>.
+    api: '/api/orders',
+    // Fallback for a standalone deployment that owns its own database and
+    // isn't behind the platform. Left empty on purpose: a shipped default
+    // pointing at the platform's database would show one shop's orders to
+    // whoever opened the tool without a key.
+    supabaseUrl: null,
+    supabaseAnonKey: null,
     table: 'omniflow_orders',
   },
   channels: ['shopify', 'amazon', 'ebay', 'direct_api', 'manual'],
@@ -38,6 +45,7 @@ const CHANNEL_META = {
 /* Runtime, populated by boot() once config resolves. */
 let CONFIG = DEFAULT_CONFIG;
 let sb = null;
+let store = null;
 let TABLE = DEFAULT_CONFIG.backend.table;
 let CLASSIFICATIONS = DEFAULT_CONFIG.classifications;
 let CHANNELS = DEFAULT_CONFIG.channels;
@@ -138,17 +146,70 @@ function fmtTime(iso) {
 }
 const fmtMoney = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/* ── Where the orders come from ────────────────────────────────────────────
+   Two backends behind one small interface, chosen once at boot.
+
+   'api'      the shop proves who it is and the server answers with that
+              shop's orders and no others. This is how the tool runs on the
+              platform, and it is the only mode that is safe when more than
+              one shop exists.
+   'direct'   talks to a database straight from the browser. Kept for a
+              standalone deployment that owns its own data, and only ever
+              reached when the page was opened without a key.
+   ------------------------------------------------------------------------ */
+
+function apiStore(base, who, key) {
+  const url = `${base}?who=${encodeURIComponent(who)}&k=${encodeURIComponent(key)}`;
+  return {
+    label: who,
+    async list() {
+      const res = await fetch(url, { cache: 'no-store' });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body || !body.ok) throw new Error((body && body.error) || `feed error ${res.status}`);
+      return body.orders || [];
+    },
+    async update(id, patch) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, patch }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body || !body.ok) throw new Error((body && body.error) || `update failed ${res.status}`);
+      return body.order;
+    },
+  };
+}
+
+function directStore(client, table) {
+  return {
+    label: null,
+    async list() {
+      const { data, error } = await client.from(table).select('*').order('intake_at', { ascending: false });
+      if (error) throw new Error(error.message || 'feed error');
+      return data || [];
+    },
+    async update(id, patch) {
+      const { error } = await client.from(table).update(patch).eq('id', id);
+      if (error) throw new Error(error.message || 'update failed');
+      return null;
+    },
+  };
+}
+
 /* ── Fetch ── */
 async function loadOrders() {
   $('feedSub').textContent = 'Syncing unified intake…';
-  const { data, error } = await sb.from(TABLE).select('*').order('intake_at', { ascending: false });
-  if (error) {
-    console.error(error);
+  let data;
+  try {
+    data = await store.list();
+  } catch (e) {
+    console.error(e);
     $('feedSub').textContent = 'Feed error — check connection.';
-    feedBody.innerHTML = `<tr><td colspan="${COLUMNS.length}"><div class="empty">Could not reach the order feed.</div></td></tr>`;
+    feedBody.innerHTML = `<tr><td colspan="${COLUMNS.length}"><div class="empty">${escapeHtml(e.message || 'Could not reach the order feed.')}</div></td></tr>`;
     return;
   }
-  ORDERS = data || [];
+  ORDERS = data;
   render();
 }
 
@@ -356,12 +417,13 @@ async function updateOrder(id, patch, okMsg) {
     const o = ORDERS[idx];
     if (o) { panelDraft.classification = o.classification; }
   }
-  const { error } = await sb.from(TABLE).update(patch).eq('id', id);
-  if (error) {
-    console.error(error);
+  try {
+    await store.update(id, patch);
+  } catch (e) {
+    console.error(e);
     if (prev && idx >= 0) ORDERS[idx] = prev; // rollback
     render();
-    toast('Update failed — reverted.', 'err');
+    toast(e.message ? 'Update failed — ' + e.message : 'Update failed — reverted.', 'err');
     return false;
   }
   if (okMsg) toast(okMsg, 'ok');
@@ -494,7 +556,28 @@ async function boot() {
   CHANNELS = CONFIG.channels.filter(c => CHANNEL_META[c]); // keep only channels we can render
   if (!CHANNELS.length) CHANNELS = Object.keys(CHANNEL_META);
   filters.platforms = new Set(CHANNELS);
-  sb = supabase.createClient(CONFIG.backend.supabaseUrl, CONFIG.backend.supabaseAnonKey);
+
+  /* A shop identifies itself in the link, exactly like a locker does. */
+  const p = new URLSearchParams(location.search);
+  const who = (p.get('who') || p.get('shop') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const key = p.get('k') || '';
+
+  if (CONFIG.backend.api && who && key) {
+    store = apiStore(CONFIG.backend.api, who, key);
+  } else if (CONFIG.backend.supabaseUrl && CONFIG.backend.supabaseAnonKey && typeof supabase !== 'undefined') {
+    sb = supabase.createClient(CONFIG.backend.supabaseUrl, CONFIG.backend.supabaseAnonKey);
+    store = directStore(sb, TABLE);
+  } else {
+    // No key and no standalone database — say so rather than showing an empty
+    // board that looks like a shop with no orders.
+    $('feedSub').textContent = 'Not connected.';
+    feedBody.innerHTML = `<tr><td colspan="${COLUMNS.length}"><div class="empty">` +
+      `Open this from your own link — <b>?who=yourshop&amp;k=yourkey</b></div></td></tr>`;
+    buildMenus();
+    updatePlatformLabel();
+    return;
+  }
+
   buildMenus();
   updatePlatformLabel();
   loadOrders();

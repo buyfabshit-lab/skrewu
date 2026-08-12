@@ -130,7 +130,11 @@ looking for buttons that have an identifier and readable text.
 | `blanks.html` | Pick which blanks your shop actually prints. |
 | `normalize.html` | Cut out a garment photo, trim it, centre it at true scale. |
 | `deploy.html` | Push a finished product to the sales channels. |
-| `store.html` | Sells the tools and the art packs. |
+| `store.html` | Sells the tools and the art packs — the plain grid. |
+| `showcase.html` | The same catalogue as a full show: one tool per screen, with an action shot built from that tool's own shapes. |
+| `aiimage.html` | Make artwork from a prompt. Aspect, resolution, batch. |
+| `aivideo.html` | Make a clip from a prompt. Aspect, length. |
+| `credits.html` | What a shop has to spend, what a run costs, and topping up. |
 | `live.html` | The stream overlay — orders landing as they're paid. |
 | `backdrop.html` | The layer behind you on a stream. |
 | `stage.html` | Phone control for what's on the overlay, mid-stream. |
@@ -142,7 +146,7 @@ looking for buttons that have an identifier and readable text.
 
 ## 4. The doors, and their exact contracts
 
-Nine functions. Every one of them lives at `/api/<name>`.
+Thirteen functions. Every one of them lives at `/api/<name>`.
 
 ### The tenant wall — `/api/locker`
 
@@ -248,6 +252,10 @@ The shop platform calls this the moment an order is paid.
 | `/api/deploy-shopify` | Creates a product on the shop. Draft by default. |
 | `/api/generate-description` | Product copy. Falls back to a template with no key. |
 | `/api/checkout` | Card checkout for the tool store. Prices come from files in the project, never from the browser, so an amount can't be tampered with. |
+| `/api/orders` | A shop's own orders, and nobody else's. Proves the shop the way the locker does, then filters to that shop. Only status, classification, notes and tags can be changed — not the money, not the customer, not the owner. |
+| `/api/generate` | Makes an image or a clip. Requires the shop's key, charges credits before the work, refunds if it fails. |
+| `/api/credits` | Balance, what a run costs, the packs, and starting a top-up checkout. |
+| `/api/stripe-order` | Stripe's side of the till: a paid checkout becomes either an order in the console or credits in a wallet. Signature checked, replay window five minutes, idempotent on the session id. |
 
 ---
 
@@ -263,7 +271,26 @@ they're active.
 refuse the public key outright.** They are reachable only through the locker
 door.
 
-**`omniflow_orders`** — every order from every channel, in one shape.
+**`omniflow_orders`** — every order from every channel, in one shape. Every row
+carries **`tenant_slug`**: which shop the order belongs to. That column was
+missing at first, and while it was missing a second shop taking orders would
+have seen the first shop's buyers in its console — and on its livestream, where
+the overlay reads these same rows and puts names and cities in front of an
+audience. Everything that reads orders filters by it.
+
+The same table was also **readable by anyone**. Row-level security was switched
+on, which looks right, but its three policies granted the public role SELECT,
+INSERT and UPDATE with the condition `true`. The console read the table straight
+from the browser using the publishable key, and a publishable key is printed
+inside the page. Every customer name, email and street address was one request
+away. The policies are gone; orders travel through `/api/orders` and the signed
+webhook, both of which use the service role. Checked as the public role: it saw
+every row before, and none after.
+
+**The wallet** — `ms_users`, `ms_credit_ledger`, `ms_credit_packs`, `ms_plans`,
+`ms_generations`. This existed before the platform did, built around an email
+account. A wallet can now belong to a **tenant** instead, so credits work with no
+signup. See section 5b.
 
 **File storage** — buckets for artwork, mockups, sheets and finished print files.
 
@@ -281,6 +308,42 @@ door.
 Everything shop-specific lives here. **Nothing shop-specific belongs in code.**
 A shop hard-coded anywhere is a bug — it means somebody else's customer ends up
 in the wrong checkout. That was a real bug, found and fixed.
+
+---
+
+## 5b. Credits — the fuel
+
+Making an image or a clip costs real money at the provider, so runs are metered.
+
+**What a run costs** lives in one module on the server (`_credits.js`) and
+nowhere else, so the number a tool quotes and the number the server charges are
+the same by construction. Today: 20 credits for an image at 1K, 30 at 2K, 200
+for a five-second clip, 400 for ten.
+
+**A wallet belongs to a tenant.** It's made the first time it's needed, so
+nobody signs up for one. The older email accounts keep their own wallets; a
+constraint says a wallet belongs to an email account or a tenant and never to
+neither. There is deliberately no synthesised email address — something
+eventually tries to send mail to one.
+
+**Four rules hold the money together:**
+
+1. **Spending is one statement in the database.** Two tabs generating at the
+   same moment cannot both pass a balance check and overdraw. Not enough credits
+   is refused before any work is done.
+2. **A purchase is idempotent on the payment event.** The same webhook delivered
+   ten times adds credits once.
+3. **The pack's size is read from the database, never from the checkout
+   session.** A tampered checkout cannot mint credits.
+4. **A failed run is refunded, and says so.** Nobody pays for something they
+   didn't get.
+
+**Every movement is written down** — bought, spent, put back — each with the
+balance after it. That ledger is the record, not the console.
+
+**No identity, no run.** Every generation must say which shop it's for, proved
+the same way a locker is. Without that the endpoint spends real money for
+anyone who finds the URL, which is exactly what it did before this was added.
 
 ---
 
@@ -319,9 +382,19 @@ it shows into `SHOPIFY_WEBHOOK_SECRET`. Orders then land within seconds.
 | Name | Turns on |
 |---|---|
 | `SS_ACCOUNT_NUMBER` + `SS_API_KEY` | the real blanks catalogue instead of stand-ins |
-| `STRIPE_SECRET_KEY` | card checkout in the tool store |
+| `STRIPE_SECRET_KEY` | card checkout — the tool store **and** buying credits |
+| `STRIPE_WEBHOOK_SECRET` | **the money arriving**: a paid checkout becoming an order, or credits landing in a wallet |
+| `FAL_KEY` | the AI image and video tools. One key covers both — that's why it's one provider and not one account per model |
+| `GEN_IMAGE_MODEL` / `GEN_VIDEO_MODEL` | optional. Which model does the work. Swapping models is a setting, not a code change |
 | `ANTHROPIC_API_KEY` | AI product descriptions (template without it) |
 | `DEPLOY_SHARED_KEY` | optional password on the deploy endpoint |
+
+Card payments: the payment platform's dashboard → developers → API keys for the
+secret one. Then developers → webhooks → add an endpoint pointed at
+`/api/stripe-order`, subscribed to the completed-checkout event, and copy the
+signing secret it shows. Without that second secret the endpoint refuses
+everything, because an unsigned money endpoint lets anyone write sales and
+credits into your system.
 
 **Not an environment value:** cloud artwork backup is a credential inside the
 automation runner, on the upload step of the sync workflow.
@@ -412,6 +485,17 @@ framework to satisfy.
 9. **Don't ship what you can't verify.** There's no QR code on the stream yet for
    exactly this reason — no way to test that the output scans correctly, and a QR
    that scans wrong is worse than none.
+10. **Anything that spends money must say who's paying.** An endpoint that runs
+    a paid model without checking identity spends real money for anyone who
+    finds the URL. It's the same rule as the tenant wall, applied to a bill.
+11. **A price lives in one place.** The moment a number exists in both the page
+    and the server, they eventually disagree, and the customer finds it first.
+12. **Never cache a failure.** A cached error makes a correct fix look broken
+    for as long as the cache lasts, and the next move is usually to undo the
+    fix. Only good answers get cached.
+13. **Name the missing piece.** "Set one of these two" reads the same whether
+    one is missing or both, so half-finished setup looks identical to untouched.
+    A setting's *name* is not a secret; its value is.
 
 ---
 
@@ -420,5 +504,7 @@ framework to satisfy.
 Pages ask doors; doors check who you are and answer only with your own things.
 Every tool is a part on one line, described by three plain lists, so adding the
 fortieth is no harder than the fourth. Every shop is a tenant including our own,
-so nothing about any shop lives in code. And every feature either has its key and
-works, or has no key and says so — it never pretends.
+so nothing about any shop lives in code. Anything that costs money — a run, a
+sale, a top-up — is metered, written down, and refunded when it fails. And every
+feature either has its key and works, or has no key and says so — it never
+pretends.

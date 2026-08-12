@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Image · The Machine</title>
+<meta name="description" content="Make artwork from a prompt — aspect, resolution and batch, straight onto the line."/>
+<link rel="stylesheet" href="gen.css"/>
+</head>
+<body data-kind="image" data-page="AI Image">
+
+<div class="top">
+  <span class="mark" data-brand="AI Image">AI <b>Image</b></span>
+  <span class="bal" id="bal"></span>
+  <a class="lk" href="hub.html">The machine →</a>
+</div>
+
+<main class="wrap">
+  <div class="ask">
+    <textarea id="prompt" placeholder="Say what to make — “distressed eagle over a black sun, one-color print, thick lines”…"></textarea>
+    <div class="askrow">
+      <button type="button" class="settingsBtn" id="settingsBtn">
+        <span class="gear">⚙</span><span id="summary"></span>
+      </button>
+      <button type="button" class="go" id="go">Make it</button>
+    </div>
+    <div class="note" id="note"></div>
+  </div>
+
+  <div class="wall" id="wall"></div>
+  <p class="empty">What you make lands here — newest first.</p>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" role="dialog" aria-label="Image settings">
+  <div class="grab"></div>
+  <div class="head"><h2>Image settings</h2><button type="button" id="closeSheet" aria-label="Close">×</button></div>
+  <div class="sec"><span>▭</span><span>Aspect ratio</span></div>
+  <div class="opts" id="aspects"></div>
+  <div id="extras"></div>
+  <button type="button" class="done" id="doneSheet">Done</button>
+</div>
+
+<script src="gen.js"></script>
+<script src="theme.js"></script>
+</body>
+</html>

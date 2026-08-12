@@ -11,8 +11,7 @@
     }
   },
   "backend": {
-    "supabaseUrl": "https://qmztuagvxopahowexrum.supabase.co",
-    "supabaseAnonKey": "sb_publishable_cbwgMdVv6XDxLp0WOBsM-w_irvs7BAh",
+    "api": "/api/orders",
     "table": "omniflow_orders"
   },
   "channels": ["shopify", "amazon", "ebay", "direct_api", "manual"],

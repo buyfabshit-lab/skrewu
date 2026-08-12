@@ -159,7 +159,10 @@ exports.handler = async (event) => {
   let rows;
   try {
     rows = await sb(
-      `omniflow_orders?intake_at=gte.${encodeURIComponent(since)}` +
+      // Scoped to the shop we just authenticated. Without this the overlay
+      // would slide another shop's buyers across a live stream.
+      `omniflow_orders?tenant_slug=eq.${encodeURIComponent(tenant.slug)}` +
+      `&intake_at=gte.${encodeURIComponent(since)}` +
       `&select=customer_name,customer_location,units,total_value,intake_at,raw_platform_data` +
       `&order=intake_at.desc&limit=${limit}`
     );
