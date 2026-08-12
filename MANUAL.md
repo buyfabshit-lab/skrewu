@@ -420,6 +420,18 @@ recorded, an 11" chest print placed once is placed correctly on a tank, a tee
 and a hoodie. Without it, every mockup is positioned by eye and the same design
 sits differently on every blank.
 
+`normalize.html` does this in the browser — no keys, no upload, nothing leaves
+the machine. Drop the photos in, set what the canvas is worth in inches and how
+wide the garment really is, and each one comes out trimmed, scaled and centred.
+It says how much clear space each side ended up with, and warns when the
+original ran to the edge.
+
+**The number that sets the scale is the garment's widest point as it lies —
+sleeve hem to sleeve hem — not the spec sheet's chest width.** Chest width is
+measured lower, below the armhole, and is narrower. Confusing the two scales
+every blank wrong, and the first version of this doubled it, which put a 44"
+shirt on a 26" canvas.
+
 So each catalogue photo becomes two derivatives from one cut-out:
 
 | | What it's for | How it's built |
