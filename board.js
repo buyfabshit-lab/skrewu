@@ -63,6 +63,8 @@ const SERVICES = {
   n8n:       { name: 'n8n workflow',      note: 'your automation runner',       status: 'key'  },
   mine:      { name: 'My own API',        note: 'MidnightFusion backend',       status: 'key'  },
   hedra:     { name: 'Hedra',             note: 'AI video + avatars',           status: 'key'  },
+  photoshop: { name: 'Photoshop',         note: 'Adobe — actions, edits, vectorize', status: 'key' },
+  photoroom: { name: 'Photoroom',         note: 'cutouts + product shots',      status: 'key'  },
   browser:   { name: 'Runs in the app',   note: 'no service needed',            status: 'live' },
   folder:    { name: 'Local folder',      note: 'saves to your computer',       status: 'live' },
   hands:     { name: 'Hands-on',          note: 'you do this one',              status: 'manual'},
@@ -133,6 +135,8 @@ try {
 if (!state.links) state.links = {};   // "<type>:<capIndex>" -> serviceId
 if (!state.notes) state.notes = {};     // "<type>:<capIndex>" -> setup details
 if (!state.prompts) state.prompts = {}; // "<type>:<capIndex>" -> what you tell the AI
+if (!state.costs) state.costs = {};     // "<type>:<capIndex>" -> your rate per run
+const money = (v) => '$' + (Number(v) || 0).toFixed(Math.abs(v) < 1 && v ? 3 : 2);
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} }
 function capsOf(type) { return CAPS[type] || CAPS.custom; }
 function linkOf(type, i) {
@@ -561,7 +565,9 @@ function drawLive(n, t) {
       const c = document.createElement('button');
       c.type = 'button'; c.className = 'chipr';
       c.style.borderColor = sid ? col : '';
-      c.innerHTML = `<b>${esc(b.label)}</b><i style="color:${col}">${esc(svc ? svc.name : 'not wired')}</i>` +
+      const cst = Number(state.costs[lk]) || 0;
+      c.innerHTML = `<b>${esc(b.label)}</b>` +
+        `<i style="color:${col}">${esc(svc ? svc.name : 'not wired')}${cst ? ' · ' + money(cst) : ''}</i>` +
         (pr ? `<u>“${esc(pr)}”</u>` : '');
       c.addEventListener('click', () => openPicker(b.key, b.label, true));
       wrap.appendChild(c);
@@ -637,6 +643,7 @@ function drawLive(n, t) {
     layoutWires();
     live.addEventListener('scroll', layoutWires, { passive: true });
 
+    if ($('costs').classList.contains('open')) renderCosts();
     const live_n = liveBtns.filter(b => { const s = SERVICES[state.links[n.type + '#' + b.key]]; return s && s.status === 'live'; }).length;
     $('sheetCount').textContent = `${live_n}/${liveBtns.length}`;
   });
@@ -693,8 +700,9 @@ function drawRadial(n, t) {
     el.style.borderColor = col;
     const note = state.notes[n.type + ':' + i];
     const pr = state.prompts[n.type + ':' + i];
+    const cst = Number(state.costs[n.type + ':' + i]) || 0;
     el.innerHTML = `<div class="cn">${esc(c[0])}</div>` +
-      `<div class="cs" style="color:${col}">${esc(svc ? svc.name : 'not wired')}</div>` +
+      `<div class="cs" style="color:${col}">${esc(svc ? svc.name : 'not wired')}${cst ? ' · ' + money(cst) : ''}</div>` +
       (pr ? `<div class="ci">“${esc(pr)}”</div>` : '') +
       (note ? `<div class="ci">${esc(note)}</div>` : '');
     el.addEventListener('click', () => openPicker(i, c[0]));
@@ -719,6 +727,7 @@ function openPicker(i, capName, isLive) {
   $('pickName').textContent = capName;
   $('pickNote').value = state.notes[key] || '';
   $('pickPrompt').value = state.prompts[key] || '';
+  $('pickCost').value = state.costs[key] != null ? state.costs[key] : '';
   renderPickList();
   $('pick').classList.add('open');
 }
@@ -742,12 +751,41 @@ function savePick() {
   if (note) state.notes[key] = note; else delete state.notes[key];
   const prompt = $('pickPrompt').value.trim();
   if (prompt) state.prompts[key] = prompt; else delete state.prompts[key];
+  const cost = $('pickCost').value.trim();
+  if (cost !== '' && !isNaN(cost)) state.costs[key] = Number(cost); else delete state.costs[key];
   save(); $('pick').classList.remove('open'); drawDetail();
+  if ($('costs').classList.contains('open')) setTimeout(renderCosts, 400);
   toast(pickChoice ? `Wired to ${SERVICES[pickChoice].name}` : 'Connection cleared');
 }
 
 $('pickSave').addEventListener('click', savePick);
 $('pickCancel').addEventListener('click', () => $('pick').classList.remove('open'));
+/* what each button costs, and what a full run adds up to */
+function renderCosts() {
+  if (!detailNode) return;
+  const n = detailNode;
+  const rows = liveBtns.length
+    ? liveBtns.map(b => ({ key: n.type + '#' + b.key, label: b.label }))
+    : capsOf(n.type).map((c, i) => ({ key: n.type + ':' + i, label: c[0] }));
+  let total = 0;
+  $('costList').innerHTML = rows.map(r => {
+    const c = Number(state.costs[r.key]) || 0;
+    total += c;
+    const sid = state.links[r.key] !== undefined ? state.links[r.key] : null;
+    const svc = SERVICES[sid] || SERVICES[linkOf(n.type, 0)];
+    const name = SERVICES[state.links[r.key]] ? SERVICES[state.links[r.key]].name : 'not wired';
+    return `<div class="ci"><span class="nm"><b>${esc(r.label)}</b><i>${esc(name)}</i></span>
+      <span class="amt${c ? '' : ' zero'}">${c ? money(c) : '—'}</span></div>`;
+  }).join('') || '<div class="ci"><span class="nm">Nothing here yet</span></div>';
+  $('costTotal').textContent = money(total);
+}
+$('costBtn').addEventListener('click', () => {
+  const el = $('costs');
+  el.classList.toggle('open');
+  $('costBtn').classList.toggle('on', el.classList.contains('open'));
+  if (el.classList.contains('open')) renderCosts();
+});
+
 $('rzIn').addEventListener('click', () => setRingZoom(ringZoom * 1.25));
 $('rzOut').addEventListener('click', () => setRingZoom(ringZoom / 1.25));
 $('rzFit').addEventListener('click', () => { ringZoom = ringFit; ringPanX = 0; ringPanY = 0; applyRing(); });

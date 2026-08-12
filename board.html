@@ -160,6 +160,28 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   .cap .cs{font-size:8px;}
 }
 
+/* what each button costs */
+.costs{position:absolute;right:0;top:0;bottom:0;width:232px;background:rgba(10,9,8,.96);
+  border-left:1px solid var(--iron);z-index:20;display:none;flex-direction:column;}
+.costs.open{display:flex;}
+.costs .ch{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:12px 14px;
+  border-bottom:1px solid var(--iron);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--bone-dim);}
+.costs .ch span{font-family:var(--disp);font-size:19px;color:var(--acid);letter-spacing:.02em;}
+.costs .cl{flex:1;overflow-y:auto;padding:8px;}
+.costs .ci{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:7px 8px;
+  border-bottom:1px solid #221f1a;font-size:11.5px;}
+.costs .ci:last-child{border-bottom:none;}
+.costs .ci .nm{flex:1;min-width:0;}
+.costs .ci .nm b{display:block;font-weight:400;color:var(--bone);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.costs .ci .nm i{display:block;font-style:normal;font-size:8.5px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--iron-2);margin-top:2px;}
+.costs .ci .amt{font-variant-numeric:tabular-nums;color:var(--acid);white-space:nowrap;}
+.costs .ci .amt.zero{color:var(--iron-2);}
+.costs .cf{padding:10px 14px;border-top:1px solid var(--iron);color:var(--iron-2);
+  font-size:9px;letter-spacing:.08em;text-transform:uppercase;text-align:center;}
+@media(max-width:640px){ .costs{width:min(232px,72vw);} }
+
 /* service picker */
 .pick{position:fixed;inset:0;z-index:90;background:rgba(6,5,4,.9);display:none;align-items:flex-end;justify-content:center;}
 .pick.open{display:flex;}
@@ -257,12 +279,19 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   <div class="sbar">
     <button class="tbtn" id="sheetBack" type="button">← Board</button>
     <h2 id="sheetTitle">Tool</h2>
+    <button class="tbtn" id="costBtn" type="button" title="What each button costs">$</button>
     <button class="tbtn" id="rzOut" type="button" title="Zoom out">−</button>
     <button class="tbtn" id="rzFit" type="button" title="Fit it all on screen">Fit</button>
     <button class="tbtn" id="rzIn" type="button" title="Zoom in">+</button>
     <span class="tbtn" id="sheetCount" style="pointer-events:none;">0/0</span>
   </div>
-  <div class="stage" id="stage"><svg id="spokes"></svg></div>
+  <div class="stage" id="stage"><svg id="spokes"></svg>
+    <aside class="costs" id="costs">
+      <div class="ch">What it costs <span id="costTotal">$0.00</span></div>
+      <div class="cl" id="costList"></div>
+      <div class="cf">per full run · tap a button to set its rate</div>
+    </aside>
+  </div>
   <div class="foot">Tap a button to wire it to the service that runs it</div>
 </div>
 
@@ -272,7 +301,11 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
     <div class="ph"><div class="k">Wire this to</div><div class="n" id="pickName">—</div></div>
     <div class="list" id="pickList"></div>
     <div class="info">
-      <label for="pickPrompt">Prompt — what you tell it to do</label>
+      <label for="pickCost">Cost per run — your rate, in dollars</label>
+      <input type="number" id="pickCost" min="0" step="0.001" placeholder="0.00"
+             style="width:100%;background:var(--void);border:1px solid var(--iron);color:var(--bone);
+                    font-family:var(--body);font-size:13px;padding:10px;">
+      <label for="pickPrompt" style="margin-top:12px;">Prompt — what you tell it to do</label>
       <textarea id="pickPrompt" placeholder="e.g. Cut the background out cleanly, keep the edges sharp, return a transparent PNG."></textarea>
       <label for="pickNote" style="margin-top:12px;">Setup — key name, endpoint, account, notes</label>
       <textarea id="pickNote" placeholder="e.g. uses HEDRA_API_KEY · model character-3"></textarea>
