@@ -73,13 +73,20 @@ const VARIANTS_UPDATE = `
     }
   }`;
 
+/* Which of the required variables are missing, by name. A name is not a
+   secret; the value never appears. Saying "one of these two" is what makes a
+   missing key take an hour to find. */
+function missingEnv(names) {
+  return names.filter((n) => !process.env[n]);
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'Method not allowed' });
 
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
   const token = process.env.SHOPIFY_ADMIN_TOKEN;
   if (!domain || !token) {
-    return json(500, { ok: false, error: 'Server not configured: set SHOPIFY_STORE_DOMAIN and SHOPIFY_ADMIN_TOKEN in Netlify.' });
+    return json(500, { ok: false, error: 'Server not configured: missing ' + missingEnv(['SHOPIFY_STORE_DOMAIN', 'SHOPIFY_ADMIN_TOKEN']).join(' and ') + ' in Netlify.' });
   }
 
   // Optional basic gate so the endpoint isn't wide open.
