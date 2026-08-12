@@ -47,6 +47,45 @@ const TOOLS = {
 };
 const STATUS_LABEL = { live: 'Wired', key: 'Needs key', gated: 'Gated', manual: 'Hands-on' };
 
+/* ---- what each tool can actually DO (its buttons), and what runs them ---- */
+const SERVICES = {
+  supabase:  { name: 'Supabase',          note: 'your database + file storage', status: 'live' },
+  drive:     { name: 'Google Drive',      note: 'folders + backup',             status: 'key'  },
+  shopify:   { name: 'Shopify Admin API', note: 'DEATH CORPS store',            status: 'key'  },
+  tiktok:    { name: 'TikTok Shop API',   note: 'partner API',                  status: 'gated'},
+  ss:        { name: 'S&S Activewear',    note: 'blanks catalog feed',          status: 'key'  },
+  anthropic: { name: 'Anthropic',         note: 'AI copy + vision',             status: 'key'  },
+  bgremove:  { name: 'AI background cut', note: 'remove.bg / local model',      status: 'key'  },
+  upscale:   { name: 'AI upscaler',       note: 'HD / enhance',                 status: 'key'  },
+  vector:    { name: 'Vectorizer',        note: 'raster → SVG',                 status: 'key'  },
+  n8n:       { name: 'n8n workflow',      note: 'your automation runner',       status: 'key'  },
+  browser:   { name: 'Runs in the app',   note: 'no service needed',            status: 'live' },
+  folder:    { name: 'Local folder',      note: 'saves to your computer',       status: 'live' },
+  hands:     { name: 'Hands-on',          note: 'you do this one',              status: 'manual'},
+};
+
+/* capability list per tool: [label, default service] */
+const CAPS = {
+  locker:    [['Upload a logo','supabase'], ['Store it in the vault','supabase'], ['Remove a logo','supabase'], ['Back it up','drive']],
+  logomaker: [['Remove background','bgremove'], ['Enhance','upscale'], ['HD upscale','upscale'], ['Vectorize','vector'], ['Color fix','browser'], ['Sharpen','browser'], ['Export print PNG','browser']],
+  vault:     [['Search the archive','supabase'], ['Filter by brand','supabase'], ['Signed download','supabase']],
+  shirts:    [['Pick a blank photo','supabase'], ['Place + size the print','browser'], ['Build the mockup','browser'], ['Save the shirt','supabase'], ['Push to shop','shopify']],
+  gangsheet: [['Pack the sheet','browser'], ['Export 300 DPI PNG','browser'], ['Save to folder','folder'], ['Keep a copy','supabase']],
+  blanks:    [['Load the catalog','ss'], ['Search styles','ss'], ['Product images','ss']],
+  deploy:    [['Write the description','anthropic'], ['Upload the image','supabase'], ['Create the product','shopify'], ['Send to TikTok','tiktok']],
+  shopify:   [['Create product','shopify'], ['Update price/stock','shopify'], ['Read orders','shopify']],
+  tiktok:    [['Authorize shop','tiktok'], ['Upload images','tiktok'], ['Create product','tiktok']],
+  drive:     [['Watch for new art','n8n'], ['Copy into the folder','drive'], ['Mark it synced','supabase']],
+  omniflow:  [['Pull in orders','supabase'], ['Sort + classify','browser'], ['Update status','supabase']],
+  wholesale: [['Take the order','supabase'], ['Attach artwork','supabase'], ['Notify you','n8n']],
+  ticket:    [['Build the job ticket','browser'], ['CAD / gang sheet','browser'], ['Print it','hands']],
+  press:     [['Press the film','hands'], ['Quality check','hands']],
+  manifest:  [['Build the pull sheet','supabase'], ['Mark shipped','supabase'], ['Tracking number','hands']],
+  tracking:  [['Look up an order','supabase'], ['Show status','browser']],
+  folder:    [['Set the folder','folder'], ['Files land here','folder']],
+  custom:    [['Step one','hands']],
+};
+
 /* ---- default production line ---- */
 function defaultState() {
   return {
@@ -81,7 +120,19 @@ try {
   if (!state || !Array.isArray(state.nodes)) state = defaultState();
 } catch { state = defaultState(); }
 
+if (!state.links) state.links = {};   // "<type>:<capIndex>" -> serviceId
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} }
+function capsOf(type) { return CAPS[type] || CAPS.custom; }
+function linkOf(type, i) {
+  const k = type + ':' + i;
+  return Object.prototype.hasOwnProperty.call(state.links, k) ? state.links[k] : capsOf(type)[i][1];
+}
+function wiredCount(type) {
+  const caps = capsOf(type);
+  let n = 0;
+  caps.forEach((c, i) => { const s = SERVICES[linkOf(type, i)]; if (s && (s.status === 'live')) n++; });
+  return { n, total: caps.length };
+}
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
 let toastTimer;
@@ -145,13 +196,20 @@ function renderNode(n) {
       <span class="port out" data-port="out"></span>`;
   } else {
     const name = n.label || t.name;
+    const w = wiredCount(n.type);
     el.innerHTML = `
-      <div class="head"><span class="dotst"></span><h3>${esc(name)}</h3><button class="rm" title="Remove">&times;</button></div>
+      <div class="head"><span class="dotst"></span><h3>${esc(name)}</h3>
+        <button class="exp" title="Open this tool's buttons">⤢</button>
+        <button class="rm" title="Remove">&times;</button></div>
       <div class="body">
         <div class="desc">${esc(t.desc)}</div>
         <div class="row">
           <span class="st">${STATUS_LABEL[t.status] || ''}</span>
-          ${t.href ? `<button class="open" data-href="${esc(t.href)}">Open →</button>` : ''}
+          <span class="wired-n"><b>${w.n}</b>/${w.total} wired</span>
+        </div>
+        <div class="row">
+          ${t.href ? `<button class="open" data-href="${esc(t.href)}">Open →</button>` : '<span></span>'}
+          <button class="open" data-expand="1">Inside →</button>
         </div>
       </div>
       <span class="port in" data-port="in"></span>
@@ -218,7 +276,7 @@ function wireNodeEvents(el, n) {
 
   // Grab the block anywhere — not just its title bar. Controls still work.
   el.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.rm, .open, .port')) return;
+    if (e.target.closest('.rm, .open, .port, .exp')) return;
     e.preventDefault();
     pid = e.pointerId; el.setPointerCapture(pid);
     sx = e.clientX; sy = e.clientY; ox = n.x; oy = n.y; moved = false;
@@ -250,13 +308,16 @@ function wireNodeEvents(el, n) {
     save(); renderAll(); toast('Step removed');
   });
 
-  const open = el.querySelector('.open');
-  if (open) open.addEventListener('click', () => {
-    if (open.dataset.setfolder) { setFolder(n, el); return; }
-    const href = open.dataset.href;
+  el.querySelectorAll('.open').forEach(btn => btn.addEventListener('click', () => {
+    if (btn.dataset.setfolder) { setFolder(n, el); return; }
+    if (btn.dataset.expand) { openDetail(n); return; }
+    const href = btn.dataset.href;
+    if (!href) return;
     if (/^https?:/.test(href)) window.open(href, '_blank', 'noopener');
     else location.href = href;
-  });
+  }));
+  const exp = el.querySelector('.exp');
+  if (exp) exp.addEventListener('click', () => openDetail(n));
 
   el.querySelector('.port.out').addEventListener('click', (e) => {
     e.stopPropagation();
@@ -316,6 +377,100 @@ $('resetBtn').addEventListener('click', () => {
   if (!confirm('Reset the board to the default production line?')) return;
   state = defaultState(); save(); renderAll(); toast('Line reset');
 });
+
+/* =================================================================
+   NODE DETAIL — open a tool and see its buttons fanned out around it,
+   each one wireable to the service (API) that actually runs it.
+   ================================================================= */
+const sheet = $('sheet'), stage = $('stage'), spokes = $('spokes');
+let detailNode = null, pickIndex = -1;
+
+function serviceDot(id) {
+  const s = SERVICES[id];
+  return s ? ({ live: 'var(--acid)', key: 'var(--ember)', gated: 'var(--rust)', manual: 'var(--steel)' }[s.status] || 'var(--iron-2)') : 'var(--iron-2)';
+}
+
+function openDetail(n) {
+  detailNode = n;
+  const t = TOOLS[n.type] || TOOLS.custom;
+  $('sheetTitle').innerHTML = `Inside <b>${esc(n.label || t.name)}</b>`;
+  sheet.classList.add('open');
+  drawDetail();
+}
+function closeDetail() { sheet.classList.remove('open'); detailNode = null; renderAll(); }
+
+function drawDetail() {
+  if (!detailNode) return;
+  const n = detailNode, t = TOOLS[n.type] || TOOLS.custom;
+  const caps = capsOf(n.type);
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const cx = W / 2, cy = H / 2;
+  const narrow = W < 620;
+  // Ring wide enough that a button never sits on top of the hub, and never
+  // runs off the edge of the screen.
+  const capW = narrow ? 112 : 132;
+  const hubHalf = narrow ? 63 : 95;
+  const rx = Math.max(hubHalf + capW / 2 + 10, W / 2 - capW / 2 - 8);
+  const ry = Math.max(90, Math.min(H * 0.38, H / 2 - 58));
+
+  stage.querySelectorAll('.hubn,.cap').forEach(e => e.remove());
+
+  const hub = document.createElement('div');
+  hub.className = 'hubn';
+  hub.style.left = cx + 'px'; hub.style.top = cy + 'px';
+  const w = wiredCount(n.type);
+  hub.innerHTML = `<div class="t">${esc(n.label || t.name)}</div><div class="s">${w.n}/${w.total} wired</div>`;
+  stage.appendChild(hub);
+
+  let paths = '';
+  caps.forEach((c, i) => {
+    const a = (-Math.PI / 2) + (i / caps.length) * Math.PI * 2;
+    const x = cx + Math.cos(a) * rx;
+    const y = cy + Math.sin(a) * ry;
+    const sid = linkOf(n.type, i);
+    const svc = SERVICES[sid];
+    const col = serviceDot(sid);
+
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'cap' + (svc && svc.status === 'live' ? ' on' : '');
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    el.style.borderColor = col;
+    el.innerHTML = `<div class="cn">${esc(c[0])}</div><div class="cs" style="color:${col}">${esc(svc ? svc.name : 'not wired')}</div>`;
+    el.addEventListener('click', () => openPicker(i, c[0]));
+    stage.appendChild(el);
+
+    paths += `<path d="M ${cx} ${cy} L ${x} ${y}" stroke="${col}" stroke-width="1.6" opacity="0.55" fill="none"></path>`;
+    paths += `<circle cx="${x}" cy="${y}" r="3.5" fill="${col}"></circle>`;
+  });
+  spokes.innerHTML = paths;
+  $('sheetCount').textContent = `${w.n}/${w.total}`;
+}
+
+function openPicker(i, capName) {
+  pickIndex = i;
+  $('pickName').textContent = capName;
+  const list = $('pickList');
+  const cur = linkOf(detailNode.type, i);
+  list.innerHTML = Object.entries(SERVICES).map(([id, s]) => `
+    <button class="opt" data-s="${id}" type="button">
+      <span class="d" style="color:${serviceDot(id)};background:${serviceDot(id)}"></span>
+      <span>${esc(s.name)}${id === cur ? ' ✓' : ''}<small>${esc(s.note)}</small></span>
+    </button>`).join('') +
+    `<button class="opt clear" data-s="" type="button"><span>Not wired yet</span></button>`;
+  list.querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.s;
+    if (v) state.links[detailNode.type + ':' + i] = v;
+    else state.links[detailNode.type + ':' + i] = null;
+    save(); $('pick').classList.remove('open'); drawDetail();
+    toast(v ? `Wired to ${SERVICES[v].name}` : 'Connection cleared');
+  }));
+  $('pick').classList.add('open');
+}
+
+$('sheetBack').addEventListener('click', closeDetail);
+$('pick').addEventListener('click', (e) => { if (e.target === $('pick')) $('pick').classList.remove('open'); });
+window.addEventListener('resize', () => { if (detailNode) drawDetail(); });
 
 /* ---- board lock: freeze the canvas so only blocks move ---- */
 const LOCK_KEY = 'skrewu_board_locked';

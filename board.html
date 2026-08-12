@@ -78,6 +78,56 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
 .node .head h3{font-size:13.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .node .rm{background:none;border:none;color:var(--iron-2);font-size:14px;line-height:1;padding:2px 4px;}
 .node .rm:hover{color:var(--rust);}
+.node .exp{background:none;border:none;color:var(--iron-2);font-size:12px;line-height:1;padding:2px 4px;}
+.node .exp:hover{color:var(--acid);}
+.node .wired-n{font-size:8.5px;letter-spacing:.1em;color:var(--iron-2);text-transform:uppercase;}
+.node .wired-n b{color:var(--acid);}
+
+/* ===== node detail: the tool's buttons fanned out as sub-nodes ===== */
+.sheet{position:fixed;inset:0;z-index:80;background:rgba(6,5,4,.93);backdrop-filter:blur(4px);display:none;flex-direction:column;}
+.sheet.open{display:flex;}
+.sheet .sbar{display:flex;align-items:center;gap:12px;height:54px;padding:0 14px;border-bottom:1px solid var(--iron);flex-shrink:0;}
+.sheet .sbar h2{font-family:var(--disp);text-transform:uppercase;font-size:16px;letter-spacing:.05em;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sheet .sbar h2 b{color:var(--acid);}
+.stage{flex:1;position:relative;overflow:hidden;}
+#spokes{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.hubn{position:absolute;transform:translate(-50%,-50%);background:linear-gradient(180deg,#1c1811,var(--void-2));
+  border:2px solid var(--acid);padding:14px 18px;text-align:center;max-width:190px;z-index:3;}
+.hubn .t{font-family:var(--disp);text-transform:uppercase;font-size:16px;letter-spacing:.04em;}
+.hubn .s{font-size:9.5px;color:var(--bone-dim);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
+.cap{position:absolute;transform:translate(-50%,-50%);width:132px;background:linear-gradient(180deg,var(--panel),var(--void-2));
+  border:1px solid var(--iron);padding:8px 9px;cursor:pointer;z-index:3;text-align:center;}
+.cap:hover,.cap:focus-visible{border-color:var(--acid);}
+.cap.on{border-color:var(--acid);}
+.cap .cn{font-size:11.5px;color:var(--bone);line-height:1.25;}
+.cap .cs{font-size:9px;letter-spacing:.06em;text-transform:uppercase;margin-top:5px;color:var(--iron-2);}
+.cap.on .cs{color:var(--acid);}
+.sheet .foot{flex-shrink:0;border-top:1px solid var(--iron);padding:10px 14px;color:var(--iron-2);
+  font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+@media(max-width:620px){
+  .hubn{max-width:126px;padding:11px 12px;}
+  .hubn .t{font-size:13.5px;}
+  .cap{width:112px;padding:7px;}
+  .cap .cn{font-size:10.5px;}
+  .cap .cs{font-size:8px;}
+}
+
+/* service picker */
+.pick{position:fixed;inset:0;z-index:90;background:rgba(6,5,4,.9);display:none;align-items:flex-end;justify-content:center;}
+.pick.open{display:flex;}
+.pick .card{background:var(--void-2);border:1px solid var(--iron);width:100%;max-width:460px;max-height:76vh;
+  display:flex;flex-direction:column;}
+.pick .ph{padding:14px 16px;border-bottom:1px solid var(--iron);}
+.pick .ph .k{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--bone-dim);}
+.pick .ph .n{font-family:var(--disp);text-transform:uppercase;font-size:17px;margin-top:5px;}
+.pick .list{overflow-y:auto;padding:8px;}
+.pick .opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--void);
+  border:1px solid var(--iron);color:var(--bone);padding:11px 12px;margin-bottom:7px;font-size:13px;}
+.pick .opt:hover{border-color:var(--acid);color:var(--acid);}
+.pick .opt .d{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
+.pick .opt small{display:block;color:var(--iron-2);font-size:10px;letter-spacing:.05em;text-transform:uppercase;margin-top:2px;}
+.pick .opt.clear{color:var(--rust);border-color:var(--iron);}
 .node .body{padding:8px 10px 10px;}
 .node .desc{font-size:10.5px;color:var(--bone-dim);line-height:1.4;min-height:29px;}
 .node .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:6px;}
@@ -139,6 +189,25 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
     <div class="canvas" id="canvas">
       <svg id="wires"></svg>
     </div>
+  </div>
+</div>
+
+<!-- node detail: the tool in the middle, its buttons fanned out around it -->
+<div class="sheet" id="sheet">
+  <div class="sbar">
+    <button class="tbtn" id="sheetBack" type="button">← Board</button>
+    <h2 id="sheetTitle">Tool</h2>
+    <span class="tbtn" id="sheetCount" style="pointer-events:none;">0/0</span>
+  </div>
+  <div class="stage" id="stage"><svg id="spokes"></svg></div>
+  <div class="foot">Tap a button to wire it to the service that runs it</div>
+</div>
+
+<!-- service picker -->
+<div class="pick" id="pick">
+  <div class="card">
+    <div class="ph"><div class="k">Wire this to</div><div class="n" id="pickName">—</div></div>
+    <div class="list" id="pickList"></div>
   </div>
 </div>
 
