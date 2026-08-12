@@ -17,8 +17,17 @@
 
 const CATALOG = require('./_catalog');
 
+/* Never cached. Every answer this endpoint gives is about the state of the
+   site right now — whether checkout is connected, what shape the key is, why
+   Stripe refused. A browser holding on to yesterday's answer is worse than no
+   answer, because it looks current: reload after fixing a key and the phone
+   hands back the old reading, and the fix looks like it failed. */
 function json(statusCode, body) {
-  return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    body: JSON.stringify(body),
+  };
 }
 
 /**

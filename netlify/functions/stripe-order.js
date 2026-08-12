@@ -28,7 +28,11 @@ const C = require('./_credits');
 const STORE_TENANT = 'skrewu';
 
 function json(statusCode, body) {
-  return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    body: JSON.stringify(body),
+  };
 }
 
 function missingEnv(names) {

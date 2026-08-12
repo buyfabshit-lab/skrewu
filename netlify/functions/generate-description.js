@@ -15,7 +15,11 @@
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
 
 function json(statusCode, body) {
-  return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    body: JSON.stringify(body),
+  };
 }
 
 function templateDescription({ title, keywords, productType }) {
