@@ -323,6 +323,9 @@ let locked = false;
 function applyLock(announce) {
   const btn = $('lockBtn');
   viewport.classList.toggle('locked', locked);
+  // pin the page itself too, so the phone can't scroll or rubber-band
+  document.documentElement.classList.toggle('board-locked', locked);
+  document.body.classList.toggle('board-locked', locked);
   btn.classList.toggle('on', locked);
   btn.setAttribute('aria-pressed', locked ? 'true' : 'false');
   btn.querySelector('.ic').textContent = locked ? '🔒' : '🔓';
@@ -333,6 +336,14 @@ function applyLock(announce) {
   if (announce) toast(locked ? 'Board locked — move blocks freely' : 'Board unlocked — swipe to pan');
 }
 $('lockBtn').addEventListener('click', () => { locked = !locked; applyLock(true); });
+
+/* While locked, swallow page-level touch scrolling (Safari still bounces the
+   window otherwise). The tool tray stays swipeable so you can still add steps. */
+document.addEventListener('touchmove', (e) => {
+  if (!locked) return;
+  if (e.target && e.target.closest && e.target.closest('.tray')) return;
+  if (e.cancelable) e.preventDefault();
+}, { passive: false });
 
 /* ---- zoom buttons ---- */
 $('zoomIn').addEventListener('click', () => setZoom(zoom + 0.15));
