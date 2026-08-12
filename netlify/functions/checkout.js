@@ -50,9 +50,14 @@ function loadCatalog() {
 }
 
 exports.handler = async (event) => {
+  const key = process.env.STRIPE_SECRET_KEY;
+
+  // GET is a readiness probe, so the store page can say honestly whether the
+  // Buy buttons work instead of guessing. Reveals a yes/no and nothing else.
+  if (event.httpMethod === 'GET') return json(200, { ok: true, ready: !!key });
+
   if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'Method not allowed' });
 
-  const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
     return json(400, { ok: false, error: 'Checkout isn’t connected yet — add STRIPE_SECRET_KEY in Netlify, or paste a Stripe Payment Link into products.json.' });
   }
@@ -82,6 +87,8 @@ exports.handler = async (event) => {
   if (p.tagline) form.set('line_items[0][price_data][product_data][description]', p.tagline);
   if (recurring) form.set('line_items[0][price_data][recurring][interval]', 'month');
   form.set('metadata[product_id]', p.id);
+  // A discount code box on the payment page — Stripe hides it until one exists.
+  form.set('allow_promotion_codes', 'true');
 
   try {
     const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
