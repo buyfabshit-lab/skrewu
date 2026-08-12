@@ -89,6 +89,29 @@ body[data-layout=portrait].solid .zones{display:block;}
 .zones .z-bot{left:0;right:0;bottom:0;height:26%;}
 .zones .z-right{right:0;top:9.5%;bottom:26%;width:16%;}
 
+/* a logo you can swap without touching code */
+.tally .logo{display:flex;align-items:center;padding:8px 14px;background:var(--acid);}
+.tally .logo img{height:34px;width:auto;max-width:150px;object-fit:contain;display:block;}
+body[data-layout=portrait] .tally .logo img{height:42px;}
+
+/* the media slot — a product shot or a clip, in the clear band */
+.media{position:absolute;right:26px;top:26px;width:min(320px,26vw);border:2px solid var(--acid);
+  background:rgba(10,9,8,.7);backdrop-filter:blur(5px);overflow:hidden;line-height:0;}
+.media img,.media video{width:100%;height:auto;display:block;}
+body[data-layout=portrait] .media{
+  right:var(--safe-right);left:auto;top:auto;width:46%;
+  bottom:calc(var(--safe-bottom) + 2%);}
+
+/* where YOU are — only drawn while setting up, never on air */
+.cam{display:none;position:absolute;border:2px dashed rgba(196,241,53,.55);
+  align-items:flex-end;justify-content:center;padding-bottom:12px;
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(196,241,53,.8);}
+body.solid .cam{display:flex;}
+body[data-layout=wide] .cam{right:26px;top:26px;bottom:26px;left:520px;}
+body[data-layout=portrait] .cam{
+  left:var(--safe-left);right:var(--safe-right);
+  top:calc(var(--safe-top) + 250px);bottom:calc(var(--safe-bottom) + 210px);}
+
 .off{display:none !important;}
 /* Setting it up: only shown with ?bg=1, never over a live stream. */
 .help{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;
@@ -101,7 +124,12 @@ body[data-layout=portrait].solid .zones{display:block;}
 </head>
 <body data-page="Live Overlay">
 <div class="stage">
+  <div class="cam">your camera — this is where you are</div>
+
+  <div class="media off" id="media"></div>
+
   <div class="tally off" id="tally">
+    <span class="logo off" id="logoWrap"><img id="logoImg" alt=""></span>
     <span class="shop" id="shopName">Shop</span>
     <span class="cell"><span class="n" id="nOrders">0</span><span class="l">orders today</span></span>
     <span class="cell"><span class="n" id="nUnits">0</span><span class="l">pieces</span></span>

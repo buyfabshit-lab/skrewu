@@ -18,10 +18,42 @@
  * Netlify environment variables:
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  *
- * GET /api/live?shop=<slug>&k=<access key>&limit=8
+ * GET  /api/live?shop=<slug>&k=<access key>&limit=8   what's on, plus the stage
+ * POST /api/live?shop=<slug>&k=<access key>  { stage:{…} }   change what's on
+ *
+ * The stage is the swappable part — logo, headline, a picture or a clip. It
+ * isn't secret (it goes on a public stream) but only the shop may change it,
+ * so a write needs the same key a read does.
  */
 
 const MAX_LIMIT = 20;
+
+/* What a stage may contain. Anything else sent is dropped rather than stored —
+   this ends up rendered on a stream, so the shape stays known. */
+const STAGE_TEXT = ['logo', 'headline', 'sub'];
+const PANELS = ['tally', 'feed', 'drop', 'media'];
+
+function cleanStage(raw) {
+  const inp = (raw && typeof raw === 'object') ? raw : {};
+  const out = {};
+  STAGE_TEXT.forEach(k => {
+    const v = inp[k];
+    if (typeof v === 'string' && v.trim()) out[k] = v.trim().slice(0, 200);
+  });
+  // Only http(s) — a javascript: or data: URL has no business on a page we render.
+  ['logo'].forEach(k => {
+    if (out[k] && !/^https?:\/\//i.test(out[k])) delete out[k];
+  });
+  if (inp.media && typeof inp.media === 'object') {
+    const kind = inp.media.kind === 'video' ? 'video' : 'image';
+    const url = String(inp.media.url || '');
+    if (/^https?:\/\//i.test(url)) out.media = { kind, url: url.slice(0, 500) };
+  }
+  if (Array.isArray(inp.show)) {
+    out.show = inp.show.filter(x => PANELS.includes(x));
+  }
+  return out;
+}
 
 function json(statusCode, body) {
   return {
@@ -36,6 +68,23 @@ function keyMatches(a, b) {
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
+}
+
+async function sbWrite(path, opts) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const res = await fetch(`${url}/rest/v1/${path}`, {
+    ...opts,
+    headers: {
+      apikey: key, Authorization: 'Bearer ' + key,
+      'Content-Type': 'application/json', ...(opts.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(t || `database error ${res.status}`);
+  }
+  return true;
 }
 
 async function sb(path) {
@@ -78,13 +127,30 @@ exports.handler = async (event) => {
 
   let tenant;
   try {
-    const rows = await sb(`tenants?slug=eq.${encodeURIComponent(who)}&select=slug,name,access_key,active,shop`);
+    const rows = await sb(`tenants?slug=eq.${encodeURIComponent(who)}&select=slug,name,access_key,active,shop,stage`);
     tenant = rows && rows[0];
   } catch (e) {
     return json(502, { ok: false, error: String(e.message || e) });
   }
   if (!tenant || !tenant.active) return json(404, { ok: false, error: 'No such shop' });
   if (!keyMatches(key, tenant.access_key)) return json(401, { ok: false, error: 'Not your shop' });
+
+  // Changing what's on screen.
+  if (event.httpMethod === 'POST') {
+    let body;
+    try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { ok: false, error: 'Invalid request' }); }
+    const stage = cleanStage(body.stage);
+    try {
+      await sbWrite(`tenants?slug=eq.${encodeURIComponent(tenant.slug)}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ stage }),
+      });
+    } catch (e) {
+      return json(502, { ok: false, error: String(e.message || e) });
+    }
+    return json(200, { ok: true, stage });
+  }
 
   // Midnight where the shop is would be better; until a tenant carries a
   // timezone, "the last 24 hours" is honest and never wrong by a whole day.
@@ -105,6 +171,7 @@ exports.handler = async (event) => {
   return json(200, {
     ok: true,
     shop: { slug: tenant.slug, name: tenant.name, domain: (tenant.shop || {}).domain || null },
+    stage: tenant.stage || {},
     today: {
       orders: list.length,
       units: list.reduce((n, o) => n + o.units, 0),

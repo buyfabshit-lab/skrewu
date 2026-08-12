@@ -9,6 +9,10 @@
 /* the gift bar and the button rail — and is assumed on any tall source.       */
 /*                                                                            */
 /* Options: &bg=1 solid background (for setting up) · &show=tally,feed,drop   */
+/*                                                                            */
+/* The swappable bits — logo, headline, a picture or a clip — are the shop's   */
+/* "stage", changed from stage.html and picked up here on the next check. No   */
+/* restarting the browser source, no editing anything.                        */
 /* &every=<seconds> how often to check (10 by default, 5 at the fastest).      */
 
 (function () {
@@ -82,18 +86,36 @@
       return;   // a dropped connection is not worth showing anybody; try again next tick
     }
 
-    if (wants('tally')) {
+    const stage = data.stage || {};
+    // The stage can turn panels off too, so it can be driven from one place.
+    const on = (part) => wants(part) && (!Array.isArray(stage.show) || stage.show.includes(part));
+
+    if (on('tally')) {
       $('tally').classList.remove('off');
       $('shopName').textContent = data.shop.name || 'Shop';
       $('nOrders').textContent = data.today.orders;
       $('nUnits').textContent = data.today.units;
-    }
-    if (wants('drop') && data.shop.domain) {
-      $('drop').classList.remove('off');
-      $('dropUrl').innerHTML = `<b>${esc(data.shop.domain)}</b>`;
-    }
+      if (stage.logo) {
+        $('logoImg').src = stage.logo;
+        $('logoWrap').classList.remove('off');
+        $('shopName').classList.add('off');     // the logo IS the name
+      } else {
+        $('logoWrap').classList.add('off');
+        $('shopName').classList.remove('off');
+      }
+    } else { $('tally').classList.add('off'); }
 
-    if (wants('feed')) {
+    if (on('drop')) {
+      $('drop').classList.remove('off');
+      if (stage.headline) $('dropTitle').textContent = stage.headline;
+      const line = stage.sub || data.shop.domain;
+      if (line) $('dropUrl').innerHTML = `<b>${esc(line)}</b>`;
+    } else { $('drop').classList.add('off'); }
+
+    showMedia(on('media') ? stage.media : null);
+
+    if (!on('feed')) { first = false; return; }
+    {
       const fresh = (data.orders || []).filter(o => !seen.has(idOf(o)));
       fresh.forEach(o => seen.add(idOf(o)));
       // On the first read the last few orders are history, not news — bank them
@@ -101,6 +123,21 @@
       if (!first) fresh.reverse().forEach(announce);
       first = false;
     }
+  }
+
+  /* Swap the picture or clip only when it actually changes — re-setting a
+     <video> src every ten seconds would restart it mid-play, on air. */
+  let mediaNow = '';
+  function showMedia(m) {
+    const box = $('media');
+    const id = m ? `${m.kind}|${m.url}` : '';
+    if (id === mediaNow) return;
+    mediaNow = id;
+    if (!m) { box.classList.add('off'); box.innerHTML = ''; return; }
+    box.innerHTML = m.kind === 'video'
+      ? `<video src="${esc(m.url)}" autoplay loop muted playsinline></video>`
+      : `<img src="${esc(m.url)}" alt="">`;
+    box.classList.remove('off');
   }
 
   // Let a theme set the colours, then start.

@@ -405,6 +405,32 @@ without touching the services, prompts and rates you set up.
 wiring. Arranging is layout; wiring is work, and the two shouldn't share a
 delete button.
 
-**Not yet:** a QR code on the drop panel. Worth doing — a QR converts a viewer
+### Stage control — the swappable elements
+
+`stage.html?shop=<slug>&k=<access key>` — the logo, the headline, the line
+under it, and a picture or a clip. Change any of them and the overlay picks it
+up on its next check; nothing is restarted and no code is touched. Panels can
+be switched on and off from here too. Stored on `tenants.stage`, written
+through `POST /api/live` with the same key a read needs.
+
+`cleanStage()` in that function is the guard: only the known fields are stored,
+and a logo or media link must be `http(s)` — a `javascript:` or `data:` URL has
+no business on a page we render. Keep that.
+
+**The buttons are on your phone, not on the stream.** A livestream is video;
+nobody watching can tap it. There is no way to put a working button into a
+TikTok live for viewers, and any design that assumes otherwise is wrong. A
+viewer reaches a tool by a link — bio, a pinned comment, a TikTok Shop product
+card, or something on screen they type or scan.
+
+**Where the camera goes:** everything is arranged around a clear middle band.
+Turn on `&bg=1` and that band is outlined as *your camera* — the overlay is a
+layer over your video in OBS, never a replacement for it.
+
+**Not yet:** a QR code on the drop panel. It is the right answer for getting a
+viewer off the stream and into the builder, and it should be built — but it
+needs a QR encoder written in, and there is no reference implementation
+available here to check the output against. An unverified QR that scans wrong
+is worse than no QR, so it waits for a way to test it properly. Worth doing — a QR converts a viewer
 faster than a typed URL — but it needs a real encoder written in, and a wrong
 one is worse than none.
