@@ -128,6 +128,19 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
 .pick .opt .d{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
 .pick .opt small{display:block;color:var(--iron-2);font-size:10px;letter-spacing:.05em;text-transform:uppercase;margin-top:2px;}
 .pick .opt.clear{color:var(--rust);border-color:var(--iron);}
+.pick .opt.sel{border-color:var(--acid);background:rgba(196,241,53,.08);}
+.pick .info{padding:12px 16px;border-top:1px solid var(--iron);}
+.pick .info label{display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);margin-bottom:7px;}
+.pick .info textarea{width:100%;min-height:64px;background:var(--void);border:1px solid var(--iron);color:var(--bone);
+  font-family:var(--body);font-size:13px;padding:10px;resize:vertical;}
+.pick .info textarea:focus{border-color:var(--acid);outline:none;}
+.pick .pf{display:flex;gap:8px;padding:0 16px 14px;}
+.pick .pf .tbtn{flex:1;text-align:center;padding:11px;}
+.pick .pf .go{background:var(--rust);border-color:var(--rust-bright);color:var(--bone);}
+.cap .ci{font-size:8.5px;color:var(--bone-dim);margin-top:4px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.node.allgreen{border-color:var(--acid);}
+.node.allgreen .wired-n{color:var(--acid);}
 .node .body{padding:8px 10px 10px;}
 .node .desc{font-size:10.5px;color:var(--bone-dim);line-height:1.4;min-height:29px;}
 .node .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:6px;}
@@ -208,6 +221,14 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   <div class="card">
     <div class="ph"><div class="k">Wire this to</div><div class="n" id="pickName">—</div></div>
     <div class="list" id="pickList"></div>
+    <div class="info">
+      <label for="pickNote">What goes in here — key name, endpoint, account, notes</label>
+      <textarea id="pickNote" placeholder="e.g. uses SHOPIFY_ADMIN_TOKEN on Netlify · store cae949-fc"></textarea>
+    </div>
+    <div class="pf">
+      <button class="tbtn" id="pickCancel" type="button">Cancel</button>
+      <button class="tbtn go" id="pickSave" type="button">Save</button>
+    </div>
   </div>
 </div>
 

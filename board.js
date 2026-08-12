@@ -117,10 +117,17 @@ function defaultState() {
 let state;
 try {
   state = JSON.parse(localStorage.getItem(STORE_KEY));
-  if (!state || !Array.isArray(state.nodes)) state = defaultState();
+  if (!state || !Array.isArray(state.nodes)) {
+    // rebuild the layout but keep any wiring/notes that survived
+    const keep = state || {};
+    state = defaultState();
+    state.links = keep.links || {};
+    state.notes = keep.notes || {};
+  }
 } catch { state = defaultState(); }
 
 if (!state.links) state.links = {};   // "<type>:<capIndex>" -> serviceId
+if (!state.notes) state.notes = {};   // "<type>:<capIndex>" -> what you typed in
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} }
 function capsOf(type) { return CAPS[type] || CAPS.custom; }
 function linkOf(type, i) {
@@ -197,15 +204,16 @@ function renderNode(n) {
   } else {
     const name = n.label || t.name;
     const w = wiredCount(n.type);
+    if (w.n === w.total) el.classList.add('allgreen');
     el.innerHTML = `
       <div class="head"><span class="dotst"></span><h3>${esc(name)}</h3>
-        <button class="exp" title="Open this tool's buttons">⤢</button>
+        <button class="exp" title="Open this tool's buttons (or double-click the block)">⤢</button>
         <button class="rm" title="Remove">&times;</button></div>
       <div class="body">
         <div class="desc">${esc(t.desc)}</div>
         <div class="row">
           <span class="st">${STATUS_LABEL[t.status] || ''}</span>
-          <span class="wired-n"><b>${w.n}</b>/${w.total} wired</span>
+          <span class="wired-n">${w.n === w.total ? 'ALL WORKING' : `<b>${w.n}</b>/${w.total} wired`}</span>
         </div>
         <div class="row">
           ${t.href ? `<button class="open" data-href="${esc(t.href)}">Open →</button>` : '<span></span>'}
@@ -319,6 +327,20 @@ function wireNodeEvents(el, n) {
   const exp = el.querySelector('.exp');
   if (exp) exp.addEventListener('click', () => openDetail(n));
 
+  // double-click / double-tap a block to open it up
+  el.addEventListener('dblclick', (e) => {
+    if (e.target.closest('.rm, .port')) return;
+    openDetail(n);
+  });
+  let lastTap = 0;
+  el.addEventListener('pointerup', (e) => {
+    if (e.pointerType === 'mouse') return;
+    if (e.target.closest('.rm, .port, .open, .exp')) return;
+    const now = performance.now();
+    if (now - lastTap < 320 && !moved) { openDetail(n); lastTap = 0; return; }
+    lastTap = now;
+  });
+
   el.querySelector('.port.out').addEventListener('click', (e) => {
     e.stopPropagation();
     canvas.querySelectorAll('.port.armed').forEach(p => p.classList.remove('armed'));
@@ -419,7 +441,10 @@ function drawDetail() {
   hub.className = 'hubn';
   hub.style.left = cx + 'px'; hub.style.top = cy + 'px';
   const w = wiredCount(n.type);
-  hub.innerHTML = `<div class="t">${esc(n.label || t.name)}</div><div class="s">${w.n}/${w.total} wired</div>`;
+  const allGreen = w.n === w.total;
+  if (!allGreen) hub.style.borderColor = 'var(--ember)';
+  hub.innerHTML = `<div class="t">${esc(n.label || t.name)}</div>` +
+    `<div class="s" style="color:${allGreen ? 'var(--acid)' : 'var(--bone-dim)'}">${allGreen ? 'all working' : w.n + '/' + w.total + ' wired'}</div>`;
   stage.appendChild(hub);
 
   let paths = '';
@@ -436,7 +461,10 @@ function drawDetail() {
     el.className = 'cap' + (svc && svc.status === 'live' ? ' on' : '');
     el.style.left = x + 'px'; el.style.top = y + 'px';
     el.style.borderColor = col;
-    el.innerHTML = `<div class="cn">${esc(c[0])}</div><div class="cs" style="color:${col}">${esc(svc ? svc.name : 'not wired')}</div>`;
+    const note = state.notes[n.type + ':' + i];
+    el.innerHTML = `<div class="cn">${esc(c[0])}</div>` +
+      `<div class="cs" style="color:${col}">${esc(svc ? svc.name : 'not wired')}</div>` +
+      (note ? `<div class="ci">${esc(note)}</div>` : '');
     el.addEventListener('click', () => openPicker(i, c[0]));
     stage.appendChild(el);
 
@@ -447,27 +475,40 @@ function drawDetail() {
   $('sheetCount').textContent = `${w.n}/${w.total}`;
 }
 
+let pickChoice = null;
 function openPicker(i, capName) {
   pickIndex = i;
+  const key = detailNode.type + ':' + i;
+  pickChoice = linkOf(detailNode.type, i);
   $('pickName').textContent = capName;
-  const list = $('pickList');
-  const cur = linkOf(detailNode.type, i);
-  list.innerHTML = Object.entries(SERVICES).map(([id, s]) => `
-    <button class="opt" data-s="${id}" type="button">
-      <span class="d" style="color:${serviceDot(id)};background:${serviceDot(id)}"></span>
-      <span>${esc(s.name)}${id === cur ? ' ✓' : ''}<small>${esc(s.note)}</small></span>
-    </button>`).join('') +
-    `<button class="opt clear" data-s="" type="button"><span>Not wired yet</span></button>`;
-  list.querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => {
-    const v = b.dataset.s;
-    if (v) state.links[detailNode.type + ':' + i] = v;
-    else state.links[detailNode.type + ':' + i] = null;
-    save(); $('pick').classList.remove('open'); drawDetail();
-    toast(v ? `Wired to ${SERVICES[v].name}` : 'Connection cleared');
-  }));
+  $('pickNote').value = state.notes[key] || '';
+  renderPickList();
   $('pick').classList.add('open');
 }
+function renderPickList() {
+  const list = $('pickList');
+  list.innerHTML = Object.entries(SERVICES).map(([id, s]) => `
+    <button class="opt${id === pickChoice ? ' sel' : ''}" data-s="${id}" type="button">
+      <span class="d" style="color:${serviceDot(id)};background:${serviceDot(id)}"></span>
+      <span>${esc(s.name)}${id === pickChoice ? ' ✓' : ''}<small>${esc(s.note)}</small></span>
+    </button>`).join('') +
+    `<button class="opt clear${pickChoice === null ? ' sel' : ''}" data-s="" type="button"><span>Not wired yet</span></button>`;
+  list.querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => {
+    pickChoice = b.dataset.s || null;
+    renderPickList();
+  }));
+}
+function savePick() {
+  const key = detailNode.type + ':' + pickIndex;
+  state.links[key] = pickChoice;
+  const note = $('pickNote').value.trim();
+  if (note) state.notes[key] = note; else delete state.notes[key];
+  save(); $('pick').classList.remove('open'); drawDetail();
+  toast(pickChoice ? `Wired to ${SERVICES[pickChoice].name}` : 'Connection cleared');
+}
 
+$('pickSave').addEventListener('click', savePick);
+$('pickCancel').addEventListener('click', () => $('pick').classList.remove('open'));
 $('sheetBack').addEventListener('click', closeDetail);
 $('pick').addEventListener('click', (e) => { if (e.target === $('pick')) $('pick').classList.remove('open'); });
 window.addEventListener('resize', () => { if (detailNode) drawDetail(); });
