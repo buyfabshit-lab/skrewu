@@ -103,11 +103,22 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
 .hubn .s{font-size:9.5px;color:var(--bone-dim);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
 .cap{position:absolute;transform:translate(-50%,-50%);width:132px;background:linear-gradient(180deg,var(--panel),var(--void-2));
   border:1px solid var(--iron);padding:8px 9px;cursor:pointer;z-index:3;text-align:center;}
-.cap:hover,.cap:focus-visible{border-color:var(--acid);}
-.cap.on{border-color:var(--acid);}
 .cap .cn{font-size:11.5px;color:var(--bone);line-height:1.25;}
-.cap .cs{font-size:9px;letter-spacing:.06em;text-transform:uppercase;margin-top:5px;color:var(--iron-2);}
-.cap.on .cs{color:var(--acid);}
+.cap .cs{font-size:9px;letter-spacing:.06em;text-transform:uppercase;margin-top:6px;
+  display:flex;align-items:center;justify-content:center;gap:5px;}
+.cap .cst{font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;margin-top:3px;color:var(--bone-dim);}
+.pip{width:6px;height:6px;border-radius:50%;flex:0 0 auto;display:inline-block;}
+/* A working connection is the one you should be able to find without reading. */
+.cap.on{border-color:var(--acid);box-shadow:0 0 0 1px rgba(196,241,53,.18),0 0 18px -6px rgba(196,241,53,.5);}
+.cap.on .cst{color:var(--acid);}
+.cap:hover,.cap:focus-visible{border-color:var(--acid);}
+
+/* What the colours mean, on the map itself, listing only the states in front
+   of you. A key you have to remember is a key nobody reads. */
+.legend{position:absolute;left:0;right:0;bottom:8px;z-index:3;display:flex;flex-wrap:wrap;
+  justify-content:center;gap:14px;pointer-events:none;}
+.legend span{display:inline-flex;align-items:center;gap:5px;font-size:8.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--bone-dim);}
 .sheet .foot{flex-shrink:0;border-top:1px solid var(--iron);padding:10px 14px;color:var(--iron-2);
   font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
 /* live view: the real tool on screen, wires off its actual buttons */
@@ -174,7 +185,8 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   .hubn .t{font-size:13.5px;}
   .cap{width:112px;padding:7px;}
   .cap .cn{font-size:10.5px;}
-  .cap .cs{font-size:8px;}
+  .cap .cs{font-size:8px;gap:4px;}
+  .cap .cst{font-size:7.5px;}
 }
 
 /* what each button costs */

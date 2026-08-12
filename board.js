@@ -524,6 +524,22 @@ function serviceDot(id) {
   return { live: '#c4f135', key: '#ff8a3d', gated: '#d8402f', manual: '#7f95b0' }[s.status] || DIM;
 }
 
+/* A colour on its own doesn't tell you anything — orange next to the words
+   GOOGLE DRIVE reads as "broken" when what it means is "chosen, but nobody has
+   connected the account yet". So every connection says its state in words, and
+   the colour is only there to let you find the unfinished ones at a glance. */
+const STATE_WORD = {
+  live:   'working',
+  key:    'needs key',
+  gated:  'needs approval',
+  manual: 'you do this',
+};
+function stateWord(id) {
+  const s = SERVICES[id];
+  if (!s) return 'not set';
+  return STATE_WORD[s.status] || 'not set';
+}
+
 function openDetail(n) {
   detailNode = n;
   const t = TOOLS[n.type] || TOOLS.custom;
@@ -665,7 +681,7 @@ let detailView = 'live';
 function drawDetail() {
   if (!detailNode) return;
   const n = detailNode, t = TOOLS[n.type] || TOOLS.custom;
-  stage.querySelectorAll('.hubn,.cap,.live,.chips,.chipr,.dotb,.ringwrap').forEach(e => e.remove());
+  stage.querySelectorAll('.hubn,.cap,.live,.chips,.chipr,.dotb,.ringwrap,.legend').forEach(e => e.remove());
   spokes.innerHTML = '';
   liveBtns = []; ringWrap = null; placeMarkers = null; toolZoom = 1;
 
@@ -692,14 +708,23 @@ function drawRadial(n, t) {
   // runs off the edge of the screen.
   const capW = narrow ? 112 : 132;
   const hubHalf = narrow ? 63 : 95;
-  const rx = Math.max(hubHalf + capW / 2 + 10, W / 2 - capW / 2 - 8);
-  const ry = Math.max(90, Math.min(H * 0.38, H / 2 - 58));
+  const rx = Math.max(hubHalf + capW / 2 + 10, W / 2 - capW / 2 - 14);
+  // Leaves the bottom strip clear for the key, and stops a three-spoke map
+  // from stranding one card at the top of a tall phone with nothing between.
+  const ry = Math.max(88, Math.min(H * 0.34, H / 2 - 84));
 
-  stage.querySelectorAll('.hubn,.cap,.live,.chips,.chipr,.dotb,.ringwrap').forEach(e => e.remove());
+  stage.querySelectorAll('.hubn,.cap,.live,.chips,.chipr,.dotb,.ringwrap,.legend').forEach(e => e.remove());
+
+  /* Spokes start at the top and go round, so a map with three of them reaches
+     a full radius up but only half of one down — geometrically centred, and
+     visibly sitting high with a hole underneath. Centre what's actually drawn
+     instead of the circle it came from. */
+  const ys = caps.map((c, i) => Math.sin((-Math.PI / 2) + (i / caps.length) * Math.PI * 2) * ry);
+  const cy2 = cy - (Math.min(...ys) + Math.max(...ys)) / 2;
 
   const hub = document.createElement('div');
   hub.className = 'hubn';
-  hub.style.left = cx + 'px'; hub.style.top = cy + 'px';
+  hub.style.left = cx + 'px'; hub.style.top = cy2 + 'px';
   const w = wiredCount(n.type);
   const allGreen = w.n === w.total;
   if (!allGreen) hub.style.borderColor = 'var(--ember)';
@@ -707,11 +732,20 @@ function drawRadial(n, t) {
     `<div class="s" style="color:${allGreen ? 'var(--acid)' : 'var(--bone-dim)'}">${allGreen ? 'all working' : w.n + '/' + w.total + ' wired'}</div>`;
   stage.appendChild(hub);
 
-  let paths = '';
+  /* A ring around the hub, filled as far as the connections that actually
+     work. Same number as the caption underneath, readable without reading. */
+  const ringR = hubHalf + 16;
+  const circ = 2 * Math.PI * ringR;
+  let paths =
+    `<circle cx="${cx}" cy="${cy2}" r="${ringR}" fill="none" stroke="var(--iron)" stroke-width="2"></circle>` +
+    (w.n ? `<circle cx="${cx}" cy="${cy2}" r="${ringR}" fill="none" stroke="var(--acid)" stroke-width="3"
+             stroke-linecap="round" stroke-dasharray="${(circ * w.n / w.total).toFixed(1)} ${circ.toFixed(1)}"
+             transform="rotate(-90 ${cx} ${cy2})"></circle>` : '');
+
   caps.forEach((c, i) => {
     const a = (-Math.PI / 2) + (i / caps.length) * Math.PI * 2;
     const x = cx + Math.cos(a) * rx;
-    const y = cy + Math.sin(a) * ry;
+    const y = cy2 + Math.sin(a) * ry;
     const sid = linkOf(n.type, i);
     const svc = SERVICES[sid];
     const col = serviceDot(sid);
@@ -725,19 +759,42 @@ function drawRadial(n, t) {
     const pr = state.prompts[n.type + ':' + i];
     const cst = Number(state.costs[n.type + ':' + i]) || 0;
     el.innerHTML = `<div class="cn">${esc(c[0])}</div>` +
-      `<div class="cs" style="color:${col}">${esc(svc ? svc.name : 'not wired')}${cst ? ' · ' + money(cst) : ''}</div>` +
+      `<div class="cs"><i class="pip" style="background:${col}"></i>` +
+        `<span style="color:${col}">${esc(svc ? svc.name : 'nothing yet')}</span></div>` +
+      `<div class="cst">${esc(stateWord(sid))}${cst ? ' · ' + money(cst) : ''}</div>` +
       (pr ? `<div class="ci">“${esc(pr)}”</div>` : '') +
       (note ? `<div class="ci">${esc(note)}</div>` : '');
     el.addEventListener('click', () => openPicker(i, c[0]));
     stage.appendChild(el);
 
     const working = svc && svc.status === 'live';
-    paths += `<path d="M ${cx} ${cy} L ${x} ${y}" stroke="${col}" fill="none"
+    paths += `<path d="M ${cx} ${cy2} L ${x} ${y}" stroke="${col}" fill="none"
                stroke-width="${working ? 2.4 : 1.4}" opacity="${working ? 1 : 0.6}"
                ${sid ? '' : 'stroke-dasharray="5 5"'}></path>`;
     paths += `<circle cx="${x}" cy="${y}" r="${working ? 5 : 3.5}" fill="${col}"></circle>`;
   });
   spokes.innerHTML = paths;
+
+  /* Only the states actually on this map, so it stays short and stays true. */
+  const ORDER = ['live', 'key', 'gated', 'manual', 'none'];
+  const here = [];
+  caps.forEach((c, i) => {
+    const s = SERVICES[linkOf(n.type, i)];
+    const st = s ? s.status : 'none';
+    if (!here.includes(st)) here.push(st);
+  });
+  here.sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+  if (here.length > 1) {
+    const key = document.createElement('div');
+    key.className = 'legend';
+    key.innerHTML = here.map(st => {
+      const col = { live: '#c4f135', key: '#ff8a3d', gated: '#d8402f', manual: '#7f95b0' }[st] || DIM;
+      const word = STATE_WORD[st] || 'not set';
+      return `<span><i class="pip" style="background:${col}"></i>${esc(word)}</span>`;
+    }).join('');
+    stage.appendChild(key);
+  }
+
   $('sheetCount').textContent = `${w.n}/${w.total}`;
 }
 
