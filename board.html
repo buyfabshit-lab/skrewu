@@ -91,9 +91,8 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sheet .sbar h2 b{color:var(--acid);}
 /* touch-action none, or the browser takes the drag and you can't move the map */
-.stage{flex:1;position:relative;overflow:hidden;touch-action:none;overscroll-behavior:none;cursor:grab;}
-.stage.panning{cursor:grabbing;}
-.live{touch-action:pan-y;}          /* the tool itself still scrolls */
+.stage{flex:1;position:relative;overflow:hidden;overscroll-behavior:none;}
+.live{touch-action:pan-x pan-y;}    /* the tool panel scrolls itself */
 .costs .cl{touch-action:pan-y;}
 .pick .list{touch-action:pan-y;}
 .pick .info{touch-action:auto;}
@@ -121,6 +120,18 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   border-right:1px solid var(--iron);border-bottom:1px solid var(--iron);}
 .dotb{position:absolute;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);z-index:4;
   box-shadow:0 0 8px currentColor;pointer-events:none;}
+/* the tool fills the screen; each of its buttons wears a glowing marker */
+.live.full{left:12px;right:12px;top:12px;bottom:12px;width:auto;height:auto;transform:none;
+  overflow:auto;}
+.mk{position:absolute;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;
+  border:2px solid #ff8a3d;background:rgba(255,138,61,.28);box-shadow:0 0 10px 3px rgba(255,138,61,.6);
+  cursor:pointer;z-index:5;padding:0;animation:mkpulse 2.2s ease-in-out infinite;}
+.mk:hover{transform:translate(-50%,-50%) scale(1.15);}
+.mk.ok{border-color:#c4f135;background:rgba(196,241,53,.3);
+  box-shadow:0 0 14px 4px rgba(196,241,53,.75);animation:none;}
+@keyframes mkpulse{0%,100%{box-shadow:0 0 8px 2px rgba(255,138,61,.45);}50%{box-shadow:0 0 16px 5px rgba(255,138,61,.85);}}
+@media (prefers-reduced-motion: reduce){ .mk{animation:none;} }
+
 /* connectors ringed around the tool — built full size, then scaled to fit */
 .ringwrap{position:absolute;left:50%;top:50%;transform-origin:50% 50%;}
 .ringwrap svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;}

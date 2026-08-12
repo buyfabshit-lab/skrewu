@@ -436,14 +436,13 @@ function closeDetail() { sheet.classList.remove('open'); detailNode = null; rend
 
 /* ---------- LIVE VIEW: the real tool, wired off its own buttons ---------- */
 let liveBtns = [];   // {key, label, px, py}  (positions inside the tool panel)
-let ringWrap = null, ringZoom = 1, ringFit = 1, ringPanX = 0, ringPanY = 0;
-
-function applyRing() {
-  if (!ringWrap) return;
-  ringWrap.style.transform =
-    `translate(-50%,-50%) translate(${ringPanX}px,${ringPanY}px) scale(${ringZoom})`;
+let ringWrap = null;                 // the tool panel, when one is open
+let toolZoom = 1;                    // how big the tool itself is drawn
+let placeMarkers = null;             // re-lays the glowing markers
+function setToolZoom(z) {
+  toolZoom = Math.max(0.5, Math.min(3, z));
+  if (placeMarkers) placeMarkers();
 }
-function setRingZoom(z) { ringZoom = Math.max(0.2, Math.min(2, z)); applyRing(); }
 
 function labelOf(el) {
   const pick = el.querySelector('.qc-t,.t-name,.pc-t');
@@ -453,72 +452,43 @@ function labelOf(el) {
 
 function drawLive(n, t) {
   const W = stage.clientWidth, H = stage.clientHeight;
-  const narrow = W < 640;
-
-  // Build the whole map full size, then scale it to the screen — a phone opens
-  // zoomed out with all of it in view, and you can zoom in from there.
-  // Shape the canvas like the screen so no space goes to waste.
-  const aspect = Math.max(0.45, Math.min(2.2, W / H));
-  const VW = Math.round(980 * Math.sqrt(aspect));
-  const VH = Math.round(980 / Math.sqrt(aspect));
-  const chipW = 124, chipH = 40;
-  const panelW = Math.round(Math.min(430, VW * 0.42));
-  const panelH = Math.round(Math.min(560, VH * 0.46));
-
-  const wrap = document.createElement('div');
-  wrap.className = 'ringwrap';
-  wrap.style.width = VW + 'px'; wrap.style.height = VH + 'px';
-  stage.appendChild(wrap);
-
-  ringFit = Math.min((W - 16) / VW, (H - 16) / VH);
-  ringZoom = ringFit; ringPanX = 0; ringPanY = 0;
-  ringWrap = wrap;
-  applyRing();
-
-  const ringSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  wrap.appendChild(ringSvg);
 
   const live = document.createElement('div');
-  live.className = 'live center';
-  live.style.width = panelW + 'px';
-  live.style.height = panelH + 'px';
-  wrap.appendChild(live);
-  // Render at the tool's own layout width so it fills the panel edge to edge
-  // (too wide and the tool centres itself, leaving dead bars down both sides).
-  const FRAME_W = 520;
-  const scale = panelW / FRAME_W;
+  live.className = 'live full';
+  stage.appendChild(live);
 
   const inner = document.createElement('div');
   inner.className = 'inner';
   live.appendChild(inner);
 
+  const panelW = live.clientWidth, panelH = live.clientHeight;
+  const FRAME_W = 520;                       // the tool's own layout width
+  const FRAME_H = Math.max(940, Math.round(panelH / (panelW / FRAME_W)));
+  const base = panelW / FRAME_W;
+
   const frame = document.createElement('iframe');
   frame.setAttribute('scrolling', 'no');
   frame.setAttribute('tabindex', '-1');
-  // Give the tool a tall viewport so a fixed-height app lays out fully instead
-  // of squeezing into a strip; the panel then scrolls through it.
-  const FRAME_H = Math.max(940, Math.round(panelH / scale));
   frame.style.width = FRAME_W + 'px';
   frame.style.height = FRAME_H + 'px';
-  frame.style.transform = `scale(${scale})`;
   frame.src = t.href;
   inner.appendChild(frame);
+
   const cap = document.createElement('div');
-  cap.className = 'lbl'; cap.textContent = 'live view · ' + (n.label || t.name);
+  cap.className = 'lbl'; cap.textContent = 'live · ' + (n.label || t.name);
   live.appendChild(cap);
+
+  ringWrap = live;   // the zoom buttons act on the tool itself now
 
   frame.addEventListener('load', () => {
     let doc;
     try { doc = frame.contentDocument; } catch { doc = null; }
-    if (!doc) { drawRadial(n, t); return; }        // cross-origin — fall back
+    if (!doc) { live.remove(); drawRadial(n, t); return; }
 
-    // the panel scrolls through the tall render — the wires follow along
     const full = Math.max(frame.clientHeight, doc.body.scrollHeight || 0);
     if (full > frame.clientHeight) frame.style.height = full + 'px';
-    inner.style.height = Math.round(full * scale) + 'px';
 
-    // Only this node's own part of the page — three nodes share locker.html,
-    // and scanning the whole thing showed each of them the others' buttons.
+    // this node's own part of the page
     let roots = [doc];
     if (t.scope) {
       const found = [];
@@ -526,126 +496,63 @@ function drawLive(n, t) {
         const sec = el.closest('section') || el;
         if (!found.includes(sec)) found.push(sec);
       });
-      if (found.length) {
-        roots = found;
-        // show that section rather than the top of the page
-        const topY = Math.min(...found.map(s => s.getBoundingClientRect().top));
-        live.scrollTop = Math.max(0, topY * scale - 8);
-      }
+      if (found.length) roots = found;
     }
     const sel = '[data-group][data-id], button[id], button[class], a[data-tab]';
     const els = roots.flatMap(r => [...r.querySelectorAll(sel)]);
+
     const seen = new Set();
     liveBtns = [];
     els.forEach(el => {
       const r = el.getBoundingClientRect();
       if (!r.width || !r.height) return;
       const label = labelOf(el);
-      if (!label || (label.match(/[A-Za-z0-9]/g) || []).length < 2) return;  // icon-only, no name
+      if (!label || (label.match(/[A-Za-z0-9]/g) || []).length < 2) return;
       const key = (el.dataset.id || el.id || label).toLowerCase();
       if (seen.has(key)) return;
       seen.add(key);
-      // position inside the scrolling panel (not the stage) so scrolling works
-      liveBtns.push({
-        key, label,
-        px: r.left * scale + (r.width * scale) / 2,
-        py: r.top * scale + (r.height * scale) / 2,
-      });
+      liveBtns.push({ key, label, rx: r.left + r.width / 2, ry: r.top + r.height / 2 });
     });
 
-    if (!liveBtns.length) { wrap.remove(); drawRadial(n, t); return; }
+    if (!liveBtns.length) { live.remove(); drawRadial(n, t); return; }
 
-    // one connector per real button, ringed around the tool
+    // a glowing marker on each real button — orange until it works, then green
     liveBtns.forEach(b => {
-      const lk = n.type + '#' + b.key;
-      const sid = state.links[lk] || null;
-      const svc = SERVICES[sid];
-      const col = sid ? serviceDot(sid) : 'var(--iron-2)';
-      const pr = state.prompts[lk];
-      const c = document.createElement('button');
-      c.type = 'button'; c.className = 'chipr';
-      c.style.borderColor = sid ? col : '';
-      const cst = Number(state.costs[lk]) || 0;
-      c.innerHTML = `<b>${esc(b.label)}</b>` +
-        `<i style="color:${col}">${esc(svc ? svc.name : 'not wired')}${cst ? ' · ' + money(cst) : ''}</i>` +
-        (pr ? `<u>“${esc(pr)}”</u>` : '');
-      c.addEventListener('click', () => openPicker(b.key, b.label, true));
-      wrap.appendChild(c);
-      b.chip = c;
+      const mk = document.createElement('button');
+      mk.type = 'button'; mk.className = 'mk';
+      mk.title = b.label;
+      mk.setAttribute('aria-label', b.label);
+      mk.addEventListener('click', (e) => { e.stopPropagation(); openPicker(b.key, b.label, true); });
+      inner.appendChild(mk);
+      b.mk = mk;
     });
 
-    // Ring the connectors around the tool and wire each to its real button.
-    // Only what's on screen in the tool gets a connector, so the ring never
-    // crowds — scroll the tool and the ring re-forms around what you see.
-    // Size the ring to how many connectors there actually are, then resize the
-    // canvas to match — a tool with three buttons opens big instead of tiny in
-    // the middle of a ring built for twenty.
-    const nBtn = Math.max(3, liveBtns.length);
-    const need = (nBtn * (chipW + 30)) / (2 * Math.PI);
-    const rx = Math.max(panelW / 2 + chipW / 2 + 24, need);
-    const ry = Math.max(panelH / 2 + chipH / 2 + 20, need * 0.85);
-    const RW = Math.round(2 * (rx + chipW / 2 + 12));
-    const RH = Math.round(2 * (ry + chipH / 2 + 12));
-    wrap.style.width = RW + 'px'; wrap.style.height = RH + 'px';
-    ringFit = Math.min((W - 16) / RW, (H - 16) / RH);
-    ringZoom = ringFit; ringPanX = 0; ringPanY = 0; applyRing();
-    const cx = RW / 2, cy = RH / 2;
-
-    // The panel is centred with a translate, so its real top-left isn't
-    // offsetLeft/offsetTop — measure it from the middle of the canvas.
-    const panelLeft = cx - panelW / 2, panelTop = cy - panelH / 2;
-
-    function layoutWires() {
-      wrap.querySelectorAll('.dotb').forEach(d => d.remove());
-      const top = panelTop, bottom = top + live.clientHeight;
-
-      const shown = [];
+    function place() {
+      const scale = base * toolZoom;
+      frame.style.transform = `scale(${scale})`;
+      frame.style.transformOrigin = '0 0';
+      inner.style.width = Math.round(FRAME_W * scale) + 'px';
+      inner.style.height = Math.round(parseFloat(frame.style.height) * scale) + 'px';
+      let okCount = 0;
       liveBtns.forEach(b => {
-        const x = panelLeft + b.px;
-        const y = top + b.py - live.scrollTop;
-        const visible = y > top + 3 && y < bottom - 3;
-        b.chip.style.display = visible ? '' : 'none';
-        if (visible) shown.push({ b, x, y, a: Math.atan2(y - cy, x - cx) });
+        b.mk.style.left = (b.rx * scale) + 'px';
+        b.mk.style.top = (b.ry * scale) + 'px';
+        const svc = SERVICES[state.links[n.type + '#' + b.key]];
+        const ok = svc && svc.status === 'live';
+        b.mk.classList.toggle('ok', !!ok);
+        if (ok) okCount++;
       });
-
-      // spread them evenly around the ring, keeping their natural direction
-      shown.sort((p, q) => p.a - q.a);
-      const step = (Math.PI * 2) / Math.max(shown.length, 1);
-      const start = shown.length ? shown[0].a : 0;
-
-      let paths = '';
-      shown.forEach((s, i) => {
-        const a = start + i * step;
-        const tx = cx + Math.cos(a) * rx;
-        const ty = cy + Math.sin(a) * ry;
-        s.b.chip.style.left = tx + 'px';
-        s.b.chip.style.top = ty + 'px';
-
-        // green only ever means working: unwired stays dim and dashed
-        const lk = n.type + '#' + s.b.key;
-        const sid = state.links[lk];
-        const svc = SERVICES[sid];
-        const working = svc && svc.status === 'live';
-        const col = sid ? serviceDot(sid) : DIM;
-        const mx = (s.x + tx) / 2, my = (s.y + ty) / 2;
-        paths += `<path d="M ${s.x} ${s.y} Q ${mx} ${my}, ${tx} ${ty}" fill="none" stroke="${col}"
-                   stroke-width="${working ? 2.4 : 1.4}" opacity="${working ? 1 : (sid ? 0.85 : 0.5)}"
-                   ${sid ? '' : 'stroke-dasharray="5 5"'}></path>`;
-        const dot = document.createElement('span');
-        dot.className = 'dotb';
-        dot.style.left = s.x + 'px'; dot.style.top = s.y + 'px';
-        dot.style.color = col; dot.style.background = col;
-        if (working) { dot.style.width = '12px'; dot.style.height = '12px'; }
-        wrap.appendChild(dot);
-      });
-      ringSvg.innerHTML = paths;
+      $('sheetCount').textContent = `${okCount}/${liveBtns.length}`;
+      if ($('costs').classList.contains('open')) renderCosts();
     }
-    layoutWires();
-    live.addEventListener('scroll', layoutWires, { passive: true });
+    placeMarkers = place;
+    place();
 
-    if ($('costs').classList.contains('open')) renderCosts();
-    const live_n = liveBtns.filter(b => { const s = SERVICES[state.links[n.type + '#' + b.key]]; return s && s.status === 'live'; }).length;
-    $('sheetCount').textContent = `${live_n}/${liveBtns.length}`;
+    // open on this node's own section
+    if (t.scope && roots[0] !== doc) {
+      const topY = Math.min(...roots.map(s => s.getBoundingClientRect().top));
+      live.scrollTop = Math.max(0, topY * base * toolZoom - 10);
+    }
   });
 }
 
@@ -654,7 +561,7 @@ function drawDetail() {
   const n = detailNode, t = TOOLS[n.type] || TOOLS.custom;
   stage.querySelectorAll('.hubn,.cap,.live,.chips,.chipr,.dotb,.ringwrap').forEach(e => e.remove());
   spokes.innerHTML = '';
-  liveBtns = []; ringWrap = null;
+  liveBtns = []; ringWrap = null; placeMarkers = null; toolZoom = 1;
   // a real page? show the tool itself and wire its own buttons
   if (t.href && !/^https?:/.test(t.href)) { drawLive(n, t); return; }
   drawRadial(n, t);
@@ -786,43 +693,11 @@ $('costBtn').addEventListener('click', () => {
   if (el.classList.contains('open')) renderCosts();
 });
 
-$('rzIn').addEventListener('click', () => setRingZoom(ringZoom * 1.25));
-$('rzOut').addEventListener('click', () => setRingZoom(ringZoom / 1.25));
-$('rzFit').addEventListener('click', () => { ringZoom = ringFit; ringPanX = 0; ringPanY = 0; applyRing(); });
+$('rzIn').addEventListener('click', () => setToolZoom(toolZoom * 1.3));
+$('rzOut').addEventListener('click', () => setToolZoom(toolZoom / 1.3));
+$('rzFit').addEventListener('click', () => { setToolZoom(1); if (ringWrap) { ringWrap.scrollTop = 0; ringWrap.scrollLeft = 0; } });
 
-/* drag the empty space in here to move the map around */
-let rpid = null, rsx = 0, rsy = 0, rpx = 0, rpy = 0;
-let panArmed = false;
-stage.addEventListener('pointerdown', (e) => {
-  if (!ringWrap) return;
-  if (e.target.closest('.chipr, .cap, .hubn, .costs')) return;
-  rpid = e.pointerId;
-  rsx = e.clientX; rsy = e.clientY; rpx = ringPanX; rpy = ringPanY;
-  // Zoomed in there's barely any empty space left, so a sideways drag across
-  // the tool moves the map too — up and down still scrolls the tool itself.
-  panArmed = !e.target.closest('.live');
-  if (panArmed) {
-    e.preventDefault();
-    stage.setPointerCapture(rpid);
-    stage.classList.add('panning');
-  }
-});
-stage.addEventListener('pointermove', (e) => {
-  if (rpid === null || e.pointerId !== rpid) return;
-  const dx = e.clientX - rsx, dy = e.clientY - rsy;
-  if (!panArmed) {
-    if (Math.abs(dx) < 12 || Math.abs(dx) <= Math.abs(dy)) return;
-    panArmed = true;
-    try { stage.setPointerCapture(rpid); } catch {}
-    stage.classList.add('panning');
-  }
-  ringPanX = rpx + dx;
-  ringPanY = rpy + dy;
-  applyRing();
-});
-const endRingPan = () => { rpid = null; stage.classList.remove('panning'); };
-stage.addEventListener('pointerup', endRingPan);
-stage.addEventListener('pointercancel', endRingPan);
+/* the tool panel scrolls itself — nothing to drag around behind it */
 
 $('sheetBack').addEventListener('click', closeDetail);
 $('pick').addEventListener('click', (e) => { if (e.target === $('pick')) $('pick').classList.remove('open'); });
