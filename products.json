@@ -1,0 +1,64 @@
+{
+  "_readme": "Your product catalog. Edit prices and blurbs freely. For each product either paste a Stripe Payment Link into `paymentLink` (easiest — make them at dashboard.stripe.com/payment-links), or leave it null and the store will use the checkout function with STRIPE_SECRET_KEY.",
+  "currency": "usd",
+  "products": [
+    {
+      "id": "logo-maker",
+      "name": "Logo Maker",
+      "tagline": "Print-ready art in one drop",
+      "blurb": "Drop a logo, strip the background, clean the edges, export a transparent PNG that's actually ready for DTF. No Photoshop, no subscription, no learning curve.",
+      "bullets": ["Background removal", "Enhance + HD upscale", "Vectorize", "Export print-ready PNG"],
+      "price": 149,
+      "billing": "one-time",
+      "badge": "Most popular",
+      "demo": "tools-library/gang-sheet-logo-maker/index.html",
+      "paymentLink": null
+    },
+    {
+      "id": "gang-sheet",
+      "name": "Gang Sheet Builder",
+      "tagline": "Pack the sheet, hit print",
+      "blurb": "Lay your art out on a 22\" or 24\" sheet, set how many and how big, and export a 300 DPI transparent file straight to your printer. Stop paying someone to gang your sheets.",
+      "bullets": ["22\" and 24\" rolls", "Auto-packing layout", "Real inches, real DPI", "One-tap export"],
+      "price": 99,
+      "billing": "one-time",
+      "demo": "locker.html?who=demo",
+      "paymentLink": null
+    },
+    {
+      "id": "locker",
+      "name": "Client Lockers",
+      "tagline": "Every customer, their own room",
+      "blurb": "Give each client a private link. They upload their own logos, build their own shirts, and never see anybody else's work. You see all of it from one place.",
+      "bullets": ["A private link per client", "Their logos stay theirs", "Shirt mockups on real blanks", "You see everything"],
+      "price": 39,
+      "billing": "per month",
+      "badge": "Recurring",
+      "demo": "locker.html?who=demo",
+      "paymentLink": null
+    },
+    {
+      "id": "omniflow",
+      "name": "OmniFlow Orders",
+      "tagline": "Every channel, one screen",
+      "blurb": "Orders from Shopify, TikTok, eBay and your own forms land in one console — sorted, classified, and ready to pull. No more five tabs and a notebook.",
+      "bullets": ["All channels in one list", "Auto-classify B2B vs DTC", "Status tracking", "Ship manifest built in"],
+      "price": 79,
+      "billing": "per month",
+      "demo": "tools-library/omniflow-command/index.html",
+      "paymentLink": null
+    },
+    {
+      "id": "shop-kit",
+      "name": "The Whole Shop Kit",
+      "tagline": "All of it, branded to you",
+      "blurb": "Every tool above, set up under your own name and colors, plus the order intake and ship manifest. This is the setup we run — handed to you.",
+      "bullets": ["Every tool, your branding", "Client lockers included", "Order console + manifest", "Setup help to get running"],
+      "price": 899,
+      "billing": "one-time",
+      "badge": "Best value",
+      "demo": "hub.html",
+      "paymentLink": null
+    }
+  ]
+}

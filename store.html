@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SKREWU · Shop Tools</title>
+<meta name="description" content="The tools we run our own shop on — logo prep, gang sheets, client lockers and order intake."/>
+<style>
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --iron:#3a3530; --iron-2:#4b453d; --acid:#c4f135; --ember:#ff8a3d; --rust:#a32a1f; --rust-bright:#c43a2c;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:
+    radial-gradient(1100px 500px at 80% -10%, rgba(196,241,53,.06), transparent 60%),
+    radial-gradient(900px 460px at -5% 5%, rgba(196,42,31,.09), transparent 55%),
+    var(--void);
+  color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.02em;line-height:1.02;}
+a{color:inherit;text-decoration:none;}
+button{font-family:var(--body);cursor:pointer;}
+:focus-visible{outline:3px solid var(--acid);outline-offset:2px;}
+.wrap{max-width:1120px;margin:0 auto;padding:0 22px;}
+
+.top{border-bottom:1px solid var(--iron);position:sticky;top:0;background:rgba(10,9,8,.94);backdrop-filter:blur(6px);z-index:20;}
+.top .row{display:flex;align-items:center;justify-content:space-between;height:58px;max-width:1120px;margin:0 auto;padding:0 22px;}
+.top .mark{font-family:var(--disp);letter-spacing:.16em;font-size:15px;text-transform:uppercase;}
+.top .mark b{color:var(--acid);}
+.top .lk{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-dim);}
+.top .lk:hover{color:var(--acid);}
+
+/* hero */
+.hero{padding:clamp(56px,9vw,104px) 0 40px;}
+.hero .eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--rust-bright);}
+.hero h1{font-size:clamp(42px,9vw,86px);margin-top:16px;max-width:15ch;}
+.hero h1 .g{color:var(--acid);}
+.hero p{color:var(--bone-dim);max-width:56ch;margin-top:20px;font-size:16px;}
+.hero .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px;}
+.btn{border:1px solid var(--iron);background:var(--void-2);color:var(--bone);padding:14px 22px;
+  font-size:12px;text-transform:uppercase;letter-spacing:.12em;display:inline-block;}
+.btn:hover{border-color:var(--acid);color:var(--acid);}
+.btn.go{background:var(--rust);border-color:var(--rust-bright);color:#fff;}
+.btn.go:hover{background:var(--rust-bright);color:#fff;}
+
+/* proof strip */
+.proof{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--iron);border-top:1px solid var(--iron);
+  border-bottom:1px solid var(--iron);margin-top:26px;}
+.proof div{background:var(--void-2);padding:18px 16px;}
+.proof .n{font-family:var(--disp);font-size:clamp(22px,4vw,32px);color:var(--acid);}
+.proof .l{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);margin-top:6px;}
+@media(max-width:620px){.proof{grid-template-columns:1fr;}}
+
+/* products */
+section{padding:56px 0;}
+.sec-head{margin-bottom:26px;}
+.sec-head h2{font-size:clamp(24px,4vw,34px);}
+.sec-head p{color:var(--bone-dim);margin-top:8px;max-width:52ch;font-size:14px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.card{background:linear-gradient(180deg,var(--panel),var(--void-2));border:1px solid var(--iron);
+  display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--iron-2);}
+.card:hover{border-color:var(--iron-2);}
+.card.hot::before{background:var(--acid);}
+.badge{position:absolute;top:0;right:0;background:var(--acid);color:var(--void);font-size:9px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;}
+.card .body{padding:22px 20px 18px;display:flex;flex-direction:column;gap:12px;flex:1;}
+.card h3{font-size:22px;}
+.card .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--acid);margin-top:-6px;}
+.card p{font-size:13.5px;color:var(--bone-dim);}
+.card ul{list-style:none;display:flex;flex-direction:column;gap:6px;margin-top:2px;}
+.card li{font-size:12.5px;color:var(--bone-dim);display:flex;gap:9px;align-items:baseline;}
+.card li::before{content:"✓";color:var(--acid);font-size:11px;}
+.card .foot{margin-top:auto;padding-top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.price{font-family:var(--disp);font-size:32px;line-height:1;}
+.price small{display:block;font-family:var(--body);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--iron-2);margin-top:5px;}
+.card .acts{display:flex;gap:8px;}
+.card .buy{background:var(--rust);border:1px solid var(--rust-bright);color:#fff;padding:12px 18px;
+  font-size:11px;text-transform:uppercase;letter-spacing:.12em;}
+.card .buy:hover{background:var(--rust-bright);}
+.card .try{background:transparent;border:1px solid var(--iron);color:var(--bone-dim);padding:12px 14px;
+  font-size:11px;text-transform:uppercase;letter-spacing:.12em;}
+.card .try:hover{border-color:var(--acid);color:var(--acid);}
+
+/* how it works */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media(max-width:760px){.steps{grid-template-columns:1fr;}}
+.step{border:1px solid var(--iron);background:var(--void-2);padding:20px;}
+.step .n{font-family:var(--disp);font-size:34px;color:var(--iron-2);line-height:1;}
+.step h3{font-size:17px;margin:10px 0 8px;}
+.step p{font-size:13px;color:var(--bone-dim);}
+
+footer{border-top:1px solid var(--iron);padding:30px 0 60px;color:var(--iron-2);font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;text-align:center;}
+.note{margin-top:14px;color:var(--iron-2);font-size:11px;text-align:center;letter-spacing:.06em;}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(18px);background:var(--acid);
+  color:var(--void);font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:13px;
+  padding:12px 20px;opacity:0;pointer-events:none;transition:.22s;z-index:60;max-width:92vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.bad{background:var(--rust-bright);color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="row">
+  <a class="mark" href="index.html">SKREW<b>U</b> · Shop Tools</a>
+  <a class="lk" href="hub.html">The machine →</a>
+</div></div>
+
+<main class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Built in a real print shop</div>
+    <h1>The tools we run <span class="g">our own shop</span> on.</h1>
+    <p>Not a demo, not a mockup. This is the software we use every day to prep art, gang sheets, take orders and get shirts out the door. Now you can run it too.</p>
+    <div class="row">
+      <a class="btn go" href="#tools">See the tools</a>
+      <a class="btn" href="locker.html?who=demo">Try one free</a>
+    </div>
+    <div class="proof">
+      <div><div class="n">300 DPI</div><div class="l">Print-ready output</div></div>
+      <div><div class="n">Minutes</div><div class="l">From art to gang sheet</div></div>
+      <div><div class="n">No subs</div><div class="l">Own it, don't rent it</div></div>
+    </div>
+  </header>
+
+  <section id="tools">
+    <div class="sec-head">
+      <h2>Pick your tool</h2>
+      <p>Buy one on its own, or take the whole kit branded to your shop. Everything runs in the browser — nothing to install.</p>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="note" id="payNote"></p>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>How it works</h2></div>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><h3>Buy it</h3><p>Card checkout through Stripe. One-time tools are yours; the monthly ones you can stop any time.</p></div>
+      <div class="step"><div class="n">02</div><h3>We brand it</h3><p>Your shop name, your colors, your link. Same tool, wearing your name — not ours.</p></div>
+      <div class="step"><div class="n">03</div><h3>Start working</h3><p>Open the link and go. It runs in any browser, on the phone in your pocket or the machine on the bench.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer>SKREW U · Death Corps — built on the floor, not in a boardroom.</footer>
+<div class="toast" id="toast"></div>
+<script src="store.js"></script>
+</body>
+</html>
