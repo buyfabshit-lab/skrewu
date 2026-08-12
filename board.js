@@ -33,6 +33,7 @@ const TOOLS = {
   vault:     { name: 'Design Vault',    desc: 'The big archive — browse licensed art.',    href: 'tools-library/logo-vault/index.html', status: 'live' },
   shirts:    { name: 'Shirts Studio',   desc: 'Logo on a real blank — listing mockup.',    href: 'locker.html?who=rorion', status: 'live', scope: '#builder, #shirts' },
   gangsheet: { name: 'Gang Sheet',      desc: 'Pack logos → 300 DPI DTF print file.',      href: 'locker.html?who=rorion', status: 'live', scope: '#gsCanvas, #gsWidth, #gsItems' },
+  sticker:   { name: 'UV Stickers',     desc: 'Customer builds their own sticker sheet.',  href: 'sticker.html', status: 'live' },
   blanks:    { name: 'Blanks Catalog',  desc: 'Pick a blank from the S&S feed.',           href: 'tools-library/blanks-storefront/index.html', status: 'key' },
   deploy:    { name: 'Deploy Panel',    desc: 'One button → push product to stores.',      href: 'deploy.html', status: 'key' },
   shopify:   { name: 'Shopify Store',   desc: 'DEATH CORPS — deathcorps.shop.',            href: 'https://deathcorps.shop', status: 'live' },
@@ -77,6 +78,7 @@ const CAPS = {
   vault:     [['Search the archive','supabase'], ['Filter by brand','supabase'], ['Signed download','supabase']],
   shirts:    [['Pick a blank photo','supabase'], ['Place + size the print','browser'], ['Build the mockup','browser'], ['Save the shirt','supabase'], ['Push to shop','shopify']],
   gangsheet: [['Pack the sheet','browser'], ['Export 300 DPI PNG','browser'], ['Save to folder','folder'], ['Keep a copy','supabase']],
+  sticker:   [['Load their art','supabase'], ['Lay out the sheet','browser'], ['Export 300 DPI','browser'], ['Save the sheet','supabase'], ['Take the order','shopify']],
   blanks:    [['Load the catalog','ss'], ['Search styles','ss'], ['Product images','ss']],
   deploy:    [['Write the description','anthropic'], ['Upload the image','supabase'], ['Create the product','shopify'], ['Send to TikTok','tiktok']],
   shopify:   [['Create product','shopify'], ['Update price/stock','shopify'], ['Read orders','shopify']],
@@ -556,14 +558,31 @@ function drawLive(n, t) {
   });
 }
 
+/* Two ways to look inside a node:
+   'live' — the real tool, with a glowing marker on each of its own buttons
+   'map'  — the wiring map: the tool in the middle, every connection fanned out
+            around it with what runs it, the prompt and the cost.
+   Tools without a page of their own only have the map. */
+let detailView = 'live';
+
 function drawDetail() {
   if (!detailNode) return;
   const n = detailNode, t = TOOLS[n.type] || TOOLS.custom;
   stage.querySelectorAll('.hubn,.cap,.live,.chips,.chipr,.dotb,.ringwrap').forEach(e => e.remove());
   spokes.innerHTML = '';
   liveBtns = []; ringWrap = null; placeMarkers = null; toolZoom = 1;
-  // a real page? show the tool itself and wire its own buttons
-  if (t.href && !/^https?:/.test(t.href)) { drawLive(n, t); return; }
+
+  const hasPage = !!(t.href && !/^https?:/.test(t.href));
+  const btn = $('viewBtn');
+  btn.style.display = hasPage ? '' : 'none';
+  btn.textContent = detailView === 'live' ? 'Map' : 'Tool';
+
+  if (hasPage && detailView === 'live') {
+    $('sheetFoot').textContent = 'Tap a glowing marker to wire that button';
+    drawLive(n, t);
+    return;
+  }
+  $('sheetFoot').textContent = 'Every connection this tool makes — tap one to set it up';
   drawRadial(n, t);
 }
 
@@ -699,6 +718,10 @@ $('rzFit').addEventListener('click', () => { setToolZoom(1); if (ringWrap) { rin
 
 /* the tool panel scrolls itself — nothing to drag around behind it */
 
+$('viewBtn').addEventListener('click', () => {
+  detailView = detailView === 'live' ? 'map' : 'live';
+  drawDetail();
+});
 $('sheetBack').addEventListener('click', closeDetail);
 $('pick').addEventListener('click', (e) => { if (e.target === $('pick')) $('pick').classList.remove('open'); });
 window.addEventListener('resize', () => { if (detailNode) drawDetail(); });

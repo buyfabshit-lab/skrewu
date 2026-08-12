@@ -296,6 +296,7 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   <div class="sbar">
     <button class="tbtn" id="sheetBack" type="button">← Board</button>
     <h2 id="sheetTitle">Tool</h2>
+    <button class="tbtn" id="viewBtn" type="button" title="Switch between the real tool and the wiring map">Map</button>
     <button class="tbtn" id="costBtn" type="button" title="What each button costs">$</button>
     <button class="tbtn" id="rzOut" type="button" title="Zoom out">−</button>
     <button class="tbtn" id="rzFit" type="button" title="Fit it all on screen">Fit</button>
@@ -309,7 +310,7 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
       <div class="cf">per full run · tap a button to set its rate</div>
     </aside>
   </div>
-  <div class="foot">Tap a button to wire it to the service that runs it</div>
+  <div class="foot" id="sheetFoot">Tap a button to wire it to the service that runs it</div>
 </div>
 
 <!-- service picker -->

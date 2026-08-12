@@ -22,16 +22,31 @@ function json(statusCode, body) {
   return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
 }
 
-function loadCatalog() {
-  // products.json sits at the site root; try the usual spots.
+function readJson(name) {
+  // These sit at the site root; try the usual spots.
   const tries = [
-    path.join(__dirname, '../../products.json'),
-    path.join(process.cwd(), 'products.json'),
+    path.join(__dirname, '../../' + name),
+    path.join(process.cwd(), name),
   ];
   for (const p of tries) {
     try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch {}
   }
   return null;
+}
+
+/* Tools (products.json) and art packs (packs.json) sell through the same
+   checkout, and both get their price from the repo — never from the browser. */
+function loadCatalog() {
+  const products = readJson('products.json');
+  const packs = readJson('packs.json');
+  if (!products && !packs) return null;
+  return {
+    currency: (products && products.currency) || (packs && packs.currency) || 'usd',
+    products: [
+      ...((products && products.products) || []),
+      ...(((packs && packs.packs) || []).map(p => ({ ...p, billing: 'one-time' }))),
+    ],
+  };
 }
 
 exports.handler = async (event) => {

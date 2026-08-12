@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SKREWU · UV Sticker Sheets</title>
+<style>
+:root{
+  --void:#0a0908; --void-2:#12100d; --panel:#17130e; --bone:#e8e2d4; --bone-dim:#a49c8d;
+  --rust:#a32a1f; --rust-bright:#c43a2c; --acid:#c4f135; --ember:#ff8a3d; --steel:#7f95b0;
+  --iron:#3a3530; --iron-2:#4b453d;
+  --disp:'Arial Narrow','Helvetica Neue',sans-serif; --body:'Courier New',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:
+    radial-gradient(1000px 460px at 85% -10%, rgba(196,241,53,.06), transparent 60%),
+    radial-gradient(760px 440px at -5% 6%, rgba(196,42,31,.08), transparent 55%),
+    var(--void);
+  color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;padding-bottom:70px;}
+h1,h2,h3{font-family:var(--disp);text-transform:uppercase;font-weight:700;letter-spacing:.02em;line-height:1;}
+a{color:inherit;text-decoration:none;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px;}
+
+.top{border-bottom:1px solid var(--iron);background:rgba(10,9,8,.92);backdrop-filter:blur(6px);
+  position:sticky;top:0;z-index:20;}
+.top .row{display:flex;align-items:center;justify-content:space-between;gap:12px;height:56px;
+  max-width:1180px;margin:0 auto;padding:0 18px;}
+.top .mark{font-family:var(--disp);letter-spacing:.15em;font-size:14px;}
+.top .mark b{color:var(--acid);}
+.top .who{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--bone-dim);}
+
+.head{padding:34px 0 20px;}
+.head .eyebrow{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--rust-bright);}
+.head h1{font-size:clamp(32px,7vw,60px);margin-top:12px;}
+.head h1 .g{color:var(--acid);}
+.head p{color:var(--bone-dim);max-width:60ch;margin-top:12px;font-size:14px;}
+
+.cols{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start;}
+@media(max-width:900px){.cols{grid-template-columns:1fr;}}
+
+.card{background:linear-gradient(180deg,var(--panel),var(--void-2));border:1px solid var(--iron);
+  padding:16px;margin-bottom:14px;}
+.card h2{font-size:15px;margin-bottom:4px;}
+.card .hint{font-size:11px;color:var(--bone-dim);margin-bottom:12px;line-height:1.4;}
+
+.seg{display:flex;flex-wrap:wrap;gap:6px;}
+.seg-b{background:var(--void);border:1px solid var(--iron);color:var(--bone-dim);
+  font-family:var(--body);font-size:12px;padding:8px 10px;cursor:pointer;transition:.15s;}
+.seg-b:hover{border-color:var(--iron-2);color:var(--bone);}
+.seg-b.on{border-color:var(--acid);color:var(--acid);background:rgba(196,241,53,.08);}
+.seg-b small{display:block;font-size:9px;letter-spacing:.08em;opacity:.75;margin-top:2px;}
+
+.drop{border:1px dashed var(--iron-2);padding:20px 14px;text-align:center;cursor:pointer;
+  color:var(--bone-dim);font-size:12px;transition:.15s;}
+.drop:hover,.drop.over{border-color:var(--acid);color:var(--acid);background:rgba(196,241,53,.05);}
+
+.tray{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px;margin-top:10px;}
+.tray .none{grid-column:1/-1;font-size:11px;color:var(--iron-2);padding:8px 0;}
+.art{background:var(--void);border:1px solid var(--iron);padding:4px;cursor:pointer;
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;transition:.15s;position:relative;}
+.art:hover{border-color:var(--iron-2);}
+.art.on{border-color:var(--acid);box-shadow:0 0 0 1px var(--acid) inset;}
+.art img{max-width:100%;max-height:100%;object-fit:contain;
+  background-image:linear-gradient(45deg,#1c1a17 25%,transparent 25%,transparent 75%,#1c1a17 75%),
+                   linear-gradient(45deg,#1c1a17 25%,transparent 25%,transparent 75%,#1c1a17 75%);
+  background-size:10px 10px;background-position:0 0,5px 5px;}
+.art .src{position:absolute;left:2px;bottom:2px;font-size:7px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--steel);background:rgba(10,9,8,.85);padding:1px 3px;}
+
+label.fld{display:block;font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--bone-dim);margin:12px 0 5px;}
+input[type=range]{width:100%;accent-color:var(--acid);}
+.val{font-size:12px;color:var(--acid);}
+
+.btn{width:100%;background:var(--acid);border:0;color:#0a0908;font-family:var(--disp);
+  text-transform:uppercase;letter-spacing:.06em;font-weight:700;font-size:14px;padding:12px;
+  cursor:pointer;margin-top:12px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn.ghost{background:transparent;border:1px solid var(--iron);color:var(--bone-dim);}
+.btn.ghost:hover{border-color:var(--bone-dim);color:var(--bone);}
+
+/* the sheet itself */
+.sheetwrap{background:var(--void-2);border:1px solid var(--iron);padding:14px;}
+.sheetbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin-bottom:12px;}
+.sheetbar .stats{font-size:11px;color:var(--bone-dim);}
+.sheetbar .tools{display:flex;gap:6px;}
+.sheetbar .tools button{background:var(--void);border:1px solid var(--iron);color:var(--bone-dim);
+  font-family:var(--body);font-size:11px;padding:6px 9px;cursor:pointer;}
+.sheetbar .tools button:hover{border-color:var(--acid);color:var(--acid);}
+.paper{position:relative;margin:0 auto;max-width:100%;
+  background-color:#f4f2ec;
+  background-image:linear-gradient(45deg,#e2ded3 25%,transparent 25%,transparent 75%,#e2ded3 75%),
+                   linear-gradient(45deg,#e2ded3 25%,transparent 25%,transparent 75%,#e2ded3 75%);
+  background-size:18px 18px;background-position:0 0,9px 9px;
+  box-shadow:0 0 0 1px var(--iron), 0 18px 40px rgba(0,0,0,.55);}
+#sheet{display:block;width:100%;height:auto;touch-action:none;cursor:grab;}
+#sheet.dragging{cursor:grabbing;}
+.overflow{margin-top:10px;font-size:11px;color:var(--ember);}
+
+.pieces{margin-top:14px;}
+.piece{display:flex;align-items:center;gap:9px;background:var(--void);border:1px solid var(--iron);
+  padding:7px 9px;margin-bottom:6px;font-size:12px;}
+.piece.on{border-color:var(--acid);}
+.piece img{width:26px;height:26px;object-fit:contain;flex-shrink:0;}
+.piece .m{flex:1;color:var(--bone-dim);}
+.piece .m b{color:var(--bone);}
+.piece button{background:none;border:0;color:var(--iron-2);font-size:17px;cursor:pointer;line-height:1;}
+.piece button:hover{color:var(--rust-bright);}
+.empty{font-size:12px;color:var(--iron-2);padding:12px 0;}
+
+.price{display:flex;align-items:baseline;justify-content:space-between;border-top:1px solid var(--iron);
+  margin-top:12px;padding-top:12px;}
+.price .n{font-family:var(--disp);font-size:30px;color:var(--acid);}
+.price .l{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--bone-dim);}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,120%);background:var(--acid);
+  color:#0a0908;font-size:13px;padding:11px 18px;z-index:60;transition:transform .25s;max-width:92vw;}
+.toast.show{transform:translate(-50%,0);}
+.toast.bad{background:var(--rust-bright);color:var(--bone);}
+
+footer{margin-top:40px;border-top:1px solid var(--iron);padding-top:16px;color:var(--iron-2);
+  font-size:11px;letter-spacing:.09em;text-transform:uppercase;}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="row">
+  <span class="mark">SKREW<b>U</b> · UV Sticker Sheets</span>
+  <span><a class="who" href="hub.html" style="margin-right:14px;">The Machine</a><a class="who" href="store.html" style="color:var(--acid);">Art packs →</a></span>
+</div></div>
+
+<main class="wrap">
+  <section class="head">
+    <div class="eyebrow">Design it yourself · print-ready when you're done</div>
+    <h1>Build your <span class="g">sticker sheet</span>.</h1>
+    <p>Pick a sheet, drop your art on it, drag it where you want it. When it looks right,
+       export a 300 DPI print file — or send it to us to print.</p>
+  </section>
+
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h2>1 · Sheet size</h2>
+        <div class="hint">UV DTF transfers — they stick to cups, tumblers, hard surfaces.</div>
+        <div class="seg" id="sizes"></div>
+      </div>
+
+      <div class="card">
+        <h2>2 · Your art</h2>
+        <div class="hint">Drop a file, or pick from what you've already got.</div>
+        <div class="drop" id="drop">
+          Tap to choose art<br><span style="font-size:10px;">PNG with a transparent background works best</span>
+        </div>
+        <input type="file" id="file" accept="image/*" multiple hidden>
+        <div class="tray" id="tray"><span class="none">Nothing yet — drop a file above.</span></div>
+      </div>
+
+      <div class="card">
+        <h2>3 · Size &amp; how many</h2>
+        <label class="fld" for="size">How wide — <span class="val" id="sizeVal">2"</span></label>
+        <input type="range" id="size" min="0.5" max="8" step="0.25" value="2">
+        <label class="fld" for="qty">How many — <span class="val" id="qtyVal">4</span></label>
+        <input type="range" id="qty" min="1" max="50" step="1" value="4">
+        <button class="btn" id="add" type="button">Add to the sheet</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sheetwrap">
+        <div class="sheetbar">
+          <span class="stats" id="stats">Empty sheet.</span>
+          <span class="tools">
+            <button id="repack" type="button" title="Tidy everything back into rows">Auto-arrange</button>
+            <button id="clear" type="button">Clear</button>
+          </span>
+        </div>
+        <div class="paper" id="paper"><canvas id="sheet"></canvas></div>
+        <div class="overflow" id="overflow"></div>
+
+        <div class="pieces" id="pieces"><div class="empty">Nothing on the sheet yet.</div></div>
+
+        <div class="price">
+          <span class="l">One <span id="priceSize">4×4</span> sheet</span>
+          <span class="n" id="priceVal">$0</span>
+        </div>
+
+        <button class="btn" id="export" type="button">Export 300 DPI print file</button>
+        <button class="btn ghost" id="save" type="button">Save it to my locker</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>SKREW U · Death Corps — your art, your sheet.</footer>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="sticker.js"></script>
+</body>
+</html>

@@ -74,7 +74,7 @@ and are reachable at `/api/<name>` (see `netlify.toml`).
 | `index.html` | SKREW U community site (shop floor, Weeklygram, zine, live) |
 | `hub.html` | The Machine — control centre, links every tool in work order |
 | `board.html` | The Board — production line as draggable nodes; open a node to see the real tool with a glowing marker on each button, wire each button to the service that runs it, with prompt + cost |
-| `store.html` | Sells the tools themselves (reads `products.json`) |
+| `store.html` | Sells the tools (`products.json`) and the art packs (`packs.json`) |
 
 ### Design & prep
 | Tool | Path |
@@ -82,6 +82,7 @@ and are reachable at `/api/<name>` (see `netlify.toml`).
 | Client Locker | `locker.html?who=<slug>&k=<access key>` |
 | Shirts Studio | inside `locker.html` — logo on a real blank photo, drag/size the print |
 | Gang Sheet Builder | inside `locker.html` — pack a 22"/24" sheet, export 300 DPI PNG |
+| UV Sticker Sheets | `sticker.html` — the customer lays out their own sheet, drags each sticker where they want it, exports 300 DPI. Works with no account; a locker link (`?who=&k=`) adds their saved logos to the tray. Sheet sizes and prices are the `SHEETS` list at the top of `sticker.js`. |
 | Logo Maker | `tools-library/gang-sheet-logo-maker/` — background cut, enhance, vectorize |
 | Logo Vault | `tools-library/logo-vault/` — licensed art catalogue |
 
@@ -229,7 +230,7 @@ Either paste a **Stripe Payment Link** per product into `products.json`
 | `locker.js` | `/api/locker` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
 | `deploy-shopify.js` | `/api/deploy-shopify` | `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ADMIN_TOKEN` |
 | `generate-description.js` | `/api/generate-description` | `ANTHROPIC_API_KEY` (optional) |
-| `checkout.js` | `/api/checkout` | `STRIPE_SECRET_KEY` |
+| `checkout.js` | `/api/checkout` | `STRIPE_SECRET_KEY` — prices come from `products.json` + `packs.json` in the repo, never from the browser |
 
 Supabase edge functions `vault-list` / `vault-sign` / `vault-upload` are
 committed but **not deployed** — deploy from the Supabase dashboard when the
@@ -251,11 +252,14 @@ for Jeff · order routing with partner attribution · true white-label (no SKREW
 branding on a partner's client screens).
 
 **Known gaps worth naming**
-- Storage buckets are still permissive; the *rows* are locked per tenant but an
-  uploaded file's URL is public if guessed. Move to signed URLs before a partner's
-  clients use it in anger.
+- `packs.json` ships empty. The store section and the sticker builder's art tray
+  both read it, so a pack becomes sellable *and* usable the moment its entry and
+  art URLs go in — no code change.
 - Multi-channel listing needs retries and a visible failure log before it is sold
   to anyone — a listing that silently fails to post loses a customer that week.
+- The sticker builder can't save a sheet built from a file you just uploaded from
+  your phone — that art exists nowhere but the browser tab. It says so instead of
+  half-saving. Uploading through the locker first fixes it.
 - `people.json` is legacy; tenants are the source of truth now.
 
 ---
