@@ -105,7 +105,25 @@ const CAPS = {
 };
 
 /* ---- default production line ---- */
+/* A board starts as one block, not a finished factory.
+ *
+ * It used to open with all thirteen steps already wired, which reads as
+ * somebody else's line that you're allowed to rearrange. Starting from a single
+ * Locker makes it yours: add the next step, then the one after, and the shape
+ * of your shop is the thing you built rather than the thing you edited.
+ *
+ * The full line hasn't gone anywhere — it's the first entry in Setups, so it's
+ * one tap away when you want it as an example or a starting point. */
 function defaultState() {
+  return {
+    nodes: [{ id: 'n1', type: 'locker', x: 60, y: 210 }],
+    wires: [],
+  };
+}
+
+/* The whole shop, end to end. Kept as an example you can load, not as the
+   thing you're handed on arrival. */
+function fullLine() {
   return {
     nodes: [
       { id: 'n1', type: 'locker',    x: 60,   y: 210 },
@@ -451,40 +469,94 @@ canvas.addEventListener('click', (e) => {
 });
 
 /* ---- tray ---- */
-function buildTray() {
-  const tray = $('tray');
-  Object.entries(TOOLS).forEach(([type, t]) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = '+ ' + t.name;
-    b.addEventListener('click', () => {
-      let label = null;
-      if (type === 'custom') {
-        label = (prompt('Name this step:') || '').trim();
-        if (!label) return;
-      }
-      const id = 'n' + Date.now();
-      // drop it where you're actually looking (zoom-aware)
-      const node = { id, type, label,
-        x: Math.round(viewport.scrollLeft / zoom) + 50,
-        y: Math.round(viewport.scrollTop / zoom) + 110 };
-      state.nodes.push(node); save();
-      renderNode(node); growToFitAll(); drawWires();
-      toast((label || t.name) + ' added — drag it into the line');
-    });
-    tray.appendChild(b);
-  });
+/* The steps, in the order a job actually happens, rather than the order they
+   were written. Twenty-two buttons in a row is a thing you scroll past; five
+   short groups is a thing you read. Anything not named here still shows up,
+   under Other — the list can never quietly lose a tool. */
+const STEP_GROUPS = [
+  ['Art comes in',    ['locker', 'vault', 'aiimage', 'logomaker']],
+  ['Make the thing',  ['shirts', 'gangsheet', 'sticker', 'blanks', 'aivideo']],
+  ['Sell it',         ['deploy', 'shopify', 'tiktok', 'wholesale']],
+  ['Print and ship',  ['ticket', 'press', 'manifest', 'tracking']],
+  ['Around the edge', ['omniflow', 'live', 'drive', 'folder', 'fusion', 'custom']],
+];
+
+/* Put a step on the board, wherever you're currently looking. */
+function addStep(type) {
+  const t = TOOLS[type];
+  if (!t) return;
+  let label = null;
+  if (type === 'custom') {
+    label = (prompt('Name this step:') || '').trim();
+    if (!label) return;
+  }
+  const node = { id: 'n' + Date.now(), type, label,
+    x: Math.round(viewport.scrollLeft / zoom) + 50,
+    y: Math.round(viewport.scrollTop / zoom) + 110 };
+  state.nodes.push(node); save();
+  renderNode(node); growToFitAll(); drawWires();
+  toast((label || t.name) + ' added — drag it into the line');
 }
+
+/* The picker. One tap shows what a step does, a second adds it — a phone has
+   no hover, so the preview has to be something you ask for. */
+function buildStepPicker() {
+  const listed = new Set(STEP_GROUPS.flatMap(([, ids]) => ids));
+  const groups = STEP_GROUPS.concat(
+    [['Other', Object.keys(TOOLS).filter(id => !listed.has(id))]]
+  ).filter(([, ids]) => ids.length);
+
+  let picked = null;
+
+  $('stepList').innerHTML = groups.map(([title, ids]) => `
+    <div style="font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+                color:var(--iron-2);margin:10px 2px 6px;">${esc(title)}</div>
+    ${ids.map(id => {
+      const t = TOOLS[id];
+      const dot = { live: '#c4f135', key: '#ff7a2f', gated: '#5b8dd6', manual: '#8a8378' }[t.status] || '#8a8378';
+      return `<button class="opt" type="button" data-step="${id}">
+        <span class="d" style="background:${dot};color:${dot};"></span>
+        <span>${esc(t.name)}<small>${esc(STATUS_LABEL[t.status] || t.status)}</small></span>
+      </button>`;
+    }).join('')}`).join('');
+
+  $('stepList').querySelectorAll('[data-step]').forEach(b => {
+    b.addEventListener('click', () => {
+      picked = b.dataset.step;
+      const t = TOOLS[picked];
+      $('stepList').querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+      b.classList.add('sel');
+      $('prevName').textContent = t.name;
+      const caps = (CAPS[picked] || []).map(c => c[0]);
+      $('prevDesc').innerHTML = esc(t.desc)
+        + (caps.length ? `<br><span style="color:var(--bone-dim);">Does: ${esc(caps.join(' · '))}</span>` : '')
+        + `<br><span style="color:var(--bone-dim);">${esc(STATUS_LABEL[t.status] || '')}${t.href ? '' : ' — no page yet'}</span>`;
+      $('stepAdd').disabled = false;
+    });
+  });
+
+  $('stepAdd').addEventListener('click', () => {
+    if (!picked) return;
+    addStep(picked);
+    $('stepPick').classList.remove('open');
+  });
+  $('stepClose').addEventListener('click', () => $('stepPick').classList.remove('open'));
+  $('stepPick').addEventListener('click', (e) => {
+    if (e.target === $('stepPick')) $('stepPick').classList.remove('open');
+  });
+  $('addStepBtn').addEventListener('click', () => $('stepPick').classList.add('open'));
+}
+
 
 /* ---- reset ----
    Reset only puts the blocks back; the wiring, prompts and rates you set are
    work, and work isn't what "reset the layout" should throw away. */
 $('resetBtn').addEventListener('click', () => {
-  if (!confirm('Put the blocks back to the default line?\n\nYour wiring, prompts and rates are kept.')) return;
+  if (!confirm('Start fresh with one block?\n\nYour wiring, prompts and rates are kept, and the full line is still in Setups.')) return;
   const keep = { links: state.links, notes: state.notes, prompts: state.prompts, costs: state.costs };
   state = defaultState();
   Object.assign(state, keep);
-  save(); renderAll(); toast('Blocks reset — your wiring kept');
+  save(); renderAll(); toast('Fresh board — add your next step');
 });
 
 /* ---- saved setups ----
@@ -504,12 +576,39 @@ function writeSetups(list) {
 function renderSetups() {
   const list = loadSetups();
   const el = $('setupList');
+
+  /* The example line always sits at the top, above anything saved. It can be
+     loaded but not deleted — it's a starting point, not one of your setups. */
+  const example = `
+    <div class="li" style="display:flex;align-items:center;gap:10px;">
+      <span style="flex:1;">
+        <b>The full line</b>
+        <span style="display:block;font-size:10px;color:var(--iron-2);letter-spacing:.08em;">
+          example · 13 steps · 14 hand-offs</span>
+      </span>
+      <button class="tbtn" id="loadExample" type="button">Load</button>
+    </div>`;
+
+  const wireExample = () => {
+    const b = $('loadExample');
+    if (!b) return;
+    b.addEventListener('click', () => {
+      const s = fullLine();
+      state.nodes = s.nodes.map(n => ({ ...n }));
+      state.wires = s.wires.map(w => [...w]);
+      save(); renderAll(); growToFitAll(); fitLine();
+      $('setups').classList.remove('open');
+      toast('Loaded the full line — press Tidy to stack it');
+    });
+  };
+
   if (!list.length) {
-    el.innerHTML = `<div style="color:var(--iron-2);font-size:12px;padding:12px 2px;">
+    el.innerHTML = example + `<div style="color:var(--iron-2);font-size:12px;padding:12px 2px;">
       Nothing saved yet. Arrange the board how you like it, name it below, and save.</div>`;
+    wireExample();
     return;
   }
-  el.innerHTML = list.map((s, i) => `
+  el.innerHTML = example + list.map((s, i) => `
     <div class="li" style="display:flex;align-items:center;gap:10px;">
       <span style="flex:1;">
         <b>${esc(s.name)}</b>
@@ -519,6 +618,8 @@ function renderSetups() {
       <button class="tbtn" data-load="${i}" type="button">Load</button>
       <button class="tbtn" data-drop="${i}" type="button" title="Delete this setup">&times;</button>
     </div>`).join('');
+
+  wireExample();
 
   el.querySelectorAll('[data-load]').forEach(b => b.addEventListener('click', () => {
     const s = loadSetups()[Number(b.dataset.load)];
@@ -1000,7 +1101,7 @@ $('zoomFit').addEventListener('click', fitLine);
 $('tidyBtn').addEventListener('click', tidy);
 
 /* ---- go ---- */
-buildTray();
+buildStepPicker();
 renderAll();
 growToFitAll();
 /* Phones open zoomed to where the blocks are still readable (tap FIT for the

@@ -313,7 +313,32 @@ html.board-locked,body.board-locked{position:fixed;top:0;left:0;right:0;bottom:0
   </div>
 </div>
 
-<div class="tray" id="tray"><span class="tl">Add a step:</span></div>
+<div class="tray" id="tray"><span class="tl">Add a step:</span>
+  <button class="tbtn" id="addStepBtn" type="button">+ Add a step ▾</button>
+</div>
+
+<!-- The step picker. Grouped, because twenty-two buttons in a row is a list you
+     scroll past rather than read. Tap a step to see what it does; tap Add to
+     put it on the board. Two taps on purpose — a phone has no hover. -->
+<div class="pick" id="stepPick">
+  <div class="card">
+    <div class="ph">
+      <div class="k">Add a step</div>
+      <div class="n" id="stepHead">What happens next?</div>
+    </div>
+    <div class="list" id="stepList"></div>
+    <div class="info">
+      <label>Preview</label>
+      <div id="prevName" style="font-size:14px;color:var(--bone);">Pick a step above</div>
+      <div id="prevDesc" style="font-size:12px;color:var(--iron-2);margin-top:5px;line-height:1.5;">
+        Tap any step to see what it does. Tap <b>Add it</b> to put it on the board.</div>
+    </div>
+    <div class="pf">
+      <button class="tbtn" id="stepAdd" type="button" disabled>Add it</button>
+      <button class="tbtn" id="stepClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
 
 <div class="viewport" id="viewport">
   <div id="zoomOuter">
