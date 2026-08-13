@@ -1,0 +1,39 @@
+# Cache rules.
+#
+# The pages here are plain HTML that pull in plain .js and .css by name, with no
+# build step and no fingerprint in the filename. That is what makes this site
+# easy to work on, and it has one sharp edge: a browser is free to keep an old
+# script while fetching the new page that goes with it.
+#
+# When that happens the page calls a function the stale script has never heard
+# of, throws before it finishes starting up, and everything after that line
+# never runs. What you see is a half-drawn page where no button works — which
+# reads as "the site is broken" rather than "these two files are from different
+# days". It happened once; that's enough.
+#
+# must-revalidate doesn't mean "download it every time". The browser still keeps
+# the file and still asks first; when nothing has changed the answer is a 304
+# with no body. The cost is one round trip, and what it buys is that the markup
+# and the script it depends on can never be from different deploys.
+
+/*.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.json
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Images and fonts don't have this problem — nothing calls a function inside a
+# PNG — so they're free to sit in the cache for a week.
+/*.png
+  Cache-Control: public, max-age=604800
+/*.jpg
+  Cache-Control: public, max-age=604800
+/*.webp
+  Cache-Control: public, max-age=604800
+/*.svg
+  Cache-Control: public, max-age=604800
+/*.woff2
+  Cache-Control: public, max-age=604800
