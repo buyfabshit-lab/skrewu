@@ -272,6 +272,67 @@ function renderAll() {
   drawWires();
 }
 
+/* ---- Tidy ----
+ *
+ * Drag enough blocks around and the line stops reading as a line. This puts
+ * every block back where the wiring says it belongs: a step sits one column to
+ * the right of whatever feeds it, and blocks sharing a column stack down the
+ * screen in order. Press it and the whole thing snaps into shape.
+ *
+ * The column comes from the wires, not from where a block happens to be
+ * sitting, so tidying twice gives the same answer and a block you dragged
+ * somewhere odd goes back to where its wiring says it lives. Anything with
+ * nothing feeding it starts at the left, which is what makes the line read
+ * start-to-finish.
+ *
+ * A loop in the wiring can't push a column forever — each block is settled at
+ * most as many times as there are blocks, which is the point where a longer
+ * path has stopped being possible.
+ */
+const TIDY_COL = 280;   // left-to-right step, matches the default line
+const TIDY_ROW = 170;   // top-to-bottom stack
+const TIDY_PAD = 60;    // margin from the canvas edge
+
+function tidy() {
+  const nodes = state.nodes;
+  if (!nodes.length) return;
+
+  const feeders = new Map(nodes.map(n => [n.id, []]));
+  (state.wires || []).forEach(([from, to]) => {
+    if (feeders.has(to) && feeders.has(from)) feeders.get(to).push(from);
+  });
+
+  // One column right of the furthest thing feeding it.
+  const col = new Map(nodes.map(n => [n.id, 0]));
+  for (let pass = 0; pass < nodes.length; pass++) {
+    let moved = false;
+    for (const n of nodes) {
+      const ins = feeders.get(n.id);
+      if (!ins.length) continue;
+      const want = Math.max(...ins.map(id => col.get(id))) + 1;
+      if (want > col.get(n.id)) { col.set(n.id, want); moved = true; }
+    }
+    if (!moved) break;
+  }
+
+  // Stack each column, keeping the order they're already in so a tidy never
+  // shuffles two blocks past each other for no reason.
+  const rows = new Map();
+  for (const n of nodes) {
+    const c = col.get(n.id);
+    const row = rows.get(c) || 0;
+    n.x = TIDY_PAD + c * TIDY_COL;
+    n.y = TIDY_PAD + row * TIDY_ROW;
+    rows.set(c, row + 1);
+  }
+
+  save();
+  renderAll();
+  fitLine();
+  const wide = Math.max(...[...rows.keys()]) + 1;
+  toast(`Stacked — ${nodes.length} blocks, ${wide} step${wide === 1 ? '' : 's'} across`);
+}
+
 /* port center, in canvas coordinates */
 function portXY(id, side) {
   const el = nodeEl(id); if (!el) return null;
@@ -936,6 +997,7 @@ document.addEventListener('touchmove', (e) => {
 $('zoomIn').addEventListener('click', () => setZoom(zoom + 0.15));
 $('zoomOut').addEventListener('click', () => setZoom(zoom - 0.15));
 $('zoomFit').addEventListener('click', fitLine);
+$('tidyBtn').addEventListener('click', tidy);
 
 /* ---- go ---- */
 buildTray();
