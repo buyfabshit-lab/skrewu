@@ -380,28 +380,33 @@ document.getElementById('placeBidBtn').addEventListener('click', ()=>{
     const updatedItem = listings.find(l => l.id === currentDetailId);
     if (updatedItem) {
       document.getElementById('bidDetailCurrent').textContent = `$${updatedItem.currentBid.toFixed(2)}`;
+      document.getElementById('bidAmountInput').placeholder = `More than $${updatedItem.currentBid.toFixed(2)}`;
       renderBidHistory(updatedItem);
     }
-  })()
+  })();
 
-  document.getElementById('bidDetailCurrent').textContent = `$${item.currentBid.toFixed(2)}`;
   document.getElementById('bidAmountInput').value = '';
-  document.getElementById('bidAmountInput').placeholder = `More than $${item.currentBid.toFixed(2)}`;
-  renderBidHistory(item);
-  renderProducts();
 });
 
 document.getElementById('buyNowDetailBtn').addEventListener('click', ()=>{
   const item = listings.find(l => l.id === currentDetailId);
   if (!item || item.ended || !item.buyNowPrice) return;
   const bidderHandle = (document.getElementById('sellerHandle').value.trim() || 'anon').toUpperCase();
-  item.currentBid = item.buyNowPrice;
-  item.currentBidder = bidderHandle;
-  item.bids.push({bidder: bidderHandle, amount: item.buyNowPrice});
-  item.ended = true;
-  item.endsAt = Date.now();
-  bidModal.classList.remove('open');
-  renderProducts();
+  const buyBtn = document.getElementById('buyNowDetailBtn');
+  buyBtn.disabled = true;
+  (async () => {
+    const { data: result, error } = await sb.rpc('buy_it_now', {
+      p_listing_id: item.id, p_buyer: bidderHandle
+    });
+    if (error || !result || !result.ok) {
+      alert(result?.error || error?.message || 'Purchase failed');
+      buyBtn.disabled = false;
+      return;
+    }
+    bidModal.classList.remove('open');
+    await loadListings();
+    buyBtn.disabled = false;
+  })();
 });
 
 renderProducts();
