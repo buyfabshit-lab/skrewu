@@ -1,0 +1,95 @@
+# The cheapest check that would have mattered.
+#
+# On 12 Aug the store shipped unable to read its own price list, and the way it
+# was found out was a customer pressing Buy. There were no tests and nothing ran
+# on a pull request, so a broken function reached production unopposed.
+#
+# This is not a test suite. It parses every function and every page script, and
+# confirms each page's own scripts exist and that the catalogue loads with the
+# prices the store quotes. It runs in seconds and needs no secrets, which is why
+# it will still be running in a year.
+
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Every function parses
+        run: |
+          for f in netlify/functions/*.js; do
+            node --check "$f" || { echo "::error file=$f::syntax error"; exit 1; }
+          done
+          echo "$(ls netlify/functions/*.js | wc -l) functions parse"
+
+      - name: Every page script parses
+        run: |
+          for f in *.js; do
+            node --check "$f" || { echo "::error file=$f::syntax error"; exit 1; }
+          done
+          echo "$(ls *.js | wc -l) page scripts parse"
+
+      - name: The catalogue loads, with prices
+        run: |
+          node -e "
+            const C = require('./netlify/functions/_catalog');
+            const all = C.all();
+            if (!all.length) { console.error('the catalogue is empty'); process.exit(1); }
+            for (const p of all) {
+              if (!p.id)   { console.error('a product has no id'); process.exit(1); }
+              if (!(Number(p.price) > 0)) { console.error(p.id + ' has no price'); process.exit(1); }
+            }
+            console.log(all.length + ' products, all priced, currency ' + C.CURRENCY);
+          "
+
+      - name: Every page's own scripts exist
+        run: |
+          node -e "
+            const fs = require('fs');
+            let bad = 0;
+            for (const page of fs.readdirSync('.').filter(f => f.endsWith('.html'))) {
+              const html = fs.readFileSync(page, 'utf8');
+              for (const m of html.matchAll(/<script[^>]+src=\"([^\"]+)\"/g)) {
+                const src = m[1];
+                if (/^(https?:)?\/\//.test(src)) continue;   // someone else's CDN
+                if (!fs.existsSync(src.split('?')[0])) {
+                  console.error('::error file=' + page + '::missing script ' + src);
+                  bad++;
+                }
+              }
+            }
+            if (bad) process.exit(1);
+            console.log('every page script resolves');
+          "
+
+      - name: Every internal link goes somewhere
+        run: |
+          node -e "
+            const fs = require('fs');
+            let bad = 0;
+            for (const page of fs.readdirSync('.').filter(f => f.endsWith('.html'))) {
+              const html = fs.readFileSync(page, 'utf8');
+              for (const m of html.matchAll(/href=\"([^\"]+)\"/g)) {
+                const h = m[1];
+                if (/^(https?:)?\/\/|^(mailto|tel|javascript):|^#/.test(h)) continue;
+                const t = h.split('?')[0].split('#')[0];
+                if (!t || t.endsWith('.css')) continue;
+                if (!fs.existsSync(t)) {
+                  console.error('::error file=' + page + '::dead link ' + h);
+                  bad++;
+                }
+              }
+            }
+            if (bad) process.exit(1);
+            console.log('every internal link resolves');
+          "

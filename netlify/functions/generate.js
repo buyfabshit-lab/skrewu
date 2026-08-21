@@ -76,6 +76,69 @@ async function fal(url, opts = {}) {
   return data;
 }
 
+/* ---- keeping what you made ----
+ *
+ * A generated image used to be handed back as a link on the provider's server
+ * and nothing else. To use it for anything you had to download it and upload it
+ * again by hand, and provider links don't live forever — so the tool made
+ * things that went nowhere and then expired.
+ *
+ * Now the file is copied into the shop's own storage and filed in its locker,
+ * which is the same place a logo goes when it's dragged in. From there it
+ * drops onto a shirt or packs into a sheet like anything else. That single hop
+ * is what turns the AI tools from a side room into part of the line.
+ *
+ * It is deliberately not allowed to fail the run. The image was made and the
+ * credits were spent; a storage hiccup afterwards is not a reason to refuse
+ * what somebody paid for. If filing fails the picture still comes back, and
+ * the reply says plainly that it wasn't saved rather than quietly implying it
+ * was.
+ */
+const LOCKER_BUCKET = 'listing-photos';
+
+async function fileInLocker(slug, imageUrl, prompt) {
+  const res = await fetch(imageUrl);
+  if (!res.ok) throw new Error(`could not fetch the image back (${res.status})`);
+  const type = res.headers.get('content-type') || 'image/png';
+  const bytes = Buffer.from(await res.arrayBuffer());
+
+  const ext = /jpe?g/.test(type) ? 'jpg' : /webp/.test(type) ? 'webp' : 'png';
+  const stamp = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  const path = `ai/${slug}/${stamp}.${ext}`;
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  const up = await fetch(`${url}/storage/v1/object/${LOCKER_BUCKET}/${path}`, {
+    method: 'POST',
+    headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': type },
+    body: bytes,
+  });
+  if (!up.ok) throw new Error(`storage refused it (${up.status})`);
+
+  const publicUrl = `${url}/storage/v1/object/public/${LOCKER_BUCKET}/${path}`;
+
+  /* The prompt becomes the name, trimmed — it's what you'd have called it
+     anyway, and a locker full of "untitled" is a locker you can't search. */
+  const name = (String(prompt || '').trim().slice(0, 60) || 'AI image');
+
+  const ins = await fetch(`${url}/rest/v1/locker_logos`, {
+    method: 'POST',
+    headers: {
+      apikey: key, Authorization: 'Bearer ' + key,
+      'Content-Type': 'application/json', Prefer: 'return=representation',
+    },
+    // Both ownership columns, in step, exactly as the locker door writes them.
+    body: JSON.stringify({
+      tenant_slug: slug, owner_slug: slug,
+      name, url: publicUrl, storage_path: path,
+    }),
+  });
+  if (!ins.ok) throw new Error(`could not file it (${ins.status})`);
+
+  return publicUrl;
+}
+
 exports.handler = async (event) => {
   const ready = !!(process.env.FAL_KEY && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -167,7 +230,22 @@ exports.handler = async (event) => {
       if (!images.length) throw new Error('The model returned no images.');
 
       await C.finishRun(runId, { status: 'complete', output_url: images[0], completed_at: new Date().toISOString() });
-      return json(200, { ok: true, images, balance: left, charged: cost });
+
+      /* Into the shop's own locker, so it can actually be used. Never allowed
+         to turn a paid, successful run into a failure — see the note above. */
+      const saved = [];
+      let saveError = null;
+      for (const src of images) {
+        try { saved.push(await fileInLocker(me.tenant.slug, src, prompt)); }
+        catch (e) { saveError = String(e.message || e); }
+      }
+
+      return json(200, {
+        ok: true, images, balance: left, charged: cost,
+        saved,                                    // the copies that are yours
+        savedCount: saved.length,
+        ...(saveError ? { saveError } : {}),      // said out loud, not swallowed
+      });
     } catch (e) {
       // Paid for nothing — give it back and say so.
       const back = await C.refund(wallet.id, cost, 'Image run failed');
