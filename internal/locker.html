@@ -115,6 +115,35 @@ section{padding:26px 0;border-top:1px solid var(--iron);}
 .shirt-card .sname{font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;font-size:15px;}
 .shirt-card .sprice{color:var(--acid);font-size:13px;}
 .shirt-card .sstatus{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--bone-dim);}
+/* Post-to-board sheet. Centred over the page rather than pinned to a corner —
+   it asks for a price, which is worth stopping for. */
+.sheet{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px;}
+.sheet[hidden]{display:none;}
+.sheet-box{background:var(--void-2);border:1px solid var(--iron);border-radius:2px;padding:20px;width:100%;max-width:400px;max-height:90vh;overflow:auto;}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sheet-head h3{margin:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase;}
+.sheet-x{background:none;border:0;color:var(--bone-dim);font-size:22px;line-height:1;cursor:pointer;padding:0 2px;}
+.sheet-x:hover{color:var(--bone);}
+.sheet-sub{margin:6px 0 16px;font-size:11px;color:var(--bone-dim);line-height:1.5;}
+.sheet-sub strong{color:var(--bone);font-weight:400;}
+.sheet-box label{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--bone-dim);margin:14px 0 6px;}
+.sheet-box label .opt{text-transform:none;letter-spacing:0;opacity:.6;}
+.sheet-box input{width:100%;background:var(--void);border:1px solid var(--iron);border-radius:2px;color:var(--bone);padding:10px 11px;font:inherit;font-size:13px;}
+.sheet-box input:focus{outline:none;border-color:var(--bone-dim);}
+.sheet-box .hint{margin:6px 0 0;font-size:10px;color:var(--bone-dim);}
+#buyNowRow[hidden]{display:none;}
+/* The two shapes a listing can take, side by side, so the choice is visible
+   rather than hidden in a dropdown. */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.mode{display:flex;flex-direction:column;gap:3px;text-align:left;padding:10px 11px;cursor:pointer;
+      background:var(--void);border:1px solid var(--iron);border-radius:2px;color:var(--bone-dim);font:inherit;}
+.mode .m-t{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--bone);}
+.mode .m-d{font-size:10px;line-height:1.35;}
+.mode.on{border-color:var(--accent,#c4f135);}
+.mode.on .m-t{color:var(--accent,#c4f135);}
+.sheet-actions{display:flex;gap:8px;margin-top:20px;}
+.sheet-actions .btn{flex:1;text-align:center;}
+
 .shirt-card .srow{display:flex;gap:7px;margin-top:auto;padding-top:8px;}
 .shirt-card .srow .btn{flex:1;text-align:center;padding:9px 6px;font-size:10px;}
 .shirt-card .del{position:absolute;top:7px;right:7px;background:rgba(10,9,8,.8);border:1px solid var(--iron);color:var(--bone-dim);
@@ -269,6 +298,44 @@ footer{border-top:1px solid var(--iron);padding:28px 0 60px;color:var(--iron-lig
     </div>
   </section>
 </main>
+
+<!-- Posting a shirt to the public board. Two shapes, one table: an opening bid
+     people bid up, or one price with nothing to bid on. -->
+<div class="sheet" id="postModal" hidden data-mode="auction">
+  <div class="sheet-box">
+    <div class="sheet-head">
+      <h3>Post to SKREWU</h3>
+      <button class="sheet-x" id="postClose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <p class="sheet-sub">Putting <strong id="postShirtName">this shirt</strong> on the public board at skrewu.com.</p>
+
+    <div class="modes" role="group" aria-label="Listing type">
+      <button class="mode on" id="modeAuction" type="button">
+        <span class="m-t">Auction</span><span class="m-d">People bid it up</span>
+      </button>
+      <button class="mode" id="modeFixed" type="button">
+        <span class="m-t">Fixed price</span><span class="m-d">One price, buy it outright</span>
+      </button>
+    </div>
+
+    <label id="postPriceLabel">Opening bid</label>
+    <input id="postPrice" type="number" min="1" step="1" inputmode="decimal" placeholder="45">
+
+    <div id="buyNowRow">
+      <label>Buy it now <span class="opt">optional</span></label>
+      <input id="postBuyNow" type="number" min="1" step="1" inputmode="decimal" placeholder="Leave empty for bids only">
+    </div>
+
+    <label>Days up</label>
+    <input id="postDays" type="number" min="1" max="365" step="1" value="7">
+    <p class="hint" id="postDaysHint">How long people can bid.</p>
+
+    <div class="sheet-actions">
+      <button class="btn ghost" id="postCancel" type="button">Cancel</button>
+      <button class="btn go" id="postGo" type="button">Post it</button>
+    </div>
+  </div>
+</div>
 
 <footer class="wrap">SKREW U · your locker, your art, your rules.</footer>
 <div class="toast" id="toast"></div>

@@ -115,6 +115,71 @@ exports.handler = async (event) => {
       return json(200, { ok: true, tenant: out });
     }
 
+    /* Put a finished shirt on the public board at skrewu.com.
+     *
+     * The board has always been able to do both jobs, which is why this needs
+     * no table of its own: `listings` carries a start_price and a buy_now_price
+     * side by side. An auction sets the start and leaves buy-now empty, so the
+     * only move is to bid. A fixed-price drop sets both to the same number, so
+     * bidding can never get anywhere and the only move is Buy Now.
+     *
+     * This runs server-side even though the board accepts public inserts,
+     * because only the server can check the shirt is really this locker's
+     * before putting its owner's name on a listing. */
+    if (action === 'post_to_site') {
+      if (!body.id) return json(400, { ok: false, error: 'Missing id' });
+
+      const owned = await sb(`locker_shirts?id=eq.${encodeURIComponent(body.id)}` +
+        `&tenant_slug=eq.${encodeURIComponent(tenant.slug)}&select=*`);
+      const shirt = owned && owned[0];
+      if (!shirt) return json(404, { ok: false, error: 'That shirt isn’t in this locker.' });
+      if (shirt.listing_id) return json(409, { ok: false, error: 'That shirt is already posted.' });
+
+      // A listing with no picture is just a line of text on a board people
+      // scroll for pictures, so refuse rather than post a blank card.
+      const photo = shirt.mockup_url || shirt.logo_url;
+      if (!photo) return json(400, { ok: false, error: 'That shirt has no image to post.' });
+
+      const fixed = body.mode === 'fixed';
+      const price = Number(fixed ? body.price : body.startPrice);
+      if (!(price > 0)) return json(400, { ok: false, error: 'Set a price above zero.' });
+
+      // Buy-now has to beat the opening bid or the auction is over before it
+      // starts — the board would show a Buy Now nobody can outbid.
+      let buyNow = fixed ? price : (body.buyNowPrice == null ? null : Number(body.buyNowPrice));
+      if (!fixed && buyNow != null && !(buyNow > price)) {
+        return json(400, { ok: false, error: 'Buy-now has to be more than the opening bid.' });
+      }
+
+      const days = Math.min(Math.max(Number(body.days) || (fixed ? 30 : 7), 1), 365);
+      const endsAt = new Date(Date.now() + days * 86400000).toISOString();
+
+      const created = await sb('listings', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify({
+          title: shirt.name || 'Untitled',
+          seller: tenant.name || tenant.slug,
+          photo_url: photo,
+          start_price: price,
+          buy_now_price: buyNow,
+          current_bid: price,
+          ends_at: endsAt,
+        }),
+      });
+      const listing = created && created[0];
+      if (!listing) return json(502, { ok: false, error: 'The board did not accept the listing.' });
+
+      // Record where it went, so the locker can say "Posted" rather than offer
+      // to post the same shirt again.
+      await sb(`locker_shirts?id=eq.${encodeURIComponent(shirt.id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ listing_id: listing.id, status: 'posted' }),
+      });
+
+      return json(200, { ok: true, listing, mode: fixed ? 'fixed' : 'auction' });
+    }
+
     const table = TABLES[body.table];
     if (!table) return json(400, { ok: false, error: 'Unknown collection' });
 

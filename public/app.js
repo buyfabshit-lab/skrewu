@@ -323,7 +323,13 @@ function openBidDetail(id){
   document.getElementById('bidDetailCurrent').textContent = `$${item.currentBid.toFixed(2)}`;
   renderBidHistory(item);
   document.getElementById('bidAmountInput').value = '';
-  document.getElementById('bidAmountInput').placeholder = `More than $${item.currentBid.toFixed(2)}`;
+  // A fixed-price listing opens with the bid already at the buy-now price, so
+  // there is nothing to bid. The server refuses either way; this is so the page
+  // stops inviting a bid it knows will bounce.
+  const fixedPrice = item.buyNowPrice != null && item.currentBid >= item.buyNowPrice;
+  document.getElementById('bidAmountInput').placeholder = fixedPrice
+    ? 'Fixed price — buy it below'
+    : `More than $${item.currentBid.toFixed(2)}`;
   const buyBtn = document.getElementById('buyNowDetailBtn');
   if (item.buyNowPrice && !item.ended){
     buyBtn.style.display = 'block';
@@ -331,9 +337,13 @@ function openBidDetail(id){
   } else {
     buyBtn.style.display = 'none';
   }
-  document.getElementById('bidDetailNote').textContent = item.ended ? 'This auction has ended.' : 'Bids inside the last 2 minutes extend the clock by 3 minutes.';
-  document.getElementById('placeBidBtn').disabled = item.ended;
-  document.getElementById('bidAmountInput').disabled = item.ended;
+  document.getElementById('bidDetailNote').textContent = item.ended
+    ? 'This auction has ended.'
+    : fixedPrice
+      ? 'One price, no bidding — buy it outright.'
+      : 'Bids inside the last 2 minutes extend the clock by 3 minutes.';
+  document.getElementById('placeBidBtn').disabled = item.ended || fixedPrice;
+  document.getElementById('bidAmountInput').disabled = item.ended || fixedPrice;
   updateBidDetailCountdown();
   bidModal.classList.add('open');
 }
