@@ -1,0 +1,41 @@
+# Netlify config for the INTERNAL tools site — staff only, password protected.
+#
+# Set this Netlify project's *base directory* to `internal` and it reads this
+# file instead of the one at the repo root. That is what lets one repository
+# feed two sites: the root config publishes `public/` to skrewu.com, this one
+# publishes the tools here, and neither can accidentally serve the other's
+# files.
+#
+# The password is Netlify's own visitor-access control, set on the project
+# rather than in code — nothing in this repo needs to hold a credential, and
+# the lock still applies to every path including the functions below.
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+  # hub.html links to the live demo of each tool in the library, and the library
+  # is the one thing that must NOT be duplicated in git — it is the master copy
+  # every customer package gets cut from, so a second copy here would rot the
+  # moment someone edited one of them.
+  #
+  # Netlify checks out the whole repo before it runs this, so the source is
+  # sitting one directory up. Copying it in at deploy time gives the demos a
+  # real path to point at while keeping exactly one version of each tool under
+  # version control. The copy is gitignored; it only ever exists mid-build.
+  command = "rm -rf tools-library && cp -R ../tools-library tools-library"
+
+[functions]
+  # Node 18+ gives us global fetch, so these functions ship with zero npm deps.
+  node_bundler = "esbuild"
+
+  # The price list. esbuild ships only the JavaScript a function reaches, so
+  # these are `require`d in _catalog.js and land inside the bundle. Listing them
+  # here as well costs nothing and makes the dependency obvious from the config
+  # — checkout reads its prices from these two files and dies without them.
+  included_files = ["products.json", "packs.json"]
+
+# Friendly path: POST /api/deploy-shopify  ->  the function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
