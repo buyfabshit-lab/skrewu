@@ -9,6 +9,9 @@
     "paymentLink": "Stripe Payment Link, or null until you make one",
     "sold": false
   },
+  "_liveShopUrl": "The old shop, while it is still up. Manus is shutting down and takes shop.skrewu.com with it, so until then this sends people to the real catalogue instead of an empty shelf. The day it goes dark, set this to null — the banner disappears and the shirts below become the shop. That is the whole switch; nothing else changes.",
+  "liveShopUrl": "https://shop.skrewu.com",
+
   "currency": "usd",
   "shirts": []
 }

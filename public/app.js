@@ -765,8 +765,24 @@ async function loadStore() {
     return;
   }
 
+  // The old shop is still up until Manus shuts it down, and it has the real
+  // catalogue on it. Until then this section is a front door rather than the
+  // shop itself — send people to the working shelf instead of an empty one.
+  // Clearing liveShopUrl in shirts.json is the whole handover.
+  const banner = document.getElementById('liveShopBanner');
+  if (banner && data && data.liveShopUrl) {
+    banner.href = data.liveShopUrl;
+    banner.hidden = false;
+  }
+
   const shirts = (data && data.shirts) || [];
-  if (!shirts.length) return;               // leave the empty state as written
+  if (!shirts.length) {
+    // With somewhere to send them, "nothing here yet" is the wrong message.
+    if (empty && data && data.liveShopUrl) {
+      empty.innerHTML = '<h3>Shirts are on the old shop for now.</h3><p>Use the link above — this shelf takes over when that one closes.</p>';
+    }
+    return;
+  }
   if (empty) empty.remove();
 
   grid.innerHTML = shirts.map(s => {

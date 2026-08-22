@@ -348,6 +348,21 @@ img{max-width:100%;display:block;}
   padding:5px 9px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--bone-dim);
 }
 .store-note{margin-top:22px;font-size:11px;color:var(--bone-dim);text-align:right;}
+/* The way out to the old shop, for as long as there is one. Loud enough that
+   nobody buys nothing by mistake, quiet enough that it is clearly not the
+   shelf itself. */
+.live-shop{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin-bottom:28px;padding:15px 18px;
+  background:var(--void-2);border:1px solid var(--acid);text-decoration:none;
+  transition:background .2s ease;
+}
+.live-shop:hover{background:#171a10;}
+.live-shop[hidden]{display:none;}
+.live-shop .ls-t{font-size:12px;color:var(--bone);letter-spacing:0.02em;}
+.live-shop .ls-go{
+  font-family:var(--display);font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:var(--acid);
+}
 .product-card{
   background:var(--void-2);border:1px solid var(--iron);
   position:relative;overflow:hidden;
@@ -960,6 +975,10 @@ footer#footer{
 <p>The retail drops — our own shirts, on our own floor. Bought straight through Stripe; nothing leaves this page but you.</p>
 </div>
 </div>
+<a class="live-shop" id="liveShopBanner" hidden href="#" rel="noopener" target="_blank">
+<span class="ls-t">The full catalogue is still on the old shop</span>
+<span class="ls-go">Open it →</span>
+</a>
 <div class="product-grid" id="storeGrid"><div class="shop-empty-state" id="storeEmptyState"><h3>Nothing hung up yet.</h3><p>Shirts land here as they come off the press.</p></div></div>
 <p class="store-note" id="storeNote"></p>
 </div>
