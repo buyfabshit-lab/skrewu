@@ -29,6 +29,16 @@ skrewu/
 │   │                       #   blanks, AI image/video, deploy, credits, hub…
 │   └── netlify/functions/  #   The /api/* endpoints the tools call
 │
+├── webhooks/               # → the receiver site, deliberately NOT locked
+│   ├── netlify.toml        #   Set this project's BASE DIRECTORY to `webhooks`
+│   └── index.html          #   Nothing to visit; the endpoints are the point
+│                           #   Stripe and Shopify POST from their own servers
+│                           #   and cannot type a password, so their two
+│                           #   receivers live here instead of behind the lock.
+│                           #   Both verify an HMAC signature before touching
+│                           #   the database — that, not the password, is what
+│                           #   protects them. Only those two are copied in.
+│
 ├── tools-library/          # HOME BASE — the master copy of each tool.
 │                           #   Never published from here; the internal site
 │                           #   copies it in at build time. Customer packages

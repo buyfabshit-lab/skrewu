@@ -1,0 +1,54 @@
+# Netlify config for the WEBHOOK RECEIVER site — no password, on purpose.
+#
+# Set this Netlify project's *base directory* to `webhooks` and it reads this
+# file instead of the one at the repo root.
+#
+# Why this site exists
+# --------------------
+# The tools moved behind a password, and Netlify's visitor password gates the
+# whole site — functions included, not just pages. Stripe and Shopify are
+# machines POSTing from their own servers; they cannot type a password, so a
+# receiver sitting on the locked site would have its callbacks bounced and the
+# order would go unrecorded. That is the exact failure we already have, and
+# moving the functions would have cemented it.
+#
+# So the two receivers get their own site with no lock on it. What makes that
+# safe is that neither one trusts the caller: each verifies an HMAC signature
+# against a shared secret before it will touch the database, so an unsigned
+# request from a stranger is rejected the same way it would be anywhere else.
+# The password was never what protected them.
+#
+# What is deliberately NOT here
+# -----------------------------
+# Only the two receivers are copied in below. The other fourteen functions —
+# checkout, credits, locker, generate, deploy-shopify and the rest — stay on
+# the locked site, because those are called by a person with a browser and the
+# password is doing real work there. Adding to this list makes something
+# publicly callable, so add nothing without a reason as good as this one.
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+  # Copied from internal/ at deploy time rather than committed twice, for the
+  # same reason the tools library is: one copy under version control, so a fix
+  # to stripe-order cannot land in one place and rot in the other.
+  #
+  # _catalog reads ../../products.json, which resolves to this site's root, so
+  # the two price files have to come along or the bundle loads without prices.
+  command = """
+    rm -rf netlify/functions && mkdir -p netlify/functions && \
+    cp ../internal/netlify/functions/stripe-order.js  netlify/functions/ && \
+    cp ../internal/netlify/functions/shopify-order.js netlify/functions/ && \
+    cp ../internal/netlify/functions/_catalog.js      netlify/functions/ && \
+    cp ../internal/netlify/functions/_credits.js      netlify/functions/ && \
+    cp ../internal/products.json ../internal/packs.json .
+  """
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["products.json", "packs.json"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
