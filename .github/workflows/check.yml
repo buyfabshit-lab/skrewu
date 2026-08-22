@@ -8,6 +8,12 @@
 # confirms each page's own scripts exist and that the catalogue loads with the
 # prices the store quotes. It runs in seconds and needs no secrets, which is why
 # it will still be running in a year.
+#
+# The repo now feeds two sites — public/ is skrewu.com, internal/ is the
+# password-protected tools site — so every check below runs against both. A
+# check that silently stopped covering one of them would be worse than no check
+# at all, so the page steps count what they looked at and fail on an empty
+# directory rather than passing by default.
 
 name: check
 
@@ -15,6 +21,11 @@ on:
   pull_request:
   push:
     branches: [main]
+
+env:
+  # Every directory that gets published to a site. Add one here and it is
+  # covered by all of the page checks below.
+  SITE_DIRS: public internal
 
 jobs:
   check:
@@ -27,22 +38,26 @@ jobs:
 
       - name: Every function parses
         run: |
-          for f in netlify/functions/*.js; do
+          for f in internal/netlify/functions/*.js; do
             node --check "$f" || { echo "::error file=$f::syntax error"; exit 1; }
           done
-          echo "$(ls netlify/functions/*.js | wc -l) functions parse"
+          echo "$(ls internal/netlify/functions/*.js | wc -l) functions parse"
 
       - name: Every page script parses
         run: |
-          for f in *.js; do
-            node --check "$f" || { echo "::error file=$f::syntax error"; exit 1; }
+          for d in $SITE_DIRS; do
+            n=$(ls "$d"/*.js 2>/dev/null | wc -l)
+            [ "$n" -eq 0 ] && { echo "::error::$d has no page scripts — did it move?"; exit 1; }
+            for f in "$d"/*.js; do
+              node --check "$f" || { echo "::error file=$f::syntax error"; exit 1; }
+            done
+            echo "$d: $n page scripts parse"
           done
-          echo "$(ls *.js | wc -l) page scripts parse"
 
       - name: The catalogue loads, with prices
         run: |
           node -e "
-            const C = require('./netlify/functions/_catalog');
+            const C = require('./internal/netlify/functions/_catalog');
             const all = C.all();
             if (!all.length) { console.error('the catalogue is empty'); process.exit(1); }
             for (const p of all) {
@@ -55,41 +70,80 @@ jobs:
       - name: Every page's own scripts exist
         run: |
           node -e "
-            const fs = require('fs');
-            let bad = 0;
-            for (const page of fs.readdirSync('.').filter(f => f.endsWith('.html'))) {
-              const html = fs.readFileSync(page, 'utf8');
-              for (const m of html.matchAll(/<script[^>]+src=\"([^\"]+)\"/g)) {
-                const src = m[1];
-                if (/^(https?:)?\/\//.test(src)) continue;   // someone else's CDN
-                if (!fs.existsSync(src.split('?')[0])) {
-                  console.error('::error file=' + page + '::missing script ' + src);
-                  bad++;
+            const fs = require('fs'), path = require('path');
+            let bad = 0, seen = 0;
+            for (const dir of process.env.SITE_DIRS.split(' ')) {
+              const pages = fs.readdirSync(dir).filter(f => f.endsWith('.html'));
+              if (!pages.length) { console.error('::error::' + dir + ' has no pages'); process.exit(1); }
+              for (const page of pages) {
+                const html = fs.readFileSync(path.join(dir, page), 'utf8');
+                for (const m of html.matchAll(/<script[^>]+src=\"([^\"]+)\"/g)) {
+                  const src = m[1];
+                  if (/^(https?:)?\/\//.test(src)) continue;   // someone else's CDN
+                  seen++;
+                  if (!fs.existsSync(path.join(dir, src.split('?')[0]))) {
+                    console.error('::error file=' + dir + '/' + page + '::missing script ' + src);
+                    bad++;
+                  }
                 }
               }
             }
             if (bad) process.exit(1);
-            console.log('every page script resolves');
+            console.log(seen + ' page scripts resolve');
           "
 
       - name: Every internal link goes somewhere
         run: |
           node -e "
-            const fs = require('fs');
-            let bad = 0;
-            for (const page of fs.readdirSync('.').filter(f => f.endsWith('.html'))) {
-              const html = fs.readFileSync(page, 'utf8');
-              for (const m of html.matchAll(/href=\"([^\"]+)\"/g)) {
-                const h = m[1];
-                if (/^(https?:)?\/\/|^(mailto|tel|javascript):|^#/.test(h)) continue;
-                const t = h.split('?')[0].split('#')[0];
-                if (!t || t.endsWith('.css')) continue;
-                if (!fs.existsSync(t)) {
-                  console.error('::error file=' + page + '::dead link ' + h);
+            const fs = require('fs'), path = require('path');
+            let bad = 0, seen = 0;
+            for (const dir of process.env.SITE_DIRS.split(' ')) {
+              for (const page of fs.readdirSync(dir).filter(f => f.endsWith('.html'))) {
+                const html = fs.readFileSync(path.join(dir, page), 'utf8');
+                for (const m of html.matchAll(/href=\"([^\"]+)\"/g)) {
+                  const h = m[1];
+                  if (/^(https?:)?\/\/|^(mailto|tel|javascript):|^#/.test(h)) continue;
+                  const t = h.split('?')[0].split('#')[0];
+                  if (!t || t.endsWith('.css')) continue;
+                  seen++;
+                  // The tools library is not committed inside internal/ — it is
+                  // copied in at deploy time from the repo root, so the demo
+                  // links on hub.html only resolve one directory up. Accept
+                  // either, and nothing else.
+                  if (fs.existsSync(path.join(dir, t))) continue;
+                  if (fs.existsSync(path.join(dir, '..', t))) continue;
+                  console.error('::error file=' + dir + '/' + page + '::dead link ' + h);
                   bad++;
                 }
               }
             }
             if (bad) process.exit(1);
-            console.log('every internal link resolves');
+            console.log(seen + ' internal links resolve');
+          "
+
+      - name: No tool ever reaches the public site
+        run: |
+          node -e "
+            const fs = require('fs');
+            // public/ is skrewu.com. It is the community front and nothing
+            // else: one page, its script, and the cache rules. Anything else
+            // appearing here means a tool has leaked back onto the open web,
+            // which is the exact thing this layout exists to prevent.
+            const allowed = ['index.html', 'app.js', '_headers'];
+            const extra = fs.readdirSync('public').filter(f => !allowed.includes(f));
+            if (extra.length) {
+              console.error('::error::public/ should hold only ' + allowed.join(', ') + ' — found ' + extra.join(', '));
+              process.exit(1);
+            }
+            // A page cannot serve a tool it cannot reach, so the links matter
+            // as much as the files.
+            const html = fs.readFileSync('public/index.html', 'utf8');
+            const leaks = [...html.matchAll(/(?:href|src)=\"([^\"]+\.html|\/api\/[^\"]*)\"/g)]
+              .map(m => m[1])
+              .filter(h => !/^(https?:)?\/\//.test(h));
+            if (leaks.length) {
+              console.error('::error file=public/index.html::links to tool pages or /api: ' + leaks.join(', '));
+              process.exit(1);
+            }
+            console.log('public site is clean: ' + allowed.join(', ') + ', no tool links, no /api');
           "

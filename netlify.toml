@@ -1,22 +1,19 @@
-# Netlify config for SKREW U
-# Static site at repo root + serverless functions for multi-channel product deploy.
-
+# Netlify config for the PUBLIC site — skrewu.com
+#
+# This site is the community side of SKREWU and nothing else: the pin board,
+# the replies, the listings people put up and bid on. It is one page and one
+# script, and both of them live in `public/`.
+#
+# `publish` is the whole security model here. Netlify uploads the contents of
+# this one directory and serves nothing else, so a file that is not in
+# `public/` is not on skrewu.com — not linked, and not reachable by typing the
+# URL either. The tools sit in `internal/` for exactly that reason, and they
+# are served by their own password-protected site (see internal/netlify.toml).
+#
+# There is deliberately no `functions` key. The /api/* endpoints are tool
+# plumbing; leaving them off this site means the public deploy has no server
+# surface at all. The community page talks to Supabase straight from the
+# browser under row-level security, the way it did before the tools existed.
 [build]
-  publish = "."
-  functions = "netlify/functions"
-
-[functions]
-  # Node 18+ gives us global fetch, so these functions ship with zero npm deps.
-  node_bundler = "esbuild"
-
-  # The price list. esbuild ships only the JavaScript a function reaches, so
-  # these are `require`d in _catalog.js and land inside the bundle. Listing them
-  # here as well costs nothing and makes the dependency obvious from the config
-  # — checkout reads its prices from these two files and dies without them.
-  included_files = ["products.json", "packs.json"]
-
-# Friendly path: POST /api/deploy-shopify  ->  the function
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+  publish = "public"
+  command = ""

@@ -1,0 +1,3 @@
+# Copied in at deploy time by the build command in netlify.toml.
+# The master lives at ../tools-library — never commit a second copy.
+tools-library/
