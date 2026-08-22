@@ -191,14 +191,83 @@ function renderShirts() {
       <div class="sbody">
         <div class="sname">${escapeHtml(s.name || 'Untitled')}</div>
         <div class="sprice">$${Number(s.price || 0).toFixed(2)}</div>
-        <div class="sstatus">${s.status === 'in_shop' ? 'In shop · draft' : 'Draft'}</div>
-        <div class="srow"><button class="btn" data-push="${s.id}" type="button">${s.status === 'in_shop' ? 'Pushed ✓' : 'Push to shop'}</button></div>
+        <div class="sstatus">${s.listing_id ? 'On skrewu.com' : s.status === 'in_shop' ? 'In shop · draft' : 'Draft'}</div>
+        <div class="srow">
+          <button class="btn" data-post="${s.id}" type="button"${s.listing_id ? ' disabled' : ''}>${s.listing_id ? 'Posted ✓' : 'Post to SKREWU'}</button>
+          <button class="btn" data-push="${s.id}" type="button">${s.status === 'in_shop' ? 'Pushed ✓' : 'Push to shop'}</button>
+        </div>
       </div>
     </div>`).join('');
   grid.innerHTML = add + cards;
   $('addShirt').addEventListener('click', openBuilder);
   grid.querySelectorAll('[data-delshirt]').forEach(b => b.addEventListener('click', () => removeShirt(b.dataset.delshirt)));
   grid.querySelectorAll('[data-push]').forEach(b => b.addEventListener('click', () => pushToShop(b.dataset.push)));
+  grid.querySelectorAll('[data-post]').forEach(b => b.addEventListener('click', () => openPost(b.dataset.post)));
+}
+
+/* ---- post a shirt to the public board ---- */
+/* The board at skrewu.com does both jobs from one table, so the only thing
+   this has to decide is which shape to send: an opening bid people bid up, or
+   one price with nothing to bid on. */
+let postingId = null;
+
+function openPost(id) {
+  const s = shirts.find(x => x.id === id);
+  if (!s) return;
+  if (!(s.mockup_url || s.logo_url)) { toast('That shirt has no image to post', true); return; }
+  postingId = id;
+  $('postShirtName').textContent = s.name || 'Untitled';
+  $('postPrice').value = s.price ? Number(s.price).toFixed(2) : '';
+  $('postBuyNow').value = '';
+  $('postDays').value = '7';
+  setPostMode('auction');
+  $('postModal').hidden = false;
+}
+function closePost() { $('postModal').hidden = true; postingId = null; }
+
+function setPostMode(mode) {
+  const fixed = mode === 'fixed';
+  $('postModal').dataset.mode = mode;
+  $('modeAuction').classList.toggle('on', !fixed);
+  $('modeFixed').classList.toggle('on', fixed);
+  // Buy-now is an auction idea. At a fixed price it IS the price, so showing
+  // the field would only invite someone to contradict themselves.
+  $('buyNowRow').hidden = fixed;
+  $('postPriceLabel').textContent = fixed ? 'Price' : 'Opening bid';
+  $('postDays').value = fixed ? '30' : '7';
+  $('postDaysHint').textContent = fixed ? 'How long it stays up.' : 'How long people can bid.';
+}
+
+async function submitPost() {
+  if (!postingId) return;
+  const mode = $('postModal').dataset.mode;
+  const fixed = mode === 'fixed';
+  const price = parseFloat($('postPrice').value);
+  if (!(price > 0)) { toast(fixed ? 'Set a price' : 'Set an opening bid', true); return; }
+
+  const buyNowRaw = $('postBuyNow').value.trim();
+  const buyNowPrice = buyNowRaw ? parseFloat(buyNowRaw) : null;
+  if (!fixed && buyNowPrice != null && !(buyNowPrice > price)) {
+    toast('Buy-now has to be more than the opening bid', true); return;
+  }
+
+  const btn = $('postGo'); btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Posting…';
+  try {
+    const r = await api('post_to_site', {
+      id: postingId, mode,
+      price: fixed ? price : undefined,
+      startPrice: fixed ? undefined : price,
+      buyNowPrice: fixed ? undefined : buyNowPrice,
+      days: parseFloat($('postDays').value) || undefined,
+    });
+    if (!r.ok) throw new Error(r.error);
+    const s = shirts.find(x => x.id === postingId);
+    if (s) { s.listing_id = r.listing.id; s.status = 'posted'; }
+    renderShirts(); closePost();
+    toast(fixed ? 'Listed on skrewu.com' : 'Auction live on skrewu.com');
+  } catch (e) {
+    toast('Post failed: ' + (e.message || e), true);
+  } finally { btn.disabled = false; btn.textContent = orig; }
 }
 
 /* ---- builder preview ---- */
@@ -376,6 +445,15 @@ $('garmentInput').addEventListener('change', e => { handleGarmentFiles(e.target.
 $('sizeRange').addEventListener('input', e => { print.scale = Number(e.target.value); $('sizeVal').textContent = print.scale + '%'; positionOverlay(); });
 $('saveShirt').addEventListener('click', saveShirt);
 $('cancelShirt').addEventListener('click', closeBuilder);
+
+$('modeAuction').addEventListener('click', () => setPostMode('auction'));
+$('modeFixed').addEventListener('click', () => setPostMode('fixed'));
+$('postGo').addEventListener('click', submitPost);
+$('postCancel').addEventListener('click', closePost);
+$('postClose').addEventListener('click', closePost);
+// Clicking the dark surround closes it; clicking inside the box must not.
+$('postModal').addEventListener('click', e => { if (e.target === $('postModal')) closePost(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('postModal').hidden) closePost(); });
 
 /* ---- go ---- */
 (async () => { await loadPerson(); await Promise.all([loadLogos(), loadGarments(), loadShirts()]); })();

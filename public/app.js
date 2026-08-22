@@ -323,7 +323,13 @@ function openBidDetail(id){
   document.getElementById('bidDetailCurrent').textContent = `$${item.currentBid.toFixed(2)}`;
   renderBidHistory(item);
   document.getElementById('bidAmountInput').value = '';
-  document.getElementById('bidAmountInput').placeholder = `More than $${item.currentBid.toFixed(2)}`;
+  // A fixed-price listing opens with the bid already at the buy-now price, so
+  // there is nothing to bid. The server refuses either way; this is so the page
+  // stops inviting a bid it knows will bounce.
+  const fixedPrice = item.buyNowPrice != null && item.currentBid >= item.buyNowPrice;
+  document.getElementById('bidAmountInput').placeholder = fixedPrice
+    ? 'Fixed price — buy it below'
+    : `More than $${item.currentBid.toFixed(2)}`;
   const buyBtn = document.getElementById('buyNowDetailBtn');
   if (item.buyNowPrice && !item.ended){
     buyBtn.style.display = 'block';
@@ -331,9 +337,13 @@ function openBidDetail(id){
   } else {
     buyBtn.style.display = 'none';
   }
-  document.getElementById('bidDetailNote').textContent = item.ended ? 'This auction has ended.' : 'Bids inside the last 2 minutes extend the clock by 3 minutes.';
-  document.getElementById('placeBidBtn').disabled = item.ended;
-  document.getElementById('bidAmountInput').disabled = item.ended;
+  document.getElementById('bidDetailNote').textContent = item.ended
+    ? 'This auction has ended.'
+    : fixedPrice
+      ? 'One price, no bidding — buy it outright.'
+      : 'Bids inside the last 2 minutes extend the clock by 3 minutes.';
+  document.getElementById('placeBidBtn').disabled = item.ended || fixedPrice;
+  document.getElementById('bidAmountInput').disabled = item.ended || fixedPrice;
   updateBidDetailCountdown();
   bidModal.classList.add('open');
 }
@@ -729,3 +739,90 @@ document.getElementById('joinForm').addEventListener('submit', (e)=>{
     alert("Something went wrong sending that — mind trying again in a second?");
   });
 });
+
+/* ============ THE SHOP ============
+   The retail shelf, above Customs. This used to be a separate site on Manus;
+   it is a section here now, reading shirts.json at load so adding a shirt is
+   editing one file and nothing else.
+
+   Buying is a Stripe Payment Link per shirt — the same way the tools are sold.
+   That needs no secret key and no server, which is the whole reason it works
+   today. Sizes belong on the Link as a Stripe custom field, not in here. */
+async function loadStore() {
+  const grid = document.getElementById('storeGrid');
+  const empty = document.getElementById('storeEmptyState');
+  const note = document.getElementById('storeNote');
+  if (!grid) return;
+
+  let data;
+  try {
+    const res = await fetch('shirts.json', { cache: 'no-store' });
+    data = await res.json();
+  } catch {
+    // A shelf that failed to load is not an empty shelf, and saying "nothing
+    // here" would be a lie that costs a sale.
+    if (empty) empty.innerHTML = '<h3>Shop didn’t load.</h3><p>Give it a refresh.</p>';
+    return;
+  }
+
+  // The old shop is still up until Manus shuts it down, and it has the real
+  // catalogue on it. Until then this section is a front door rather than the
+  // shop itself — send people to the working shelf instead of an empty one.
+  // Clearing liveShopUrl in shirts.json is the whole handover.
+  const banner = document.getElementById('liveShopBanner');
+  if (banner && data && data.liveShopUrl) {
+    banner.href = data.liveShopUrl;
+    banner.hidden = false;
+  }
+
+  const shirts = (data && data.shirts) || [];
+  if (!shirts.length) {
+    // With somewhere to send them, "nothing here yet" is the wrong message.
+    if (empty && data && data.liveShopUrl) {
+      empty.innerHTML = '<h3>Shirts are on the old shop for now.</h3><p>Use the link above — this shelf takes over when that one closes.</p>';
+    }
+    return;
+  }
+  if (empty) empty.remove();
+
+  grid.innerHTML = shirts.map(s => {
+    const price = Number(s.price || 0);
+    const buyable = !s.sold && s.paymentLink;
+    const label = s.sold ? 'Sold out' : s.paymentLink ? 'Buy' : 'Soon';
+    return `
+      <div class="product-card${s.sold ? ' store-sold' : ''}">
+        <div class="product-art">
+          ${s.sold ? '<span class="store-flag">Sold out</span>' : ''}
+          ${s.image ? `<img src="${esc(s.image)}" alt="${esc(s.name || '')}" loading="lazy">` : ''}
+        </div>
+        <div class="store-body">
+          <div class="store-name">${esc(s.name || 'Untitled')}</div>
+          <div class="store-blurb">${esc(s.blurb || '')}</div>
+          <div class="store-row">
+            <span class="store-price">$${price.toFixed(0)}</span>
+            <button class="store-buy" type="button"${buyable ? ` data-buy="${esc(s.paymentLink)}"` : ' disabled'}>${label}</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  grid.querySelectorAll('[data-buy]').forEach(b =>
+    b.addEventListener('click', () => { location.href = b.dataset.buy; }));
+
+  // Say plainly how much of the shelf can actually be bought, rather than
+  // letting a shopper find out one dead button at a time.
+  const ready = shirts.filter(s => s.paymentLink && !s.sold).length;
+  const live = shirts.filter(s => !s.sold).length;
+  if (note) {
+    note.textContent = ready === live
+      ? 'Card checkout by Stripe.'
+      : `${ready} of ${live} ready to buy — the rest need a Stripe Payment Link in shirts.json.`;
+  }
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g,
+    c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+loadStore();
