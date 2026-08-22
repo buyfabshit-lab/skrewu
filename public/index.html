@@ -328,6 +328,26 @@ img{max-width:100%;display:block;}
   display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
   gap:24px;
 }
+/* The retail shelf. Shares the card shell with Customs on purpose — the same
+   floor, one side priced and one side bid on — so only the body differs. */
+.store-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;}
+.store-name{font-family:var(--display);font-size:15px;letter-spacing:0.04em;text-transform:uppercase;}
+.store-blurb{font-size:12px;line-height:1.55;color:var(--bone-dim);flex:1;}
+.store-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px;}
+.store-price{font-family:var(--display);font-size:18px;color:var(--acid);}
+.store-buy{
+  background:var(--rust);color:var(--bone);border:1px solid var(--rust-bright);
+  padding:10px 16px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;
+  transition:background .2s ease, transform .15s ease;
+}
+.store-buy:hover{background:var(--rust-bright);transform:translateY(-1px);}
+.store-buy[disabled]{background:transparent;border-color:var(--iron);color:var(--bone-dim);cursor:not-allowed;transform:none;}
+.store-sold .product-art img{filter:grayscale(1);opacity:.4;}
+.store-flag{
+  position:absolute;top:10px;left:10px;z-index:3;background:var(--void);border:1px solid var(--iron);
+  padding:5px 9px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--bone-dim);
+}
+.store-note{margin-top:22px;font-size:11px;color:var(--bone-dim);text-align:right;}
 .product-card{
   background:var(--void-2);border:1px solid var(--iron);
   position:relative;overflow:hidden;
@@ -876,7 +896,7 @@ footer#footer{
 <span></span><span></span><span></span>
 </button>
 <nav class="navlinks" id="navlinks">
-<a data-manus_click_id="2" data-manus_clickable="true" href="https://midvault-cidg2ahn.manus.space" rel="noopener" target="_blank">Shop</a>
+<a data-manus_click_id="2" data-manus_clickable="true" href="#store">Shop</a>
 <a data-manus_click_id="3" data-manus_clickable="true" href="#shop">Customs</a>
 <a data-manus_click_id="4" data-manus_clickable="true" href="#weeklygram">Weeklygram</a>
 <a data-manus_click_id="5" data-manus_clickable="true" href="#live">Live</a>
@@ -894,7 +914,7 @@ footer#footer{
 <p class="lede">A network for the ones who build their own merch, run their own feed, and broadcast straight from the floor. No gatekeepers. Some rules — enough to keep it standing.</p>
 <div class="hero-ctas">
 <a class="btn btn-primary" data-manus_click_id="7" data-manus_clickable="true" href="#join">Request Entry</a>
-<a class="btn btn-ghost" data-manus_click_id="8" data-manus_clickable="true" href="https://shop.skrewu.com" rel="noopener" target="_blank">See the Shop</a>
+<a class="btn btn-ghost" data-manus_click_id="8" data-manus_clickable="true" href="#store">See the Shop</a>
 </div>
 </div>
 <div class="hero-art">
@@ -931,13 +951,27 @@ footer#footer{
 </div>
 </div>
 </section>
+<section id="store">
+<div class="wrap">
+<div class="sec-head reveal">
+<div>
+<span class="sec-eyebrow">The Shop</span>
+<h2>Shirts.<br/>Printed here.</h2>
+<p>The retail drops — our own shirts, on our own floor. Bought straight through Stripe; nothing leaves this page but you.</p>
+</div>
+</div>
+<div class="product-grid" id="storeGrid"><div class="shop-empty-state" id="storeEmptyState"><h3>Nothing hung up yet.</h3><p>Shirts land here as they come off the press.</p></div></div>
+<p class="store-note" id="storeNote"></p>
+</div>
+</section>
+
 <section id="shop">
 <div class="wrap">
 <div class="sec-head reveal">
 <div>
 <span class="sec-eyebrow">Skrewbay Customs</span>
 <h2>Put it up.<br/>Let the floor bid.</h2>
-<p>List anything — shirts, gear, one-off pieces. Set a starting price, pick how long it runs, add a Buy It Now if you want it gone fast. For the full retail drops, hit the <a data-manus_click_id="9" data-manus_clickable="true" href="https://shop.skrewu.com" rel="noopener" style="color:var(--acid);text-decoration:underline;" target="_blank">main shop</a>.</p>
+<p>List anything — shirts, gear, one-off pieces. Set a starting price, pick how long it runs, add a Buy It Now if you want it gone fast. For the full retail drops, hit the <a data-manus_click_id="9" data-manus_clickable="true" href="#store" style="color:var(--acid);text-decoration:underline;">main shop</a>.</p>
 </div>
 </div>
 <div class="shop-toolbar">
@@ -1441,7 +1475,7 @@ footer#footer{
 <div class="footer-grid">
 <div class="footer-brand">Skrew U</div>
 <nav class="footer-links">
-<a data-manus_click_id="64" data-manus_clickable="true" href="https://shop.skrewu.com" rel="noopener" target="_blank">Shop</a>
+<a data-manus_click_id="64" data-manus_clickable="true" href="#store">Shop</a>
 <a data-manus_click_id="65" data-manus_clickable="true" href="#weeklygram">Weeklygram</a>
 <a data-manus_click_id="66" data-manus_clickable="true" href="#zine">The Zine</a>
 <a data-manus_click_id="67" data-manus_clickable="true" href="#frequency">Frequency</a>

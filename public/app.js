@@ -739,3 +739,74 @@ document.getElementById('joinForm').addEventListener('submit', (e)=>{
     alert("Something went wrong sending that — mind trying again in a second?");
   });
 });
+
+/* ============ THE SHOP ============
+   The retail shelf, above Customs. This used to be a separate site on Manus;
+   it is a section here now, reading shirts.json at load so adding a shirt is
+   editing one file and nothing else.
+
+   Buying is a Stripe Payment Link per shirt — the same way the tools are sold.
+   That needs no secret key and no server, which is the whole reason it works
+   today. Sizes belong on the Link as a Stripe custom field, not in here. */
+async function loadStore() {
+  const grid = document.getElementById('storeGrid');
+  const empty = document.getElementById('storeEmptyState');
+  const note = document.getElementById('storeNote');
+  if (!grid) return;
+
+  let data;
+  try {
+    const res = await fetch('shirts.json', { cache: 'no-store' });
+    data = await res.json();
+  } catch {
+    // A shelf that failed to load is not an empty shelf, and saying "nothing
+    // here" would be a lie that costs a sale.
+    if (empty) empty.innerHTML = '<h3>Shop didn’t load.</h3><p>Give it a refresh.</p>';
+    return;
+  }
+
+  const shirts = (data && data.shirts) || [];
+  if (!shirts.length) return;               // leave the empty state as written
+  if (empty) empty.remove();
+
+  grid.innerHTML = shirts.map(s => {
+    const price = Number(s.price || 0);
+    const buyable = !s.sold && s.paymentLink;
+    const label = s.sold ? 'Sold out' : s.paymentLink ? 'Buy' : 'Soon';
+    return `
+      <div class="product-card${s.sold ? ' store-sold' : ''}">
+        <div class="product-art">
+          ${s.sold ? '<span class="store-flag">Sold out</span>' : ''}
+          ${s.image ? `<img src="${esc(s.image)}" alt="${esc(s.name || '')}" loading="lazy">` : ''}
+        </div>
+        <div class="store-body">
+          <div class="store-name">${esc(s.name || 'Untitled')}</div>
+          <div class="store-blurb">${esc(s.blurb || '')}</div>
+          <div class="store-row">
+            <span class="store-price">$${price.toFixed(0)}</span>
+            <button class="store-buy" type="button"${buyable ? ` data-buy="${esc(s.paymentLink)}"` : ' disabled'}>${label}</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  grid.querySelectorAll('[data-buy]').forEach(b =>
+    b.addEventListener('click', () => { location.href = b.dataset.buy; }));
+
+  // Say plainly how much of the shelf can actually be bought, rather than
+  // letting a shopper find out one dead button at a time.
+  const ready = shirts.filter(s => s.paymentLink && !s.sold).length;
+  const live = shirts.filter(s => !s.sold).length;
+  if (note) {
+    note.textContent = ready === live
+      ? 'Card checkout by Stripe.'
+      : `${ready} of ${live} ready to buy — the rest need a Stripe Payment Link in shirts.json.`;
+  }
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g,
+    c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+loadStore();

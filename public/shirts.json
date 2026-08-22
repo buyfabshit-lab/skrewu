@@ -1,0 +1,14 @@
+{
+  "_readme": "The retail shirts on skrewu.com — the shop the nav points at. This replaces the storefront that used to live on Manus. Add a shirt to the `shirts` array and it shows up; there is no build step and no deploy hook, the page reads this file at load. Sizes are handled by Stripe, not here: add a size dropdown to the Payment Link (Stripe calls it a custom field) and the choice arrives with the order. Sold-out is `sold: true` — keep the entry rather than deleting it, so the link you posted still leads somewhere honest.",
+  "_shape": {
+    "id": "kebab-case, unique, never reused",
+    "name": "What it's called",
+    "blurb": "One line. What it is, what it's printed on.",
+    "price": 35,
+    "image": "Public image URL — upload to the site-assets bucket in Supabase and paste the public URL",
+    "paymentLink": "Stripe Payment Link, or null until you make one",
+    "sold": false
+  },
+  "currency": "usd",
+  "shirts": []
+}
