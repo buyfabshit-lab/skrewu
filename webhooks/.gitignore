@@ -1,0 +1,5 @@
+# Copied in at deploy time by the build command in netlify.toml.
+# The masters live in ../internal — never commit a second copy.
+netlify/
+products.json
+packs.json
