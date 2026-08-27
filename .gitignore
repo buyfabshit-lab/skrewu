@@ -8,3 +8,11 @@ Thumbs.db
 
 # Node (if ever used)
 node_modules/
+
+# Local env
+.env
+.env.local
+
+# Storage assets and DB dumps — seeded into Supabase, not committed
+storage-files/
+database/*.sql
