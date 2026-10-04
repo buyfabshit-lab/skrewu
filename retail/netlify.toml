@@ -1,0 +1,10 @@
+# Separate retail project. Set its base directory to retail.
+# The root community site and internal tools retain their existing boundaries.
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "npm run check && npm test"
+[functions]
+  node_bundler = "esbuild"
+[build.environment]
+  NODE_VERSION = "22"
