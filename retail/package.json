@@ -1,0 +1,17 @@
+{
+  "name": "skrewu-retail",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "preview": "node preview.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "node scripts/check.mjs && node scripts/bundle-check.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "esbuild": "0.28.2"
+  }
+}
