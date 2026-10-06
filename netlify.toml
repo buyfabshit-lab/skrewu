@@ -1,19 +1,24 @@
-# Netlify config for the PUBLIC site — skrewu.com
+# One repository feeds two Netlify projects.
 #
-# This site is the community side of SKREWU and nothing else: the pin board,
-# the replies, the listings people put up and bid on. It is one page and one
-# script, and both of them live in `public/`.
+# Netlify provides SITE_ID and SITE_NAME during every build. The build script
+# uses those stable values to stage either:
+#   - the public SKREWU community plus the two signature-verified webhooks, or
+#   - the private staff tools plus their full API and tools library.
 #
-# `publish` is the whole security model here. Netlify uploads the contents of
-# this one directory and serves nothing else, so a file that is not in
-# `public/` is not on skrewu.com — not linked, and not reachable by typing the
-# URL either. The tools sit in `internal/` for exactly that reason, and they
-# are served by their own password-protected site (see internal/netlify.toml).
-#
-# There is deliberately no `functions` key. The /api/* endpoints are tool
-# plumbing; leaving them off this site means the public deploy has no server
-# surface at all. The community page talks to Supabase straight from the
-# browser under row-level security, the way it did before the tools existed.
+# The generated directory is disposable and never committed.
 [build]
-  publish = "public"
-  command = ""
+  command = "node scripts/build-netlify-site.mjs"
+  publish = ".skrewu-deploy"
+
+[functions]
+  directory = ".skrewu-deploy/netlify/functions"
+  node_bundler = "esbuild"
+  included_files = [
+    ".skrewu-deploy/products.json",
+    ".skrewu-deploy/packs.json"
+  ]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

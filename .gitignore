@@ -8,3 +8,6 @@ Thumbs.db
 
 # Node (if ever used)
 node_modules/
+
+# Generated Netlify deploy staging
+.skrewu-deploy/
