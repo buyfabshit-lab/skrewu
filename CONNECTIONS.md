@@ -395,7 +395,9 @@ it shows into `SHOPIFY_WEBHOOK_SECRET`. Orders then land within seconds.
 | `SS_ACCOUNT_NUMBER` + `SS_API_KEY` | the real blanks catalogue instead of stand-ins |
 | `STRIPE_SECRET_KEY` | card checkout — the tool store **and** buying credits |
 | `STRIPE_WEBHOOK_SECRET` | **the money arriving**: a paid checkout becoming an order, or credits landing in a wallet |
-| `FAL_KEY` | the AI image and video tools. One key covers both — that's why it's one provider and not one account per model |
+| `HF_KEY` | **AI images via Higgsfield Marketing Studio** — campaign shots from a prompt, or from a product photo and a model reference out of the locker, with a preset deciding the look, at 1K/2K/4K. One value, `KEY_ID:KEY_SECRET`. Setting it switches the image tool over; without it images fall back to fal |
+| `FAL_KEY` | the AI video tool, and AI images when there's no `HF_KEY`. One key covers both — that's why it's one provider and not one account per model |
+| `GEN_IMAGE_PROVIDER` | optional. `higgsfield` or `fal`, to force the image side when both keys are set |
 | `GEN_IMAGE_MODEL` / `GEN_VIDEO_MODEL` | optional. Which model does the work. Swapping models is a setting, not a code change |
 | `ANTHROPIC_API_KEY` | AI product descriptions (template without it) |
 | `DEPLOY_SHARED_KEY` | optional password on the deploy endpoint |

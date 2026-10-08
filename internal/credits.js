@@ -35,6 +35,7 @@
     const rows = [
       ['Image', prices.image['1K'], 'each, 1K'],
       ['Image', prices.image['2K'], 'each, 2K'],
+      ['Image', prices.image['4K'], 'each, 4K'],
       ['Video', prices.video['5'], '5 seconds'],
       ['Video', prices.video['10'], '10 seconds'],
     ];

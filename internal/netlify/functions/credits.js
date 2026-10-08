@@ -67,6 +67,7 @@ exports.handler = async (event) => {
       balance: wallet.credits_balance,
       used: wallet.credits_used,
       prices: C.PRICES,
+      presetSurcharge: C.PRESET_SURCHARGE,
       packs: list || [],
       ledger,
       canBuy: !!process.env.STRIPE_SECRET_KEY,
