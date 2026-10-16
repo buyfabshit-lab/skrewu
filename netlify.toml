@@ -1,4 +1,5 @@
 # One repository feeds two Netlify projects.
+# Restored configuration verified October 15, 2026.
 #
 # Netlify provides SITE_ID and SITE_NAME during every build. The build script
 # uses those stable values to stage either:
