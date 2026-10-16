@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AI Image · The Machine</title>
-<meta name="description" content="Make artwork from a prompt — aspect, resolution and batch, straight onto the line."/>
+<meta name="description" content="Make artwork and campaign shots from a prompt — or from a product photo in your locker — at 1K, 2K or 4K, straight onto the line."/>
 <link rel="stylesheet" href="gen.css"/>
 </head>
 <body data-kind="image" data-page="AI Image">
@@ -17,7 +17,7 @@
 
 <main class="wrap">
   <div class="ask">
-    <textarea id="prompt" placeholder="Say what to make — “distressed eagle over a black sun, one-color print, thick lines”…"></textarea>
+    <textarea id="prompt" placeholder="Say what to make — “distressed eagle over a black sun, one-color print, thick lines”… or, with a product photo picked, “minimal, bright and premium”"></textarea>
     <div class="askrow">
       <button type="button" class="settingsBtn" id="settingsBtn">
         <span class="gear">⚙</span><span id="summary"></span>
@@ -38,7 +38,17 @@
   <div class="sec"><span>▭</span><span>Aspect ratio</span></div>
   <div class="opts" id="aspects"></div>
   <div id="extras"></div>
+  <!-- Campaign mode — a preset, a product photo, a model reference. Drawn only
+       when the provider behind the door can use it; empty on fal. -->
+  <div id="campaign"></div>
   <button type="button" class="done" id="doneSheet">Done</button>
+</div>
+
+<!-- The locker, as a picker: this shop's own photos, nothing else. -->
+<div class="sheet picker" id="picker" role="dialog" aria-label="Pick from the locker">
+  <div class="grab"></div>
+  <div class="head"><h2>Product photo</h2><button type="button" id="closePicker" aria-label="Close">×</button></div>
+  <div class="thumbs" id="pickerGrid"></div>
 </div>
 
 <script src="theme.js"></script>

@@ -19,13 +19,26 @@
 
 /* What a run costs. Kept as data, not scattered through the callers. */
 const PRICES = {
-  image: { '1K': 20, '2K': 30 },
+  image: { '1K': 20, '2K': 30, '4K': 50 },
   video: { '5': 200, '10': 400 },
 };
 
-function priceOf(kind, variant) {
+/* A campaign preset costs the provider a tenth more than the plain run, so it
+   costs the shop a tenth more too — rounded up to a whole credit, because
+   nobody is charged 33.0 of anything. */
+const PRESET_SURCHARGE = 0.10;
+
+/* Settled to the cent before rounding up, so 50 × 1.1 is 55 and not 56:
+   floating point would otherwise land a hair above 55 and the ceiling would
+   take the whole next credit. The page rounds the same way. */
+function withSurcharge(base) {
+  return Math.ceil(Math.round(base * (1 + PRESET_SURCHARGE) * 100) / 100);
+}
+
+function priceOf(kind, variant, opts = {}) {
   const table = PRICES[kind === 'video' ? 'video' : 'image'];
-  return table[String(variant)] || Object.values(table)[0];
+  const base = table[String(variant)] || Object.values(table)[0];
+  return opts.preset ? withSurcharge(base) : base;
 }
 
 function missingEnv(names) {
@@ -126,7 +139,7 @@ async function finishRun(id, patch) {
 }
 
 module.exports = {
-  PRICES, priceOf, missingEnv, sb, rpc,
+  PRICES, PRESET_SURCHARGE, priceOf, missingEnv, sb, rpc,
   whoIsAsking, walletFor, spend, grant, refund,
   packs, packById, recordRun, finishRun,
 };
