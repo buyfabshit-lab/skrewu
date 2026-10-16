@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SKREWU design connection review</title><link rel="stylesheet" href="styles.css"><script src="design-connection-review.js" type="module"></script></head>
+<body><div class="review-bar">LOCAL CONNECTION REVIEW · NO PAYMENTS</div>
+<main class="wrap owner-wrap"><div class="owner-heading"><div><p class="eyebrow">Designer to shop</p><h1>Send your<br><em>finished shirt.</em></h1></div><p class="lede">Review the connection using your own files.<br>This page is a transfer harness.</p></div>
+<section class="panel editor"><form id="transferForm"><div class="two"><label>Shirt preview<input name="preview" type="file" accept="image/png,image/jpeg,image/webp" required></label><label>Original print artwork<input name="artwork" type="file" accept="image/png,image/jpeg,image/webp" required></label></div>
+<label>Shirt name<input name="name" maxlength="100" required></label><label>Description<textarea name="description" maxlength="3000" required></textarea></label><label>Shirt information<textarea name="garment" maxlength="1000" required></textarea></label>
+<div class="two"><label>Print width (inches)<input name="width" type="number" min="0.1" max="60" step="0.1" required></label><label>Print height (inches)<input name="height" type="number" min="0.1" max="60" step="0.1" required></label></div>
+<div class="two"><label>Placement<select name="placement"><option>front</option><option>back</option><option>left sleeve</option><option>right sleeve</option></select></label><label>Size<input name="size" maxlength="20" required></label></div><label>Color<input name="color" maxlength="40" required></label>
+<p class="small">Both files must be 4 MB or smaller. Set your price in the owner desk.</p><button class="primary" id="sendDesign" type="submit">Sell this design</button><p id="message" role="status"></p></form></section></main></body></html>

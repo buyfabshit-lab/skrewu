@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKREW U — The Shirt Shop</title><meta name="description" content="Shirts from SKREW U. Pick your design, size and color.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css">
+<script src="shop.js" type="module"></script></head>
+<body>
+<div id="preview" class="review-bar" hidden>LOCAL REVIEW · SAMPLE PRODUCTS · NO PAYMENTS <a href="owner.html">Try the owner desk ↗</a></div>
+<header><div class="wrap top-row"><a class="brand" href="index.html"><span class="mark">U</span><span>SKREW U<small>Independent by design</small></span></a><nav aria-label="Main navigation"><a class="active" href="#shirts">Shirts</a><a href="https://skrewu.com">The community ↗</a></nav></div></header>
+<main class="wrap">
+<section class="intro"><div><p class="eyebrow">The SKREW U shirt shop</p><h1>Wear what<br>you <em>want.</em></h1><p class="lede">Pick your design. Make it yours.</p></div><div class="stamp" aria-hidden="true">NO<br>DRESS<br>CODE.<span>SKREW U / EST. YOUR RULES</span></div></section>
+<div class="section-line" id="shirts"><h2>On the rack</h2><span id="count">Loading shirts…</span></div>
+<p id="notice" class="notice" role="status" hidden></p>
+<div id="grid" class="product-grid" aria-live="polite"></div>
+<section class="policies" id="policies" hidden><div><h2>Shipping</h2><p id="shipping"></p></div><div><h2>Returns</h2><p id="returns"></p></div></section>
+</main>
+<footer class="wrap"><a class="brand" href="index.html">SKREW U</a><span>Your shirt. Your rules.</span><a href="owner.html">Owner sign-in</a></footer>
+<dialog id="detail" aria-labelledby="productName"><button class="close" id="close" aria-label="Close product">×</button><div class="detail-grid"><div class="detail-art" id="productArt"></div><div class="detail-body"><p class="eyebrow">SKREW U / Shirts</p><h2 id="productName"></h2><p class="price" id="productPrice"></p><p id="productDescription" class="copy"></p><div class="garment"><span class="label">The shirt</span><p id="productGarment"></p></div><form id="buyForm"><div class="two"><label>Color<select id="color" required></select></label><label>Size<select id="size" required></select></label></div><div class="quantity-line"><label>Quantity<input id="quantity" type="number" min="1" max="20" value="1" required></label><div>Subtotal<strong id="subtotal"></strong></div></div><button class="primary wide" id="buy" type="submit">Continue to checkout ↗</button><p class="small" id="checkoutNote"></p><p id="buyMessage" role="status"></p></form></div></div></dialog>
+</body></html>
