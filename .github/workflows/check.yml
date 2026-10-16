@@ -125,11 +125,13 @@ jobs:
         run: |
           node -e "
             const fs = require('fs');
-            // public/ is skrewu.com. It is the community front and nothing
-            // else: one page, its script, and the cache rules. Anything else
-            // appearing here means a tool has leaked back onto the open web,
-            // which is the exact thing this layout exists to prevent.
-            const allowed = ['index.html', 'app.js', '_headers'];
+            // public/ is skrewu.com: the community front and the shop, and
+            // nothing else. Anything appearing here that is not on this list
+            // means a tool has leaked back onto the open web, which is the
+            // exact thing this layout exists to prevent. Adding a name here is
+            // a deliberate decision to publish it — shirts.json is the shop's
+            // price list and is meant to be read by anyone.
+            const allowed = ['index.html', 'app.js', '_headers', 'shirts.json'];
             const extra = fs.readdirSync('public').filter(f => !allowed.includes(f));
             if (extra.length) {
               console.error('::error::public/ should hold only ' + allowed.join(', ') + ' — found ' + extra.join(', '));
