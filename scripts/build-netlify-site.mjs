@@ -18,8 +18,14 @@ const sites = {
     names: new Set(['precious-seahorse-a40e37']),
   },
   internal: {
-    ids: new Set(['da662f06-d634-4b3e-a281-c3f4be1b2a8e']),
-    names: new Set(['glistening-squirrel-1b4a1e']),
+    ids: new Set([
+      'da662f06-d634-4b3e-a281-c3f4be1b2a8e',
+      '0a2d9b0d-e1d1-4709-8819-edfc423441e5',
+    ]),
+    names: new Set([
+      'glistening-squirrel-1b4a1e',
+      'harmonious-starlight-9aa712',
+    ]),
   },
 };
 
