@@ -125,25 +125,38 @@ jobs:
         run: |
           node -e "
             const fs = require('fs');
-            // public/ is skrewu.com. It is the community front and nothing
-            // else: one page, its script, and the cache rules. Anything else
-            // appearing here means a tool has leaked back onto the open web,
-            // which is the exact thing this layout exists to prevent.
-            const allowed = ['index.html', 'app.js', '_headers'];
+            // public/ is the community front plus the closed retail storefront.
+            // Allow only its four static shop files, never a whole tools tree.
+            const allowed = ['index.html', 'app.js', '_headers', 'shop'];
             const extra = fs.readdirSync('public').filter(f => !allowed.includes(f));
             if (extra.length) {
               console.error('::error::public/ should hold only ' + allowed.join(', ') + ' — found ' + extra.join(', '));
               process.exit(1);
             }
-            // A page cannot serve a tool it cannot reach, so the links matter
-            // as much as the files.
-            const html = fs.readFileSync('public/index.html', 'utf8');
-            const leaks = [...html.matchAll(/(?:href|src)=\"([^\"]+\.html|\/api\/[^\"]*)\"/g)]
-              .map(m => m[1])
-              .filter(h => !/^(https?:)?\/\//.test(h));
-            if (leaks.length) {
-              console.error('::error file=public/index.html::links to tool pages or /api: ' + leaks.join(', '));
+            const shopFiles = ['index.html', 'styles.css', 'favicon.svg', 'death-corps.ttf'];
+            if (!fs.lstatSync('public/shop').isDirectory()) {
+              console.error('::error::public/shop must be a real directory');
               process.exit(1);
+            }
+            const entries = fs.readdirSync('public/shop', { withFileTypes: true });
+            const unexpected = entries.filter(e => !e.isFile() || !shopFiles.includes(e.name));
+            const missing = shopFiles.filter(f => !entries.some(e => e.name === f && e.isFile()));
+            if (unexpected.length || missing.length) {
+              console.error('::error::public/shop must contain exactly ' + shopFiles.join(', ') +
+                ' — unexpected: ' + unexpected.map(e => e.name).join(', ') + '; missing: ' + missing.join(', '));
+              process.exit(1);
+            }
+            // A page cannot serve a tool it cannot reach, so the links matter
+            // as much as the files. Keep the guard on both public pages.
+            for (const page of ['public/index.html', 'public/shop/index.html']) {
+              const html = fs.readFileSync(page, 'utf8');
+              const leaks = [...html.matchAll(/(?:href|src)=\"([^\"]+\.html|\/api\/[^\"]*)\"/g)]
+                .map(m => m[1])
+                .filter(h => !/^(https?:)?\/\//.test(h));
+              if (leaks.length) {
+                console.error('::error file=' + page + '::links to tool pages or /api: ' + leaks.join(', '));
+                process.exit(1);
+              }
             }
             console.log('public site is clean: ' + allowed.join(', ') + ', no tool links, no /api');
           "
