@@ -111,6 +111,8 @@ exports.handler = async (event) => {
      The pack's size is read from the database, never from the session, so a
      tampered checkout can't mint credits. */
   const meta = s.metadata || {};
+  // The retail receiver owns these orders, including their production artwork.
+  if (meta.source === 'skrewu-retail') return json(200, { ok: true, ignored: 'retail receiver owns this order' });
   if (meta.credit_pack && meta.tenant_slug) {
     try {
       const pack = await C.packById(meta.credit_pack);
@@ -169,3 +171,4 @@ exports.handler = async (event) => {
 
   return json(200, { ok: true, uct: row.uct });
 };
+
